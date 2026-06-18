@@ -1,0 +1,120 @@
+{
+  "scenario_id": "pdppilmdalpkimffnjbcaaefphiigioo",
+  "builtin": true,
+  "pattern_name": "remote_dom_event_content_manipulation",
+  "doc_ref": "scenario_docs/remote_dom_event_content_manipulation.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "targeted",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "background",
+        "content_script"
+      ],
+      "permissions_hint": [
+        "tabs",
+        "scripting",
+        "storage"
+      ]
+    },
+    "capability_profile": [
+      "dom_mutation",
+      "remote_configuration",
+      "tab_access",
+      "script_injection"
+    ],
+    "capability_combinations": [
+      "remote_configuration + dom_mutation",
+      "tabs_on_updated + custom_event_dispatch"
+    ],
+    "static_code_signals": {
+      "events": {
+        "apis": [
+          "dispatchEvent",
+          "CustomEvent",
+          "onreset"
+        ],
+        "patterns": [
+          "remote_triggered_dom_event"
+        ]
+      },
+      "tabs": {
+        "apis": [
+          "tabs.onUpdated",
+          "tabs.executeScript"
+        ],
+        "keywords": [
+          "active_tab"
+        ]
+      },
+      "dom": {
+        "apis": [
+          "document.documentElement.setAttribute",
+          "document.documentElement.removeAttribute"
+        ],
+        "keywords": [
+          "state_toggle",
+          "content_flag",
+          "checklist.info",
+          "checklist.core"
+        ]
+      },
+      "storage": {
+        "apis": [
+          "chrome.storage.local.get"
+        ],
+        "keywords": [
+          "remote_payload"
+        ]
+      },
+      "execution": {
+        "apis": [
+          "window.eval",
+          "Reflect.apply",
+          "scripting.executeScript",
+          "chrome.tabs.update"
+        ],
+        "keywords": [
+          "window.top",
+          "window.self",
+          "btoa",
+          "unescape",
+          "encodeURIComponent",
+          "credentials",
+          "gsrpdt",
+          "unsafe-eval"
+        ]
+      },
+      "navigation": {
+        "apis": [
+          "chrome.windows",
+          "chrome.tabs"
+        ],
+        "keywords": [
+          "navigate",
+          "focus",
+          "setFocusTab"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "remote_response",
+        "source": "config_payload",
+        "path": [
+          "storage.local",
+          "content_script",
+          "dispatchEvent"
+        ],
+        "sink": "page_content_mutation"
+      }
+    ],
+    "behavior_tags": [
+      "content_tampering",
+      "dom_event_abuse",
+      "remote_script_trigger",
+      "remote_navigation"
+    ]
+  }
+}

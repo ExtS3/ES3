@@ -1,0 +1,70 @@
+{
+  "scenario_id": "eljbpmbbooibhhmhaomdlbbdjolgomam",
+  "builtin": true,
+  "pattern_name": "session_reinjection_local_storage_overwrite",
+  "doc_ref": "scenario_docs/session_reinjection_local_storage_overwrite.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "targeted",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "background",
+        "content_script"
+      ],
+      "permissions_hint": [
+        "storage",
+        "tabs"
+      ]
+    },
+    "capability_profile": [
+      "storage_access",
+      "message_bridge",
+      "navigation_control",
+      "page_storage_access"
+    ],
+    "capability_combinations": [
+      "runtime_onMessage + storage_overwrite",
+      "localStorage_mutation + navigation_control"
+    ],
+    "static_code_signals": {
+      "messaging": {
+        "apis": [
+          "runtime.onMessage"
+        ]
+      },
+      "storage": {
+        "apis": [
+          "localStorage.clear",
+          "localStorage.setItem"
+        ]
+      },
+      "navigation": {
+        "apis": [
+          "window.location"
+        ]
+      },
+      "cookie": {
+        "apis": [
+          "clearAllCookies"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "inbound_message",
+        "source": "background_command",
+        "path": [
+          "content_script",
+          "local_storage_overwrite"
+        ],
+        "sink": "mock_reload"
+      }
+    ],
+    "behavior_tags": [
+      "session_reinjection",
+      "storage_overwrite",
+      "remote_navigation"
+    ]
+  }
+}

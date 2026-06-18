@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus Repository - Login</title>
+  <link rel="stylesheet" href="/static/css/auth/login.css">
+  <link rel="stylesheet" href="/static/css/common/nav.css">
+  <script src="/static/js/auth/login.js?v=session-fix-1" defer></script>
+</head>
+<body>
+  <main class="login-shell">
+    <section class="login-panel" aria-labelledby="login-title">
+      <div class="brand-mark" aria-hidden="true">N</div>
+      <h1 id="login-title">Nexus Repository</h1>
+      <p class="subtitle">확장 프로그램 분석 서비스에 로그인합니다.</p>
+
+      <form id="login_form" class="login-form">
+        <div class="field">
+          <label for="id">아이디</label>
+          <input id="id" name="id" type="text" autocomplete="username" placeholder="사용자 아이디" required>
+        </div>
+
+        <div class="field">
+          <label for="pw">비밀번호</label>
+          <input id="pw" name="pw" type="password" autocomplete="current-password" placeholder="비밀번호" required>
+        </div>
+
+        <button id="login_btn" type="submit">로그인</button>
+      </form>
+
+      <p class="signup-link">
+        계정이 없으면 <a href="/signup">회원가입 신청</a>
+      </p>
+    </section>
+  </main>
+</body>
+</html>

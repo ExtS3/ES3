@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html class="light" lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Access - Suppressor</title>
+<script src="/static/vendor/tailwindcss-forms-container-queries.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        primary: "#4c56af",
+        surface: "#f7f9fc",
+        "surface-container-low": "#f0f4f8",
+        "surface-container-high": "#e1e9f0",
+        "surface-container-lowest": "#ffffff",
+        "on-surface": "#29343a",
+        "on-surface-variant": "#566168"
+      }
+    }
+  }
+}
+</script>
+<link rel="stylesheet" href="/static/css/common/nav.css">
+</head>
+<body class="bg-surface text-on-surface" style="font-family: Inter, sans-serif;">
+<header class="fixed top-0 w-full z-40 bg-white/90 backdrop-blur-md shadow-sm">
+  <div class="flex justify-between items-center w-full px-6 h-16">
+    <div class="flex items-center gap-6">
+      <a href="/admin" class="font-black text-primary text-xl">Suppressor</a>
+      <nav class="hidden md:flex items-center gap-5 text-sm font-semibold text-on-surface-variant">
+        <a href="/">Dashboard</a>
+        <a href="/admin">Admin</a>
+        <a href="/admin/policy">Policy</a>
+      </nav>
+    </div>
+    <div class="flex items-center gap-4"></div>
+  </div>
+</header>
+<main class="pt-24 px-8 max-w-7xl mx-auto">
+  <div class="flex items-end justify-between mb-8">
+    <div>
+      <h1 class="text-3xl font-black">User Access</h1>
+      <p class="text-on-surface-variant mt-1">Approve signup requests and toggle user permissions.</p>
+    </div>
+    <button id="refreshAccess" class="px-4 py-2 rounded-lg bg-primary text-white font-bold text-sm">Refresh</button>
+  </div>
+
+  <section class="mb-10">
+    <h2 class="text-xl font-bold mb-4">Signup Requests</h2>
+    <div id="signupRequests" class="bg-white border border-slate-200 rounded-lg overflow-hidden"></div>
+  </section>
+
+  <section>
+    <h2 class="text-xl font-bold mb-4">Users</h2>
+    <div id="usersAccess" class="space-y-4"></div>
+  </section>
+</main>
+<script src="/static/js/common.js?v=session-fix-1"></script>
+<script src="/static/js/admin/permissions.js"></script>
+</body>
+</html>

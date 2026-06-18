@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nexus Repository - 관리자 대시보드</title>
+<script src="/static/vendor/tailwindcss-forms-container-queries.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container": "#e8eff4",
+              "inverse-primary": "#929bfa",
+              "secondary-fixed-dim": "#ccd2ff",
+              "secondary-fixed": "#dee0ff",
+              "secondary-container": "#dee0ff",
+              "on-error": "#fff7f7",
+              "error-dim": "#4f0116",
+              "on-tertiary-fixed": "#333d55",
+              "on-background": "#29343a",
+              "background": "#f7f9fc",
+              "inverse-surface": "#0b0f11",
+              "on-surface-variant": "#566168",
+              "on-surface": "#29343a",
+              "surface-variant": "#d9e4ec",
+              "inverse-on-surface": "#9a9da0",
+              "on-secondary-container": "#3b4a9e",
+              "surface-dim": "#cedce5",
+              "on-tertiary-fixed-variant": "#4f5a72",
+              "on-secondary-fixed-variant": "#4555a8",
+              "on-primary-container": "#3f48a1",
+              "on-primary": "#f9f6ff",
+              "surface-container-highest": "#d9e4ec",
+              "error-container": "#ff8b9a",
+              "outline": "#717c84",
+              "error": "#9e3f4e",
+              "on-secondary-fixed": "#27378a",
+              "on-error-container": "#782232",
+              "tertiary-dim": "#49536b",
+              "on-tertiary-container": "#455068",
+              "tertiary-container": "#d5dffd",
+              "surface-container-low": "#f0f4f8",
+              "surface-bright": "#f7f9fc",
+              "secondary-dim": "#3d4c9f",
+              "on-secondary": "#faf8ff",
+              "tertiary-fixed-dim": "#c7d1ee",
+              "outline-variant": "#a8b3bb",
+              "surface-container-high": "#e1e9f0",
+              "primary-container": "#e0e0ff",
+              "on-primary-fixed": "#2c358e",
+              "tertiary-fixed": "#d5dffd",
+              "primary-fixed": "#e0e0ff",
+              "on-primary-fixed-variant": "#4953ac",
+              "surface-container-lowest": "#ffffff",
+              "on-tertiary": "#f9f8ff",
+              "primary-fixed-dim": "#ced1ff",
+              "secondary": "#4958ac",
+              "primary-dim": "#4049a2",
+              "primary": "#4c56af",
+              "surface-tint": "#4c56af",
+              "surface": "#f7f9fc",
+              "tertiary": "#545f78"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Pretendard', 'Inter', sans-serif; }
+    </style>
+<link rel="stylesheet" href="/static/css/common/nav.css">
+</head>
+<body class="bg-surface text-on-surface antialiased">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm dark:shadow-none font-sans antialiased headline-sm font-semibold tracking-tight">
+<div class="flex justify-between items-center w-full px-6 h-16">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-bold tracking-tighter text-indigo-700 dark:text-indigo-400">
+  <img src="/static/img/logo.png" alt="Suppressor Logo" class="h-16 ml-4">
+</span>
+<nav class="hidden md:flex items-center gap-6 h-full">
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/">대시보드</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/search">앱 탐색</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/library">라이브러리</a>
+<a id="adminScenarioHeaderLink" class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/scenario">시나리오 관리</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="pl-10 pr-4 py-2 bg-slate-100/50 dark:bg-slate-800/50 border-none rounded-xl text-sm w-64 focus:ring-2 focus:ring-primary/20" placeholder="검색어를 입력하세요..." type="text"/>
+</div>
+
+</div>
+</div>
+</div>
+<!-- Notification Panel (Hidden by default) -->
+<div class="absolute right-6 top-16 mt-2 w-80 bg-surface-container-lowest rounded-xl shadow-2xl border border-outline-variant/10 overflow-hidden z-[60] hidden" id="notification-panel">
+<div class="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50">
+<span class="font-bold text-sm">알림</span>
+<button class="text-[10px] text-primary font-bold hover:underline">모두 읽음으로 표시</button>
+</div>
+<div class="max-h-[320px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+<div class="p-4 hover:bg-slate-50 transition-colors cursor-pointer group">
+<div class="flex gap-3">
+<div class="w-2 h-2 mt-1.5 rounded-full bg-primary flex-shrink-0"></div>
+<div>
+<p class="text-xs font-medium text-on-surface mb-1">시스템 점검 완료</p>
+<p class="text-[10px] text-on-surface-variant line-clamp-2">모든 저장소가 안정적인 상태입니다.</p>
+<span class="text-[10px] text-slate-400 mt-2 block">10분 전</span>
+</div>
+</div>
+</div>
+</div>
+<a class="block p-3 text-center text-[10px] font-bold text-on-surface-variant hover:bg-slate-50 border-t border-slate-100 dark:border-slate-800" href="#">전체 알림 보기</a>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r-0 bg-slate-50 dark:bg-slate-950 z-30 hidden md:block flat no-line-rule">
+<div class="flex flex-col h-full py-6 gap-2 pt-20">
+<!-- Brand Info -->
+<div class="px-6 py-4 mb-4 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="hub" style="font-variation-settings: 'FILL' 1;">hub</span>
+</div>
+<div>
+<h2 class="text-lg font-black text-slate-900 dark:text-white leading-tight">Suppressor</h2>
+<p class="text-xs text-slate-500 dark:text-slate-400">Enterprise Edition</p>
+</div>
+</div>
+<!-- Main Navigation -->
+<nav class="flex flex-col space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span>홈</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/search">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+<span>앱 탐색</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/library">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span>라이브러리</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/scenario">
+<span class="material-symbols-outlined" data-icon="dataset">dataset</span>
+<span>시나리오 관리</span>
+</a>
+<a class="flex items-center gap-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 rounded-lg mx-2 px-4 py-3 transition-all hover:scale-[1.02]" href="/admin">
+<span class="material-symbols-outlined" data-icon="dashboard_customize">dashboard_customize</span>
+<span>관리자 대시보드</span>
+</a>
+</nav>
+
+<!-- Side Bottom Common -->
+<div id="side-bottom" class="mt-auto px-4 flex flex-col gap-4">
+<script src="/static/js/common.js?v=session-fix-1"></script>
+
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-20 p-8 min-h-[1024px]">
+<header class="mb-8 flex justify-between items-end">
+<div>
+<h1 class="text-3xl font-extrabold tracking-tight text-on-surface mb-1">관리자 대시보드</h1>
+<p class="text-on-surface-variant">시스템 상태 및 리포지토리 활동을 실시간으로 모니터링합니다.</p>
+</div>
+<div class="flex gap-2">
+<a href="/admin/permissions" class="px-4 py-2 bg-surface-container-high rounded-lg text-sm font-medium hover:bg-surface-container-highest transition-colors inline-flex items-center gap-2">
+                <span class="material-symbols-outlined text-base">manage_accounts</span>
+                User Access
+            </a>
+<a href="/admin/policy" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium shadow-sm hover:opacity-90 transition-opacity inline-flex items-center gap-2">
+                <span class="material-symbols-outlined text-base">rule_settings</span>
+                정책 설정
+            </a>
+<button id="report-download-btn" class="px-4 py-2 bg-surface-container-high rounded-lg text-sm font-medium hover:bg-surface-container-highest transition-colors">
+                Report Download
+            </button>
+<button class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium shadow-sm hover:opacity-90 transition-opacity">
+                Refresh Data
+            </button>
+</div>
+</header>
+<!-- Summary Cards Grid -->
+<div class="hidden">
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm transition-transform hover:scale-[1.02] duration-300">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-primary-container rounded-lg">
+<span class="material-symbols-outlined text-primary">groups</span>
+</div>
+<span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full">+12.5%</span>
+</div>
+<p class="text-sm font-medium text-on-surface-variant">전체 사용자</p>
+<h3 class="text-2xl font-black text-on-surface mt-1">2,842</h3>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm transition-transform hover:scale-[1.02] duration-300">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-tertiary-container rounded-lg">
+<span class="material-symbols-outlined text-tertiary">pending_actions</span>
+</div>
+<span class="text-xs font-bold text-error bg-error-container/20 px-2 py-1 rounded-full">Urgent</span>
+</div>
+<p class="text-sm font-medium text-on-surface-variant">승인 대기 앱</p>
+<h3 class="text-2xl font-black text-on-surface mt-1">N/A</h3>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm transition-transform hover:scale-[1.02] duration-300">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-secondary-container rounded-lg">
+<span class="material-symbols-outlined text-secondary">monitor_heart</span>
+</div>
+<div class="flex items-center gap-1 text-xs text-on-surface-variant">
+<span class="w-2 h-2 rounded-full bg-green-500"></span>
+                    Healthy
+                </div>
+</div>
+<p class="text-sm font-medium text-on-surface-variant">시스템 상태</p>
+<h3 class="text-2xl font-black text-on-surface mt-1">98.5% <span class="text-sm font-normal text-on-surface-variant">uptime</span></h3>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm transition-transform hover:scale-[1.02] duration-300">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-surface-container-highest rounded-lg">
+<span class="material-symbols-outlined text-on-surface">data_usage</span>
+</div>
+<span class="text-xs font-medium text-on-surface-variant">Live</span>
+</div>
+<p class="text-sm font-medium text-on-surface-variant">오늘의 리포지토리 트래픽</p>
+<h3 class="text-2xl font-black text-on-surface mt-1">1.2 TB</h3>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+
+<!-- Approval Queue Table -->
+<div class="lg:col-span-2 space-y-3">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold tracking-tight text-on-surface">승인 대기중인 앱</h2>
+      <p class="text-sm text-on-surface-variant mt-1">Nexus review 폴더에 있는 검토 대상만 표시합니다.</p>
+    </div>
+  </div>
+  
+  <div class="overflow-y-auto" style="max-height: 480px;">
+    <table class="w-full text-left border-collapse" style="table-layout: fixed;">
+      <colgroup>
+        <col style="width: 35%;"> <col style="width: 25%;"> <col style="width: 20%;"> <col style="width: 20%;"> </colgroup>
+      
+      <thead class="bg-surface-container-low text-on-surface-variant text-xs uppercase tracking-wider font-bold sticky top-0 z-10">
+        <tr>
+          <th class="px-6 py-4">App Name</th>
+          <th class="px-6 py-4">Browser</th>
+          <th class="px-6 py-4">Version</th> <th class="px-6 py-4 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="queue-body" class="divide-y divide-surface-container">
+      </tbody>
+    </table>
+
+    <div id="pagination-controls" class="flex justify-center items-center gap-2 mt-6">
+    </div>
+  </div>
+
+  <!-- 승인&거부 확인 창 - 이거 내가 안 만듦! amdin.pending.js에도 적어뒀는데, 예뻐서 안 쓸 수가 없었어요.-->
+  <div id="custom-confirm-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
+  <div class="fixed inset-0 bg-black/50 transition-opacity opacity-0" id="modal-backdrop"></div>
+
+  <div class="fixed inset-0 flex items-center justify-center p-4">
+    <div class="bg-surface-container-low rounded-3xl shadow-xl w-full max-w-md p-6 border border-outline-variant/20 transform scale-95 opacity-0 transition-all duration-300" id="modal-content">
+      
+      <div class="flex items-center gap-4 mb-4">
+        <div class="p-3 rounded-full bg-primary/10 text-primary" id="modal-icon-container">
+          <span class="material-symbols-outlined text-2xl" id="modal-icon">help</span>
+        </div>
+        <h3 class="text-xl font-bold text-on-surface" id="modal-title">확인</h3>
+      </div>
+
+      <p class="text-on-surface-variant text-sm mb-8" id="modal-message">정말로 진행하시겠습니까?</p>
+
+      <div class="flex justify-end gap-3">
+        <button id="modal-cancel-btn" class="px-5 py-2.5 rounded-full text-sm font-semibold text-on-surface-variant hover:bg-surface-container-high transition-colors">
+          취소
+        </button>
+        <button id="modal-confirm-btn" class="px-5 py-2.5 rounded-full text-sm font-semibold bg-primary text-white hover:bg-primary-hover transition-colors shadow-sm">
+          확인
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+
+<!-- Recent System Logs -->
+<div class="space-y-4">
+<h2 class="text-xl font-bold tracking-tight text-on-surface">거부 프로그램 목록</h2>
+<div class="bg-surface-container-low rounded-2xl p-6 border border-outline-variant/10">
+<div id="reject-list" class="space-y-6">
+<p class="text-sm text-on-surface-variant">거부된 프로그램을 불러오는 중입니다.</p>
+</div>
+</div>
+</div>
+<div class="hidden">
+<div class="space-y-4">
+<h2 class="text-xl font-bold tracking-tight text-on-surface">최근 시스템 로그</h2>
+<div class="bg-surface-container-low rounded-2xl p-6 border border-outline-variant/10">
+<div class="space-y-6">
+<div class="flex gap-4">
+<div class="flex-shrink-0 mt-1">
+<div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm">upload</span>
+</div>
+</div>
+<div>
+<p class="text-sm text-on-surface font-medium">User A uploaded File X</p>
+<p class="text-xs text-on-surface-variant mt-0.5">2 minutes ago • Nexus Main Repository</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="flex-shrink-0 mt-1">
+<div class="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-amber-600 text-sm">login</span>
+</div>
+</div>
+<div>
+<p class="text-sm text-on-surface font-medium">Admin Login Successful</p>
+<p class="text-xs text-on-surface-variant mt-0.5">15 minutes ago • IP: 192.168.1.42</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="flex-shrink-0 mt-1">
+<div class="w-8 h-8 rounded-full bg-error/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-error text-sm">warning</span>
+</div>
+</div>
+<div>
+<p class="text-sm text-on-surface font-medium">File Security Scan Failed</p>
+<p class="text-xs text-on-surface-variant mt-0.5">42 minutes ago • Package: 'legacy-lib'</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="flex-shrink-0 mt-1">
+<div class="w-8 h-8 rounded-full bg-indigo-500/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-indigo-600 text-sm">person_add</span>
+</div>
+</div>
+<div>
+<p class="text-sm text-on-surface font-medium">New Developer Registered</p>
+<p class="text-xs text-on-surface-variant mt-0.5">1 hour ago • User: Sarah Jenkins</p>
+</div>
+</div>
+</div>
+<button class="w-full mt-8 py-3 bg-surface-container-highest rounded-xl text-sm font-bold text-on-surface hover:bg-primary hover:text-white transition-all duration-200">
+                    View Full System Log
+                </button>
+</div>
+<!-- Server Health Widget -->
+<div class="bg-indigo-900 rounded-2xl p-6 text-indigo-50 relative overflow-hidden">
+<div class="relative z-10">
+<p class="text-xs uppercase tracking-widest text-indigo-300 font-bold mb-1">Server Status</p>
+<h4 class="text-lg font-bold">Node-01 (Main)</h4>
+<div class="mt-4 flex items-center gap-4">
+<div class="flex-1 bg-indigo-800 rounded-full h-1.5">
+<div class="bg-indigo-300 h-full w-[65%] rounded-full"></div>
+</div>
+<span class="text-sm font-medium">65% Load</span>
+</div>
+</div>
+<div class="absolute top-0 right-0 p-4 opacity-20">
+<span class="material-symbols-outlined text-6xl">dns</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body>
+
+
+<script src="/static/js/upload.js"></script>
+<script src="/static/js/admin/admin_pending.js?v=20260517-path-fix"></script>
+
+
+</html>

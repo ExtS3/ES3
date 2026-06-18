@@ -1,0 +1,68 @@
+{
+  "scenario_id": "oinmkgpnllnekklbmnbficejejlbgfaf",
+  "builtin": true,
+  "pattern_name": "affiliate_cookie_stuffing",
+  "doc_ref": "scenario_docs/affiliate_cookie_stuffing.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "broad",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "background",
+        "content_script"
+      ],
+      "permissions_hint": [
+        "tabs",
+        "storage"
+      ]
+    },
+    "capability_profile": [
+      "affiliate_url_fetch",
+      "tab_open_close",
+      "domain_targeting"
+    ],
+    "capability_combinations": [
+      "tabs_create + affiliate_url",
+      "domain_visit + affiliate_cookie_set"
+    ],
+    "static_code_signals": {
+      "tabs": {
+        "apis": [
+          "chrome.tabs.create"
+        ],
+        "keywords": [
+          "url",
+          "awinaffid",
+          "awinmid"
+        ]
+      },
+      "network": {
+        "apis": [
+          "fetch"
+        ],
+        "keywords": [
+          "selectors",
+          "url"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "target_domain_visit",
+        "source": "affiliate_url_from_server",
+        "path": [
+          "tabs_create",
+          "cookie_set"
+        ],
+        "sink": "affiliate_commission_fraud"
+      }
+    ],
+    "behavior_tags": [
+      "affiliate_fraud",
+      "cookie_stuffing",
+      "tab_abuse",
+      "silent_navigation"
+    ]
+  }
+}

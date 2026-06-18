@@ -1,0 +1,57 @@
+{
+  "scenario_id": "ljfeaocilnmfchmmpipneafmbeefokid",
+  "builtin": true,
+  "pattern_name": "console_method_silencing_override",
+  "doc_ref": "scenario_docs/console_method_silencing_override.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "limited",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "content_script"
+      ],
+      "permissions_hint": [
+        "scripting"
+      ]
+    },
+    "capability_profile": [
+      "anti_analysis",
+      "script_injection"
+    ],
+    "capability_combinations": [
+      "script_injection + anti_analysis"
+    ],
+    "static_code_signals": {
+      "console_override": {
+        "apis": [
+          "window.console",
+          "console.log",
+          "console.warn",
+          "console.info",
+          "console.error",
+          "console.table",
+          "console.trace"
+        ],
+        "patterns": [
+          "console_method_reassignment"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "script_load",
+        "source": "injected_script",
+        "path": [
+          "content_script",
+          "console_override"
+        ],
+        "sink": "debug_visibility_reduction"
+      }
+    ],
+    "behavior_tags": [
+      "anti_analysis",
+      "debug_evasion"
+    ]
+  }
+}

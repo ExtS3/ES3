@@ -1,0 +1,82 @@
+{
+  "scenario_id": "mjokpjlgmbbdhooncpdlgcgpepecigdm",
+  "builtin": true,
+  "pattern_name": "ad_frame_inline_injection",
+  "doc_ref": "scenario_docs/ad_frame_inline_injection.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "broad",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "background",
+        "content_script"
+      ],
+      "permissions_hint": [
+        "tabs",
+        "declarativeNetRequest",
+        "scripting"
+      ]
+    },
+    "capability_profile": [
+      "csp_removal",
+      "html_injection",
+      "frame_overlay",
+      "script_execution"
+    ],
+    "capability_combinations": [
+      "csp_remove + html_inject",
+      "img_onload + eval_execution",
+      "frame_overlay + search_results"
+    ],
+    "static_code_signals": {
+      "injection": {
+        "apis": [
+          "window.eval"
+        ],
+        "keywords": [
+          "onload",
+          "this.remove",
+          "isGoogle",
+          "isFrame"
+        ]
+      },
+      "messaging": {
+        "apis": [
+          "chrome.tabs.sendMessage"
+        ],
+        "keywords": [
+          "link",
+          "frame"
+        ]
+      },
+      "dnr": {
+        "apis": [
+          "declarativeNetRequest"
+        ],
+        "keywords": [
+          "X-Frame-Options",
+          "modifyHeaders"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "page_load",
+        "source": "remote_html_payload",
+        "path": [
+          "img_inject",
+          "onload_eval",
+          "frame_overlay"
+        ],
+        "sink": "ad_frame_displayed"
+      }
+    ],
+    "behavior_tags": [
+      "ad_frame_injection",
+      "csp_bypass",
+      "html_injection",
+      "search_result_overlay"
+    ]
+  }
+}

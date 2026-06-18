@@ -1,0 +1,84 @@
+{
+  "scenario_id": "fkhfjamniojodebmffljiipelclboiko",
+  "builtin": true,
+  "pattern_name": "webmail_dom_surveillance_collection",
+  "doc_ref": "scenario_docs/webmail_dom_surveillance_collection.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "targeted",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "content_script",
+        "background"
+      ],
+      "permissions_hint": [
+        "storage",
+        "activeTab"
+      ]
+    },
+    "capability_profile": [
+      "dom_access",
+      "user_input_access",
+      "external_network"
+    ],
+    "capability_combinations": [
+      "dom_access + mutation_observer",
+      "dom_access + external_network"
+    ],
+    "static_code_signals": {
+      "dom": {
+        "apis": [
+          "MutationObserver"
+        ],
+        "patterns": [
+          "webmail_dom_polling"
+        ]
+      },
+      "serialization": {
+        "apis": [
+          "JSON.stringify"
+        ],
+        "keywords": [
+          "email",
+          "thread",
+          "subject",
+          "emailSubject",
+          "senderAddress",
+          "recipientList",
+          "emailBodyText",
+          "gmailThreadId"
+        ]
+      },
+      "network": {
+        "apis": [
+          "fetch"
+        ],
+        "methods": [
+          "POST"
+        ],
+        "endpoint_keywords": [
+          "mail",
+          "collect",
+          "/collect"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "dom_change",
+        "source": "webmail_content",
+        "path": [
+          "content_script",
+          "observer"
+        ],
+        "sink": "localhost_post"
+      }
+    ],
+    "behavior_tags": [
+      "webmail_surveillance",
+      "email_collection",
+      "data_exfiltration"
+    ]
+  }
+}

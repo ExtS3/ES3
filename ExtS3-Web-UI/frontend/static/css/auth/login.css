@@ -1,0 +1,143 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: #f7f9fc;
+  color: #29343a;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.login-shell {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 32px 20px;
+}
+
+.login-panel {
+  background: #fff;
+  border: 1px solid rgba(168, 179, 187, 0.22);
+  border-radius: 12px;
+  box-shadow: 0 24px 60px rgba(41, 52, 58, 0.08);
+  max-width: 420px;
+  padding: 34px;
+  width: 100%;
+}
+
+.brand-mark {
+  align-items: center;
+  background: #4c56af;
+  border-radius: 12px;
+  color: #fff;
+  display: flex;
+  font-size: 28px;
+  font-weight: 800;
+  height: 58px;
+  justify-content: center;
+  margin: 0 auto 20px;
+  width: 58px;
+}
+
+h1 {
+  color: #4c56af;
+  font-size: 28px;
+  line-height: 1.2;
+  margin: 0;
+  text-align: center;
+}
+
+.subtitle {
+  color: #566168;
+  font-size: 14px;
+  margin: 10px 0 28px;
+  text-align: center;
+}
+
+.login-form {
+  display: grid;
+  gap: 18px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+label {
+  color: #566168;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+input {
+  background: #f0f4f8;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #29343a;
+  font: inherit;
+  min-height: 46px;
+  outline: none;
+  padding: 0 14px;
+  transition: background 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+
+input:focus {
+  background: #fff;
+  border-color: #4c56af;
+  box-shadow: 0 0 0 3px rgba(76, 86, 175, 0.16);
+}
+
+button {
+  background: #4c56af;
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  min-height: 48px;
+  transition: background 120ms ease, transform 120ms ease;
+}
+
+button:hover {
+  background: #4049a2;
+}
+
+button:active {
+  transform: scale(0.99);
+}
+
+.signup-link {
+  color: #566168;
+  font-size: 13px;
+  margin: 22px 0 0;
+  text-align: center;
+}
+
+.signup-link a {
+  color: #4c56af;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.signup-link a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .login-shell {
+    padding: 20px 14px;
+  }
+
+  .login-panel {
+    padding: 28px 22px;
+  }
+}

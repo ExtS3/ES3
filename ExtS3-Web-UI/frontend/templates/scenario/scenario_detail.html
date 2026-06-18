@@ -1,0 +1,233 @@
+<!doctype html>
+<html class="light" lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>시나리오 상세 - Suppressor</title>
+    <script src="/static/vendor/tailwindcss-forms-container-queries.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              'surface-container': '#e8eff4',
+              'inverse-primary': '#929bfa',
+              'on-background': '#29343a',
+              background: '#f7f9fc',
+              'on-surface-variant': '#566168',
+              'on-surface': '#29343a',
+              'surface-variant': '#d9e4ec',
+              'on-primary-container': '#3f48a1',
+              'on-primary': '#f9f6ff',
+              'surface-container-highest': '#d9e4ec',
+              outline: '#717c84',
+              'outline-variant': '#a8b3bb',
+              'surface-container-low': '#f0f4f8',
+              'surface-bright': '#f7f9fc',
+              'on-secondary': '#faf8ff',
+              'surface-container-high': '#e1e9f0',
+              'primary-container': '#e0e0ff',
+              'on-primary-fixed': '#2c358e',
+              'surface-container-lowest': '#ffffff',
+              'primary-fixed-dim': '#ced1ff',
+              'primary-dim': '#4049a2',
+              primary: '#4c56af',
+              'surface-tint': '#4c56af',
+              surface: '#f7f9fc',
+            },
+            fontFamily: {
+              headline: ['Inter'],
+              body: ['Inter'],
+              label: ['Inter'],
+            },
+            borderRadius: {
+              DEFAULT: '0.125rem',
+              lg: '0.25rem',
+              xl: '0.5rem',
+              full: '0.75rem',
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings:
+          'FILL' 0,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24;
+        vertical-align: middle;
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      .doc-md h1 { font-size: 1.25rem; font-weight: 800; margin: 1rem 0 0.5rem; }
+      .doc-md h2 { font-size: 1.1rem; font-weight: 700; margin: 1rem 0 0.5rem; }
+      .doc-md h3 { font-size: 1rem; font-weight: 700; margin: 0.75rem 0 0.4rem; }
+      .doc-md p { margin: 0.5rem 0; line-height: 1.6; }
+      .doc-md ul { list-style: disc; margin: 0.5rem 0 0.5rem 1.25rem; }
+      .doc-md ol { list-style: decimal; margin: 0.5rem 0 0.5rem 1.25rem; }
+      .doc-md li { margin: 0.2rem 0; line-height: 1.5; }
+      .doc-md code { font-family: ui-monospace, Menlo, monospace; font-size: 0.85em; background: #eef2f7; padding: 0.1em 0.35em; border-radius: 4px; }
+      .doc-md pre { background: #f0f4f8; padding: 0.75rem 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 0.5rem 0; }
+      .doc-md pre code { background: none; padding: 0; }
+      .doc-md strong { font-weight: 700; }
+    </style>
+    <link rel="stylesheet" href="/static/css/common/nav.css" />
+  </head>
+  <body class="bg-surface text-on-surface antialiased">
+    <!-- TopNavBar -->
+    <header class="fixed top-0 w-full z-40 bg-white/80 backdrop-blur-md shadow-sm font-sans antialiased font-semibold tracking-tight">
+      <div class="flex justify-between items-center w-full px-6 h-16">
+        <div class="flex items-center gap-8">
+          <span class="text-2xl font-bold tracking-tighter text-indigo-700">
+            <img src="/static/img/logo.png" alt="Suppressor Logo" class="h-16 ml-4" />
+          </span>
+          <nav class="hidden md:flex items-center gap-6 h-full">
+            <a class="text-slate-500 hover:text-slate-900 transition-colors duration-200 flex items-center h-full" href="/">대시보드</a>
+            <a class="text-slate-500 hover:text-slate-900 transition-colors duration-200 flex items-center h-full" href="/search">앱 탐색</a>
+            <a class="text-slate-500 hover:text-slate-900 transition-colors duration-200 flex items-center h-full" href="/library">라이브러리</a>
+            <a class="text-indigo-700 border-b-2 border-indigo-700 pb-1 flex items-center h-full" href="/scenario">시나리오 관리</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <!-- SideNavBar -->
+    <aside class="h-screen w-64 fixed left-0 top-0 bg-slate-50 z-30 hidden md:block">
+      <div class="flex flex-col h-full py-6 gap-2 pt-20">
+        <nav class="flex flex-col space-y-1">
+          <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 rounded-lg mx-2 text-sm font-medium transition-all" href="/"><span class="material-symbols-outlined">home</span><span>홈</span></a>
+          <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 rounded-lg mx-2 text-sm font-medium transition-all" href="/search"><span class="material-symbols-outlined">explore</span><span>앱 탐색</span></a>
+          <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 rounded-lg mx-2 text-sm font-medium transition-all" href="/library"><span class="material-symbols-outlined">inventory_2</span><span>라이브러리</span></a>
+          <a class="flex items-center gap-3 bg-indigo-50 text-indigo-700 rounded-lg mx-2 px-4 py-3 transition-all" href="/scenario"><span class="material-symbols-outlined">dataset</span><span>시나리오 관리</span></a>
+          <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 rounded-lg mx-2 text-sm font-medium transition-all" href="/admin"><span class="material-symbols-outlined">dashboard_customize</span><span>관리자 대시보드</span></a>
+        </nav>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 pt-20 p-8 min-h-screen">
+      <div class="max-w-[1100px] mx-auto space-y-6">
+        <!-- Breadcrumb + back -->
+        <div class="flex items-center justify-between">
+          <nav class="flex items-center gap-2 text-xs font-medium text-on-surface-variant">
+            <a href="/scenario" class="hover:underline">시나리오 관리</a>
+            <span class="material-symbols-outlined text-xs">chevron_right</span>
+            <span>시나리오 상세</span>
+          </nav>
+          <a
+            href="/scenario"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-surface-container-high text-on-surface font-semibold rounded-xl text-sm hover:bg-surface-container-highest transition-all"
+          >
+            <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+            목록으로
+          </a>
+        </div>
+
+        <!-- Loading / error -->
+        <div id="detail-loading" class="bg-surface-container-low rounded-xl p-10 text-center text-on-surface-variant">
+          불러오는 중...
+        </div>
+        <div id="detail-error" class="hidden bg-red-50 border border-red-100 rounded-xl p-8 text-center text-red-600"></div>
+
+        <!-- Content -->
+        <div id="detail-content" class="hidden space-y-6">
+          <!-- Header card -->
+          <header class="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 shadow-sm p-6">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <div class="flex items-center gap-2 mb-2">
+                  <h1 id="d-pattern-name" class="text-2xl font-extrabold tracking-tight text-on-surface"></h1>
+                  <span id="d-builtin-badge" class="hidden text-xs px-2.5 py-1 bg-primary-container text-on-primary-container rounded-full font-bold">기본 제공</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-on-surface-variant">시나리오 ID</span>
+                  <code id="d-scenario-id" class="font-mono text-sm bg-surface-container-low px-2.5 py-1 rounded-lg text-on-surface"></code>
+                  <button id="copy-id-btn" class="text-on-surface-variant hover:text-primary transition-colors" title="ID 복사">
+                    <span class="material-symbols-outlined text-base">content_copy</span>
+                  </button>
+                </div>
+              </div>
+              <button
+                id="delete-btn"
+                class="hidden inline-flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl text-sm font-semibold transition-colors"
+              >
+                <span class="material-symbols-outlined text-[20px]">delete</span>
+                삭제
+              </button>
+            </div>
+            <div id="d-tags" class="flex flex-wrap gap-1.5 mt-4"></div>
+          </header>
+
+          <!-- Fingerprint summary -->
+          <section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 shadow-sm p-6">
+            <h2 class="text-lg font-bold text-on-surface mb-4 flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary">fingerprint</span>
+              Vector Fingerprint
+            </h2>
+            <div id="d-fingerprint" class="space-y-4"></div>
+          </section>
+
+          <!-- Document -->
+          <section id="d-doc-section" class="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 shadow-sm p-6">
+            <h2 class="text-lg font-bold text-on-surface mb-4 flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary">description</span>
+              시나리오 문서
+            </h2>
+            <div id="d-doc" class="doc-md text-sm text-on-surface"></div>
+          </section>
+
+          <!-- Raw JSON -->
+          <section class="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 shadow-sm p-6">
+            <details>
+              <summary class="text-lg font-bold text-on-surface cursor-pointer flex items-center gap-2 select-none">
+                <span class="material-symbols-outlined text-primary">data_object</span>
+                원본 JSON
+              </summary>
+              <pre id="d-raw" class="mt-4 text-xs font-mono text-on-surface bg-surface-container-low rounded-xl p-4 whitespace-pre-wrap break-all overflow-auto max-h-[500px]"></pre>
+            </details>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <!-- 확인 다이얼로그 -->
+    <div id="confirm-modal" class="fixed inset-0 z-50 hidden">
+      <div class="fixed inset-0 bg-black/40"></div>
+      <div class="fixed inset-0 flex items-center justify-center p-4">
+        <div class="bg-surface-container-lowest rounded-2xl shadow-xl border border-outline-variant/10 w-full max-w-sm p-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="p-2 rounded-full bg-red-50 text-red-500">
+              <span class="material-symbols-outlined">warning</span>
+            </div>
+            <h3 class="font-bold text-on-surface" id="confirm-title"></h3>
+          </div>
+          <p class="text-sm text-on-surface-variant mb-6 whitespace-pre-line" id="confirm-message"></p>
+          <div class="flex justify-end gap-3">
+            <button id="confirm-cancel" class="px-5 py-2 rounded-full text-sm font-semibold text-on-surface-variant hover:bg-surface-container-high transition-colors">취소</button>
+            <button id="confirm-ok" class="px-5 py-2 rounded-full text-sm font-semibold bg-red-500 text-white hover:opacity-90 transition-opacity shadow-sm">삭제</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 토스트 컨테이너 -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[100] flex flex-col gap-2 max-w-sm"></div>
+
+    <script>
+      window.__SCENARIO_ID__ = "{{ scenario_id }}";
+    </script>
+    <script src="/static/js/admin/scenario_detail.js?v=20260612-detail-1"></script>
+  </body>
+</html>

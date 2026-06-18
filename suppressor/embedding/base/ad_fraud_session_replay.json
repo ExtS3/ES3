@@ -1,0 +1,69 @@
+{
+  "scenario_id": "jnhoiaicifppampaldahclihhlejkbaf",
+  "builtin": true,
+  "pattern_name": "ad_fraud_session_replay",
+  "doc_ref": "scenario_docs/ad_fraud_session_replay.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "broad",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "background",
+        "content_script"
+      ],
+      "permissions_hint": [
+        "tabs",
+        "storage"
+      ]
+    },
+    "capability_profile": [
+      "bloom_filter_domain_check",
+      "session_replay",
+      "fetch_loop",
+      "binary_blob_download"
+    ],
+    "capability_combinations": [
+      "bloom_filter + targeted_fetch",
+      "fetch_loop + response_arrayBuffer"
+    ],
+    "static_code_signals": {
+      "network": {
+        "apis": [
+          "fetch"
+        ],
+        "keywords": [
+          "url",
+          "options",
+          "arrayBuffer"
+        ]
+      },
+      "storage": {
+        "apis": [
+          "chrome.storage.local"
+        ],
+        "keywords": [
+          "bff"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "domain_match",
+        "source": "bloom_filter",
+        "path": [
+          "url_send",
+          "session_id_receive",
+          "fetch_loop"
+        ],
+        "sink": "ad_click_simulation"
+      }
+    ],
+    "behavior_tags": [
+      "ad_fraud",
+      "session_replay",
+      "bloom_filter",
+      "fake_traffic"
+    ]
+  }
+}

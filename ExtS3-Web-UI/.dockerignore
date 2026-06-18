@@ -1,0 +1,17 @@
+.git
+.github
+__pycache__/
+*.py[cod]
+*.log
+.env
+.env.local
+venv/
+env/
+ENV/
+es3/
+.venv/
+.vscode/
+.idea/
+downloads/
+analysis_result/
+backend/security_scan/scan_pending/

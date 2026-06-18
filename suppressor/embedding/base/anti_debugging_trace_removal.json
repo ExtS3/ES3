@@ -1,0 +1,55 @@
+{
+  "scenario_id": "gcjoobcomaehjamoklloigpjcllemfad",
+  "builtin": true,
+  "pattern_name": "anti_debugging_trace_removal",
+  "doc_ref": "scenario_docs/anti_debugging_trace_removal.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "limited",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "background"
+      ],
+      "permissions_hint": [
+        "tabs",
+        "storage"
+      ]
+    },
+    "capability_profile": [
+      "devtools_detection",
+      "storage_cleanup",
+      "periodic_execution"
+    ],
+    "capability_combinations": [
+      "tabs_query_extensions_page + storage_clear",
+      "periodic_check + trace_removal"
+    ],
+    "static_code_signals": {
+      "tabs": {
+        "apis": [
+          "chrome.tabs.query"
+        ],
+        "keywords": [
+          "chrome://extensions/*"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "extensions_page_detected",
+        "source": "tabs_query_result",
+        "path": [
+          "storage_key_removal"
+        ],
+        "sink": "malicious_trace_erased"
+      }
+    ],
+    "behavior_tags": [
+      "anti_debugging",
+      "trace_removal",
+      "devtools_detection",
+      "storage_cleanup"
+    ]
+  }
+}

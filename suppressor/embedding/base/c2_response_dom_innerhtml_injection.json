@@ -1,0 +1,64 @@
+{
+  "scenario_id": "fhbijcbjboaaebhapeicnpoimepidffo",
+  "builtin": true,
+  "pattern_name": "c2_response_dom_innerhtml_injection",
+  "doc_ref": "scenario_docs/c2_response_dom_innerhtml_injection.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "targeted",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "content_script",
+        "background"
+      ],
+      "permissions_hint": [
+        "scripting",
+        "activeTab"
+      ]
+    },
+    "capability_profile": [
+      "dom_access",
+      "dom_mutation",
+      "external_network"
+    ],
+    "capability_combinations": [
+      "external_response + dom_mutation",
+      "innerHTML + insertAdjacentHTML"
+    ],
+    "static_code_signals": {
+      "dom": {
+        "apis": [
+          "innerHTML",
+          "insertAdjacentHTML"
+        ],
+        "keywords": [
+          "result.rating",
+          "result.protxt",
+          "classList.remove"
+        ]
+      },
+      "network": {
+        "apis": [
+          "fetch"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "mock_response",
+        "source": "remote_html",
+        "path": [
+          "content_script",
+          "dom_write"
+        ],
+        "sink": "page_dom"
+      }
+    ],
+    "behavior_tags": [
+      "dom_injection",
+      "unsafe_innerhtml",
+      "remote_content_injection"
+    ]
+  }
+}

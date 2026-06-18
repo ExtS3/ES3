@@ -1,0 +1,107 @@
+{
+  "scenario_id": "jhblcplcnhopplmjpcmhpimlpbajofpi",
+  "builtin": true,
+  "pattern_name": "dynamic_config_polling_remote_interval",
+  "doc_ref": "scenario_docs/dynamic_config_polling_remote_interval.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "limited",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "background"
+      ],
+      "permissions_hint": [
+        "alarms",
+        "storage"
+      ]
+    },
+    "capability_profile": [
+      "remote_configuration",
+      "periodic_execution",
+      "startup_execution",
+      "storage_access"
+    ],
+    "capability_combinations": [
+      "startup_execution + remote_configuration",
+      "periodic_execution + adaptive_polling"
+    ],
+    "static_code_signals": {
+      "bootstrap": {
+        "apis": [
+          "chrome.runtime.getManifest",
+          "Date.now"
+        ],
+        "keywords": [
+          "version",
+          "install"
+        ]
+      },
+      "polling": {
+        "apis": [
+          "chrome.alarms",
+          "chrome.storage.sync"
+        ],
+        "keywords": [
+          "configUpdateInterval"
+        ]
+      },
+      "network": {
+        "apis": [
+          "fetch"
+        ],
+        "methods": [
+          "POST"
+        ],
+        "endpoint_keywords": [
+          "checkin",
+          "config"
+        ],
+        "keywords": [
+          "installParams",
+          "checklist",
+          "dead_drop_resolver",
+          "blog_c2_parse",
+          "atob",
+          "JSON.parse"
+        ]
+      },
+      "reload": {
+        "apis": [
+          "chrome.runtime.reload"
+        ],
+        "keywords": [
+          "config_merge",
+          "storage.local.get",
+          "storage.local.set"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "on_installed",
+        "source": "manifest_version",
+        "path": [
+          "background",
+          "checkin_post"
+        ],
+        "sink": "remote_config"
+      },
+      {
+        "trigger": "config_received",
+        "source": "config_payload",
+        "path": [
+          "storage.sync",
+          "alarms_reschedule"
+        ],
+        "sink": "adaptive_polling"
+      }
+    ],
+    "behavior_tags": [
+      "polling_configuration",
+      "adaptive_polling",
+      "periodic_execution",
+      "remote_command_or_config"
+    ]
+  }
+}

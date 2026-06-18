@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+
+<html lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="/static/vendor/tailwindcss-forms-container-queries.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed": "#333d55",
+              "primary-container": "#e0e0ff",
+              "error-container": "#ff8b9a",
+              "surface-container-low": "#f0f4f8",
+              "on-tertiary-fixed-variant": "#4f5a72",
+              "outline-variant": "#a8b3bb",
+              "tertiary-dim": "#49536b",
+              "surface-container-highest": "#d9e4ec",
+              "surface-container": "#e8eff4",
+              "background": "#f7f9fc",
+              "outline": "#717c84",
+              "on-secondary-fixed-variant": "#4555a8",
+              "surface": "#f7f9fc",
+              "secondary": "#4958ac",
+              "surface-bright": "#f7f9fc",
+              "surface-dim": "#cedce5",
+              "on-background": "#29343a",
+              "on-secondary-container": "#3b4a9e",
+              "on-primary-container": "#3f48a1",
+              "on-primary-fixed-variant": "#4953ac",
+              "on-error": "#fff7f7",
+              "inverse-surface": "#0b0f11",
+              "tertiary-container": "#d5dffd",
+              "secondary-dim": "#3d4c9f",
+              "tertiary-fixed": "#d5dffd",
+              "inverse-primary": "#929bfa",
+              "inverse-on-surface": "#9a9da0",
+              "on-secondary-fixed": "#27378a",
+              "surface-container-high": "#e1e9f0",
+              "primary-fixed": "#e0e0ff",
+              "tertiary": "#545f78",
+              "tertiary-fixed-dim": "#c7d1ee",
+              "on-surface-variant": "#566168",
+              "surface-variant": "#d9e4ec",
+              "error-dim": "#4f0116",
+              "secondary-fixed-dim": "#ccd2ff",
+              "surface-container-lowest": "#ffffff",
+              "error": "#9e3f4e",
+              "on-primary": "#f9f6ff",
+              "on-error-container": "#782232",
+              "secondary-container": "#dee0ff",
+              "primary-dim": "#4049a2",
+              "on-primary-fixed": "#2c358e",
+              "secondary-fixed": "#dee0ff",
+              "surface-tint": "#4c56af",
+              "on-surface": "#29343a",
+              "primary": "#4c56af",
+              "primary-fixed-dim": "#ced1ff",
+              "on-tertiary-container": "#455068",
+              "on-secondary": "#faf8ff",
+              "on-tertiary": "#f9f8ff"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Pretendard', 'Inter', sans-serif; }
+    </style>
+<link rel="stylesheet" href="/static/css/common/nav.css">
+</head>
+<body class="bg-surface text-on-surface">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm dark:shadow-none font-sans antialiased headline-sm font-semibold tracking-tight">
+<div class="flex justify-between items-center w-full px-6 h-16">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-bold tracking-tighter text-indigo-700 dark:text-indigo-400">
+  <img src="/static/img/logo.png" alt="Suppressor Logo" class="h-16 ml-4">
+</span>
+<nav class="hidden md:flex items-center gap-6 h-full">
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/">대시보드</a>
+<a class="text-indigo-700 dark:text-indigo-400 border-b-2 border-indigo-700 dark:border-indigo-400 pb-1 flex items-center h-full" href="/search">앱 탐색</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/library">라이브러리</a>
+<a id="adminScenarioHeaderLink" class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/scenario">시나리오 관리</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="pl-10 pr-4 py-2 bg-slate-100/50 dark:bg-slate-800/50 border-none rounded-xl text-sm w-64 focus:ring-2 focus:ring-primary/20" placeholder="검색어를 입력하세요..." type="text"/>
+</div>
+
+</div>
+</div>
+<!-- Notification Panel (Hidden by default) -->
+<div class="absolute right-6 top-16 mt-2 w-80 bg-surface-container-lowest rounded-xl shadow-2xl border border-outline-variant/10 overflow-hidden z-[60] hidden" id="notification-panel">
+<div class="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50">
+<span class="font-bold text-sm">알림</span>
+<button class="text-[10px] text-primary font-bold hover:underline">모두 읽음으로 표시</button>
+</div>
+<div class="max-h-[320px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+<div class="p-4 hover:bg-slate-50 transition-colors cursor-pointer group">
+<div class="flex gap-3">
+<div class="w-2 h-2 mt-1.5 rounded-full bg-primary flex-shrink-0"></div>
+<div>
+<p class="text-xs font-medium text-on-surface mb-1">시스템 점검 완료</p>
+<p class="text-[10px] text-on-surface-variant line-clamp-2">모든 저장소가 안정적인 상태입니다.</p>
+<span class="text-[10px] text-slate-400 mt-2 block">10분 전</span>
+</div>
+</div>
+</div>
+</div>
+<a class="block p-3 text-center text-[10px] font-bold text-on-surface-variant hover:bg-slate-50 border-t border-slate-100 dark:border-slate-800" href="#">전체 알림 보기</a>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r-0 bg-slate-50 dark:bg-slate-950 z-30 hidden md:block flat no-line-rule">
+<div class="flex flex-col h-full py-6 gap-2 pt-20">
+<!-- Brand Info -->
+<div class="px-6 py-4 mb-4 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="hub" style="font-variation-settings: 'FILL' 1;">hub</span>
+</div>
+<div>
+<h2 class="text-lg font-black text-slate-900 dark:text-white leading-tight">Suppressor</h2>
+<p class="text-xs text-slate-500 dark:text-slate-400">Enterprise Edition</p>
+</div>
+</div>
+<!-- Main Navigation -->
+<nav class="flex flex-col space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span>홈</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/search">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+<span>앱 탐색</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/library">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span>라이브러리</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/scenario">
+<span class="material-symbols-outlined" data-icon="dataset">dataset</span>
+<span>시나리오 관리</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/admin">
+<span class="material-symbols-outlined" data-icon="dashboard_customize">dashboard_customize</span>
+<span>관리자 대시보드</span>
+</a>
+</nav>
+<!-- Side Bottom Common -->
+<div id="side-bottom" class="mt-auto px-4 flex flex-col gap-4">
+<script src="/static/js/common.js?v=session-fix-1"></script>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="md:ml-64 pt-24 pb-12 px-6 lg:px-12 min-h-screen flex flex-col">
+<!-- Empty State Container -->
+<section class="flex-1 flex flex-col items-center justify-center py-12 text-center">
+<div class="relative mb-8">
+<div class="absolute inset-0 bg-indigo-100/50 rounded-full blur-3xl scale-150"></div>
+<div class="relative w-48 h-48 bg-surface-container-lowest rounded-full flex items-center justify-center shadow-xl border border-white/50 overflow-hidden">
+<img alt="Search illustration" class="w-full h-full object-cover opacity-20 absolute inset-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8KAUCAhD5_VIkN4nozR_kTBMrIBVjsVik1jrCJUOE2uE2NGWG6wMrCYFIMRUlLtvCYUY95F2NCMe-hg9YzWeTQMUxuBHdfzX86IhheXfhAuDRtLgumVsXckgMxqyqtTiYRpPqH--Fv-hzvEwPphEmx18NhghyLiNb3qr5FpaQ81j46jnuMhCs13AUbrWbmfeCQDWBv5QaqJNPO-0rK4j0YYznM4NIl41RaHCyj8QRHFzpQLktJcxQ3k3q5qr9lk93vFFyLDSR8Rk"/>
+<span class="material-symbols-outlined text-7xl text-indigo-300 relative z-10" style="font-variation-settings: 'wght' 200;">search_off</span>
+</div>
+</div>
+<h1 class="text-3xl md:text-4xl font-extrabold text-indigo-900 tracking-tight mb-4">검색 결과가 없습니다</h1>
+<p class="text-on-surface-variant max-w-md mx-auto mb-8">
+            'xyz-non-existent-app'에 대한 결과를 찾을 수 없습니다. 철자를 확인하거나 다른 검색어를 시도해 보세요.
+        </p>
+<div class="flex flex-col sm:flex-row gap-4 items-center">
+<button class="bg-surface-container-high hover:bg-surface-container-highest text-indigo-900 px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 group">
+<span class="material-symbols-outlined text-xl group-hover:-translate-x-1 transition-transform">arrow_back</span>
+                다른 검색어로 검색해 보세요
+            </button>
+<button class="bg-primary hover:shadow-lg hover:shadow-primary/20 text-on-primary px-8 py-3 rounded-lg font-bold transition-all flex items-center gap-2">
+<span class="material-symbols-outlined">cloud_upload</span>
+                직접 앱을 업로드해 보세요
+            </button>
+</div>
+</section>
+<!-- Recommended Apps Section -->
+<section class="mt-12">
+<div class="flex items-center justify-between mb-8">
+<h3 class="text-xl font-bold text-on-background flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+                추천 앱
+            </h3>
+<a class="text-sm font-semibold text-primary hover:underline" href="#">모두 보기</a>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Card 1 -->
+<div class="group bg-surface-container-lowest p-5 rounded-lg border border-transparent hover:border-primary/20 transition-all shadow-sm hover:shadow-md">
+<div class="w-12 h-12 bg-indigo-50 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">terminal</span>
+</div>
+<h4 class="font-bold text-indigo-900 mb-1">Nexus CLI Tools</h4>
+<p class="text-xs text-on-surface-variant mb-4 leading-relaxed line-clamp-2">강력한 터미널 인터페이스로 저장소를 관리하세요.</p>
+<div class="flex items-center justify-between">
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">v2.4.1</span>
+<button class="p-1.5 rounded-lg bg-surface-container text-primary hover:bg-primary hover:text-white transition-colors">
+<span class="material-symbols-outlined text-sm">download</span>
+</button>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="group bg-surface-container-lowest p-5 rounded-lg border border-transparent hover:border-primary/20 transition-all shadow-sm hover:shadow-md">
+<div class="w-12 h-12 bg-amber-50 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-amber-600" style="font-variation-settings: 'FILL' 1;">security</span>
+</div>
+<h4 class="font-bold text-indigo-900 mb-1">Vault Guard</h4>
+<p class="text-xs text-on-surface-variant mb-4 leading-relaxed line-clamp-2">패키지 보안 취약점을 실시간으로 스캔합니다.</p>
+<div class="flex items-center justify-between">
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Enterprise</span>
+<button class="p-1.5 rounded-lg bg-surface-container text-primary hover:bg-primary hover:text-white transition-colors">
+<span class="material-symbols-outlined text-sm">download</span>
+</button>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="group bg-surface-container-lowest p-5 rounded-lg border border-transparent hover:border-primary/20 transition-all shadow-sm hover:shadow-md">
+<div class="w-12 h-12 bg-emerald-50 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-emerald-600" style="font-variation-settings: 'FILL' 1;">speed</span>
+</div>
+<h4 class="font-bold text-indigo-900 mb-1">Cachify Engine</h4>
+<p class="text-xs text-on-surface-variant mb-4 leading-relaxed line-clamp-2">데이터 전송 속도를 최대 3배까지 향상시킵니다.</p>
+<div class="flex items-center justify-between">
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Free Plan</span>
+<button class="p-1.5 rounded-lg bg-surface-container text-primary hover:bg-primary hover:text-white transition-colors">
+<span class="material-symbols-outlined text-sm">download</span>
+</button>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="group bg-surface-container-lowest p-5 rounded-lg border border-transparent hover:border-primary/20 transition-all shadow-sm hover:shadow-md">
+<div class="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-purple-600" style="font-variation-settings: 'FILL' 1;">insights</span>
+</div>
+<h4 class="font-bold text-indigo-900 mb-1">Data Insights</h4>
+<p class="text-xs text-on-surface-variant mb-4 leading-relaxed line-clamp-2">저장소 사용량을 분석하고 리포트를 생성합니다.</p>
+<div class="flex items-center justify-between">
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">v1.2.0</span>
+<button class="p-1.5 rounded-lg bg-surface-container text-primary hover:bg-primary hover:text-white transition-colors">
+<span class="material-symbols-outlined text-sm">download</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white flex items-center justify-around z-50 border-t border-slate-100 px-2">
+<button class="flex flex-col items-center justify-center gap-1 text-slate-400">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium">홈</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 text-indigo-600">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">explore</span>
+<span class="text-[10px] font-medium">앱 탐색</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 text-slate-400">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="text-[10px] font-medium">라이브러리</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 text-slate-400">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium">마이</span>
+</button>
+</nav>
+</body>
+
+
+<input type="file" id="demoUploadFile" style="display: none;">
+<script src="/static/js/upload.js"></script>
+
+</html>

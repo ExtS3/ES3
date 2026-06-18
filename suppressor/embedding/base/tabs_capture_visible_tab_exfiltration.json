@@ -1,0 +1,74 @@
+{
+  "scenario_id": "bglejiggobbnabakldjlagkbiipfnclj",
+  "builtin": true,
+  "pattern_name": "tabs_capture_visible_tab_exfiltration",
+  "doc_ref": "scenario_docs/tabs_capture_visible_tab_exfiltration.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "limited",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "background"
+      ],
+      "permissions_hint": [
+        "tabs",
+        "activeTab"
+      ]
+    },
+    "capability_profile": [
+      "tab_access",
+      "external_network",
+      "timer_execution"
+    ],
+    "capability_combinations": [
+      "tab_access + timer_execution",
+      "capture_visible_tab + external_network"
+    ],
+    "static_code_signals": {
+      "capture": {
+        "apis": [
+          "chrome.tabs.captureVisibleTab"
+        ],
+        "patterns": [
+          "tab_event_driven_capture"
+        ]
+      },
+      "timer": {
+        "apis": [
+          "setTimeout"
+        ],
+        "patterns": [
+          "delayed_capture_loop"
+        ]
+      },
+      "network": {
+        "apis": [
+          "fetch"
+        ],
+        "methods": [
+          "POST"
+        ],
+        "endpoint_keywords": [
+          "capture",
+          "image"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "tab_event",
+        "source": "visible_tab_bitmap",
+        "path": [
+          "captureVisibleTab",
+          "background"
+        ],
+        "sink": "localhost_post"
+      }
+    ],
+    "behavior_tags": [
+      "screen_capture",
+      "data_exfiltration"
+    ]
+  }
+}

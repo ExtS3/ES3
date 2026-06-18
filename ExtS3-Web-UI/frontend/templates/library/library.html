@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="/static/vendor/tailwindcss-forms-container-queries.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "tertiary": "#545f78",
+              "on-error-container": "#782232",
+              "secondary-fixed": "#dee0ff",
+              "surface-container-high": "#e1e9f0",
+              "on-tertiary-fixed-variant": "#4f5a72",
+              "on-primary-fixed-variant": "#4953ac",
+              "on-primary": "#f9f6ff",
+              "on-error": "#fff7f7",
+              "tertiary-dim": "#49536b",
+              "error-dim": "#4f0116",
+              "background": "#f7f9fc",
+              "outline-variant": "#a8b3bb",
+              "surface-container": "#e8eff4",
+              "secondary-fixed-dim": "#ccd2ff",
+              "surface-container-lowest": "#ffffff",
+              "on-tertiary-container": "#455068",
+              "surface-container-highest": "#d9e4ec",
+              "tertiary-fixed-dim": "#c7d1ee",
+              "on-tertiary": "#f9f8ff",
+              "primary-fixed-dim": "#ced1ff",
+              "error-container": "#ff8b9a",
+              "primary-fixed": "#e0e0ff",
+              "primary-container": "#e0e0ff",
+              "on-primary-container": "#3f48a1",
+              "secondary-dim": "#3d4c9f",
+              "surface-dim": "#cedce5",
+              "on-secondary": "#faf8ff",
+              "surface-tint": "#4c56af",
+              "on-secondary-fixed": "#27378a",
+              "primary": "#4c56af",
+              "on-background": "#29343a",
+              "secondary": "#4958ac",
+              "outline": "#717c84",
+              "surface-container-low": "#f0f4f8",
+              "on-tertiary-fixed": "#333d55",
+              "inverse-surface": "#0b0f11",
+              "inverse-primary": "#929bfa",
+              "tertiary-container": "#d5dffd",
+              "on-secondary-fixed-variant": "#4555a8",
+              "surface-bright": "#f7f9fc",
+              "secondary-container": "#dee0ff",
+              "tertiary-fixed": "#d5dffd",
+              "surface": "#f7f9fc",
+              "error": "#9e3f4e",
+              "on-surface": "#29343a",
+              "primary-dim": "#4049a2",
+              "on-secondary-container": "#3b4a9e",
+              "on-primary-fixed": "#2c358e",
+              "inverse-on-surface": "#9a9da0",
+              "on-surface-variant": "#566168"
+            },
+            fontFamily: {
+              "headline": ["Pretendard", "Inter", "sans-serif"],
+              "body": ["Pretendard", "Inter", "sans-serif"],
+              "label": ["Pretendard", "Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.4rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Pretendard', 'Inter', sans-serif; }
+        .line-clamp-2 {
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+        }
+        .library-menu-item {
+            display: flex;
+            width: 100%;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 0.75rem;
+            text-align: left;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: #29343a;
+        }
+        .library-menu-item:hover {
+            background: #f0f4f8;
+        }
+    </style>
+<link rel="stylesheet" href="/static/css/common/nav.css">
+</head>
+<body class="bg-surface text-on-surface min-h-screen">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm dark:shadow-none font-sans antialiased headline-sm font-semibold tracking-tight">
+<div class="flex justify-between items-center w-full px-6 h-16">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-bold tracking-tighter text-indigo-700 dark:text-indigo-400">
+  <img src="/static/img/logo.png" alt="Suppressor Logo" class="h-16 ml-4">
+</span>
+<nav class="hidden md:flex items-center gap-6 h-full">
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/">대시보드</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/search">앱 탐색</a>
+<a class="text-indigo-700 dark:text-indigo-400 border-b-2 border-indigo-700 dark:border-indigo-400 pb-1 flex items-center h-full" href="/library">라이브러리</a>
+<a id="adminScenarioHeaderLink" class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/scenario">시나리오 관리</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="pl-10 pr-4 py-2 bg-slate-100/50 dark:bg-slate-800/50 border-none rounded-xl text-sm w-64 focus:ring-2 focus:ring-primary/20" placeholder="검색어를 입력하세요..." type="text"/>
+</div>
+
+</div>
+</div>
+</div>
+<!-- Notification Panel (Hidden by default) -->
+<div class="absolute right-6 top-16 mt-2 w-80 bg-surface-container-lowest rounded-xl shadow-2xl border border-outline-variant/10 overflow-hidden z-[60] hidden" id="notification-panel">
+<div class="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50">
+<span class="font-bold text-sm">알림</span>
+<button class="text-[10px] text-primary font-bold hover:underline">모두 읽음으로 표시</button>
+</div>
+<div class="max-h-[320px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+<div class="p-4 hover:bg-slate-50 transition-colors cursor-pointer group">
+<div class="flex gap-3">
+<div class="w-2 h-2 mt-1.5 rounded-full bg-primary flex-shrink-0"></div>
+<div>
+<p class="text-xs font-medium text-on-surface mb-1">시스템 점검 완료</p>
+<p class="text-[10px] text-on-surface-variant line-clamp-2">모든 저장소가 안정적인 상태입니다.</p>
+<span class="text-[10px] text-slate-400 mt-2 block">10분 전</span>
+</div>
+</div>
+</div>
+</div>
+<a class="block p-3 text-center text-[10px] font-bold text-on-surface-variant hover:bg-slate-50 border-t border-slate-100 dark:border-slate-800" href="#">전체 알림 보기</a>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r-0 bg-slate-50 dark:bg-slate-950 z-30 hidden md:block flat no-line-rule">
+<div class="flex flex-col h-full py-6 gap-2 pt-20">
+<!-- Brand Info -->
+<div class="px-6 py-4 mb-4 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="hub" style="font-variation-settings: 'FILL' 1;">hub</span>
+</div>
+<div>
+<h2 class="text-lg font-black text-slate-900 dark:text-white leading-tight">Suppressor</h2>
+<p class="text-xs text-slate-500 dark:text-slate-400">Enterprise Edition</p>
+</div>
+</div>
+<!-- Main Navigation -->
+<nav class="flex flex-col space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span>홈</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/search">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+<span>앱 탐색</span>
+</a>
+<a class="flex items-center gap-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 rounded-lg mx-2 px-4 py-3 transition-all hover:scale-[1.02]" href="/library">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span>라이브러리</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/scenario">
+<span class="material-symbols-outlined" data-icon="dataset">dataset</span>
+<span>시나리오 관리</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/admin">
+<span class="material-symbols-outlined" data-icon="dashboard_customize">dashboard_customize</span>
+<span>관리자 대시보드</span>
+</a>
+</nav>
+<!-- Side Bottom Common -->
+<div id="side-bottom" class="mt-auto px-4 flex flex-col gap-4">
+<script src="/static/js/common.js?v=session-fix-1"></script>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="lg:ml-64 pt-24 pb-12 px-6 lg:px-10 max-w-7xl">
+<!-- Header Section -->
+<header class="mb-10">
+<h1 class="text-3xl font-bold tracking-tight text-on-surface mb-2">내 라이브러리 관리</h1>
+<p class="text-on-surface-variant max-w-2xl">설치된 모든 확장 프로그램과 앱의 상태를 한눈에 확인하고 업데이트나 삭제를 관리할 수 있습니다.</p>
+</header>
+<!-- Bento Stats Grid -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+  <div class="bg-primary-container p-6 rounded-xl flex flex-col justify-between h-32">
+    <span class="text-on-primary-container text-sm font-medium">총 설치 항목</span>
+    <span id="stat-total-count" class="text-4xl font-bold text-on-primary-container">0</span>
+  </div>
+
+  <div class="bg-surface-container-high p-6 rounded-xl flex flex-col justify-between h-32">
+    <div class="flex justify-between items-start">
+      <span class="text-on-surface text-sm font-medium">업데이트 필요</span>
+      <span id="update-pulse" class="flex h-2 w-2 rounded-full bg-error animate-pulse hidden"></span>
+    </div>
+    <span id="stat-update-count" class="text-4xl font-bold text-on-surface">0</span>
+  </div>
+
+</section>
+<!-- Management List -->
+<section class="space-y-4">
+    <div class="flex flex-col gap-4 mb-4 lg:flex-row lg:items-center lg:justify-between">
+        <h3 class="text-lg font-semibold text-on-surface">설치 가능한 확장 프로그램 목록</h3>
+        <form id="library-search-form" class="flex w-full max-w-md items-center gap-2" role="search">
+          <label class="sr-only" for="library-search-input">Extension name</label>
+          <div class="relative flex-1">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+            <input
+              id="library-search-input"
+              class="w-full rounded-lg border border-outline-variant bg-white py-2 pl-10 pr-3 text-sm text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              name="extName"
+              placeholder="Search by extension name"
+              type="search"
+            />
+          </div>
+          <button class="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-on-primary hover:bg-primary-dim" type="submit">
+            <span class="material-symbols-outlined text-sm">search</span>
+            Search
+          </button>
+          <a id="library-search-clear" class="hidden h-10 items-center rounded-lg px-3 text-sm font-semibold text-on-surface-variant hover:bg-surface-container" href="/library">Clear</a>
+        </form>
+        </div>
+
+    <div id="nexus-item-list" class="space-y-3">
+        </div>
+
+    <div id="pagination-controls" class="flex justify-center items-center gap-2 mt-8">
+        </div>
+</section>
+
+
+
+
+
+
+</main>
+<!-- Mobile Navigation Bar -->
+<nav class="md:hidden fixed bottom-0 w-full bg-white/80 backdrop-blur-md px-6 py-3 flex justify-around items-center z-50 border-t border-slate-100">
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="text-[10px] font-medium">홈</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+<span class="text-[10px] font-medium">탐색</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-indigo-700">
+<span class="material-symbols-outlined" data-icon="inventory_2" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+<span class="text-[10px] font-bold">라이브러리</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-500">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="text-[10px] font-medium">프로필</span>
+</button>
+</nav>
+</body>
+
+<input type="file" id="demoUploadFile" style="display: none;">
+<script src="/static/js/upload.js"></script>
+<script src="/static/js/library/library.js?v=20260521-actions"></script>
+</html>

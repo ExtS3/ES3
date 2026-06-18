@@ -1,0 +1,35 @@
+name: Local Dev Environment CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - "feature/**"
+      - "fix/**"
+      - "docs/**"
+      - "refactor/**"
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  docker-build:
+    name: Docker build validation
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ExtS3-Demo
+
+    steps:
+      - name: Checkout ExtS3-Demo
+        uses: actions/checkout@v4
+        with:
+          path: ExtS3-Demo
+
+      - name: Validate compose file
+        run: docker compose config
+
+      - name: Build web image
+        run: docker compose build exts3-demo

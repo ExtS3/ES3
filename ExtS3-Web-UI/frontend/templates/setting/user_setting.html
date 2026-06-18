@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="/static/vendor/tailwindcss-forms-container-queries.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed": "#333d55",
+              "inverse-primary": "#929bfa",
+              "outline-variant": "#a8b3bb",
+              "secondary-container": "#dee0ff",
+              "primary-fixed-dim": "#ced1ff",
+              "primary": "#4c56af",
+              "surface-bright": "#f7f9fc",
+              "on-primary": "#f9f6ff",
+              "surface-container": "#e8eff4",
+              "tertiary-fixed-dim": "#c7d1ee",
+              "secondary-fixed": "#dee0ff",
+              "inverse-surface": "#0b0f11",
+              "surface-container-high": "#e1e9f0",
+              "error-container": "#ff8b9a",
+              "primary-dim": "#4049a2",
+              "tertiary-dim": "#49536b",
+              "tertiary": "#545f78",
+              "surface-container-lowest": "#ffffff",
+              "on-secondary-fixed": "#27378a",
+              "tertiary-container": "#d5dffd",
+              "outline": "#717c84",
+              "secondary-dim": "#3d4c9f",
+              "on-tertiary-container": "#455068",
+              "on-secondary-container": "#3b4a9e",
+              "on-surface-variant": "#566168",
+              "on-primary-container": "#3f48a1",
+              "on-surface": "#29343a",
+              "on-error": "#fff7f7",
+              "surface-container-highest": "#d9e4ec",
+              "inverse-on-surface": "#9a9da0",
+              "surface-container-low": "#f0f4f8",
+              "error-dim": "#4f0116",
+              "secondary": "#4958ac",
+              "surface-tint": "#4c56af",
+              "surface-dim": "#cedce5",
+              "on-secondary-fixed-variant": "#4555a8",
+              "on-primary-fixed-variant": "#4953ac",
+              "background": "#f7f9fc",
+              "surface": "#f7f9fc",
+              "secondary-fixed-dim": "#ccd2ff",
+              "on-tertiary-fixed-variant": "#4f5a72",
+              "on-error-container": "#782232",
+              "on-background": "#29343a",
+              "tertiary-fixed": "#d5dffd",
+              "error": "#9e3f4e",
+              "primary-container": "#e0e0ff",
+              "surface-variant": "#d9e4ec",
+              "primary-fixed": "#e0e0ff",
+              "on-tertiary": "#f9f8ff",
+              "on-secondary": "#faf8ff",
+              "on-primary-fixed": "#2c358e"
+            },
+            fontFamily: {
+              "headline": ["Pretendard", "Inter"],
+              "body": ["Pretendard", "Inter"],
+              "label": ["Pretendard", "Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Pretendard', 'Inter', sans-serif; }
+    </style>
+<link rel="stylesheet" href="/static/css/common/nav.css">
+</head>
+<body class="bg-surface text-on-surface min-h-screen">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm dark:shadow-none font-sans antialiased headline-sm font-semibold tracking-tight">
+<div class="flex justify-between items-center w-full px-6 h-16">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-tighter text-indigo-700 dark:text-indigo-400">Nexus Repository</span>
+<nav class="hidden md:flex items-center gap-6 h-full">
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/">대시보드</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/search">앱 탐색</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/library">라이브러리</a>
+<a id="adminScenarioHeaderLink" class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/scenario">시나리오 관리</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="pl-10 pr-4 py-2 bg-slate-100/50 dark:bg-slate-800/50 border-none rounded-xl text-sm w-64 focus:ring-2 focus:ring-primary/20" placeholder="검색어를 입력하세요..." type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-on-surface-variant hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors duration-200 active:scale-95 duration-150" onclick="document.getElementById('notification-panel').classList.toggle('hidden')">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors duration-200 active:scale-95 duration-150">
+  <a href="/user_set">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</a>
+</button>
+
+<div class="w-8 h-8 rounded-full overflow-hidden ml-2 ring-2 ring-primary-container cursor-pointer">
+<img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAts8ApHqA8-w0KDqDtZzeYBehl7T_yJ0pRnxPl5KZVF3vNW2592hXNWYuGVsUj29icS_ykD_k9Iq2ZoFd-7CkMdFham0BpDXoFtI3GRVZvvuFSSXNxiTyU11daw3wqvmTCRBb2_M-g0PBV9REfBmCfkEFoqELYH1i04bECE_emqRjbRRa0fzl--x2GM5t1FdqCF7FoXWF8TO6fvhSyvuwb3EygzqBQu71zuFQZqHbTHhkZZIOp_I1vna5wfUmXAXhZhfR5fV3bJA0"/>
+</div>
+</div>
+</div>
+</div>
+<!-- Notification Panel (Hidden by default) -->
+<div class="absolute right-6 top-16 mt-2 w-80 bg-surface-container-lowest rounded-xl shadow-2xl border border-outline-variant/10 overflow-hidden z-[60] hidden" id="notification-panel">
+<div class="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50">
+<span class="font-bold text-sm">알림</span>
+<button class="text-[10px] text-primary font-bold hover:underline">모두 읽음으로 표시</button>
+</div>
+<div class="max-h-[320px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+<div class="p-4 hover:bg-slate-50 transition-colors cursor-pointer group">
+<div class="flex gap-3">
+<div class="w-2 h-2 mt-1.5 rounded-full bg-primary flex-shrink-0"></div>
+<div>
+<p class="text-xs font-medium text-on-surface mb-1">시스템 점검 완료</p>
+<p class="text-[10px] text-on-surface-variant line-clamp-2">모든 저장소가 안정적인 상태입니다.</p>
+<span class="text-[10px] text-slate-400 mt-2 block">10분 전</span>
+</div>
+</div>
+</div>
+</div>
+<a class="block p-3 text-center text-[10px] font-bold text-on-surface-variant hover:bg-slate-50 border-t border-slate-100 dark:border-slate-800" href="#">전체 알림 보기</a>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r-0 bg-slate-50 dark:bg-slate-950 z-30 hidden md:block flat no-line-rule">
+<div class="flex flex-col h-full py-6 gap-2 pt-20">
+<!-- Brand Info -->
+<div class="px-6 py-4 mb-4 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="hub" style="font-variation-settings: 'FILL' 1;">hub</span>
+</div>
+<div>
+<h2 class="text-lg font-black text-slate-900 dark:text-white leading-tight">Nexus Repo</h2>
+<p class="text-xs text-slate-500 dark:text-slate-400">Enterprise Edition</p>
+</div>
+</div>
+<!-- Main Navigation -->
+<nav class="flex flex-col space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span>홈</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/search">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+<span>앱 탐색</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/library">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span>라이브러리</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/scenario">
+<span class="material-symbols-outlined" data-icon="dataset">dataset</span>
+<span>시나리오 관리</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/admin">
+<span class="material-symbols-outlined" data-icon="dashboard_customize">dashboard_customize</span>
+<span>관리자 대시보드</span>
+</a>
+<div class="pt-4 pb-2 px-6">
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">환경설정</p>
+</div>
+<a class="flex items-center bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 rounded-lg mx-2 px-4 py-3 font-semibold text-sm Inter" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="person" style="font-variation-settings: 'FILL' 1;">person</span>
+            개인 정보
+        </a>
+</nav>
+<!-- Side Bottom Common -->
+<div id="side-bottom" class="mt-auto px-4 flex flex-col gap-4">
+<script src="/static/js/common.js?v=session-fix-1"></script>
+</div>
+</aside>
+</header>
+<!-- Main Content Area -->
+<main class="mt-16 p-6 lg:p-10 max-w-6xl w-full mx-auto">
+<header class="mb-10">
+<h2 class="text-3xl font-black tracking-tight text-on-surface mb-2">사용자 설정</h2>
+<p class="text-on-surface-variant text-lg">계정 정보 및 보안 환경설정을 관리합니다.</p>
+</header>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Profile Section -->
+<section class="lg:col-span-8 space-y-8">
+<div class="bg-surface-container-lowest rounded-xl p-8 shadow-sm border border-transparent">
+<div class="flex flex-col md:flex-row gap-8 items-start">
+<div class="relative group">
+<div class="w-32 h-32 rounded-full overflow-hidden bg-surface-container-high ring-4 ring-surface-container-low">
+<img alt="사용자 사진" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKb0jRnk5lAu_nm28z4HtKMdShuvJf3wSZt5zPkTIf_iFPuPzCLlRHf-5KlA3l5PoeY6pNbFWXubZI-aoboM5f5gLOyU70I6KKhZHSrql3NTlNwQjADxKHzTDYMrNhvY26nIv0nGe-I-IJyXTJIhLI9zOAv8R92WB2NEbtVYipdAyNBN4w0-Hj4uxC76CGvWIhycwpjPWWn7XYmieY6-mwa7jBA1Wsm_LIkEw4c83XLrWKwmHpDgyg6HZoyBtUWUasVTDzk4fhyVQ"/>
+</div>
+<button class="absolute bottom-1 right-1 bg-primary text-on-primary p-2 rounded-full shadow-lg hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-sm" data-icon="edit">edit</span>
+</button>
+</div>
+<div class="flex-1 w-full space-y-6">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="space-y-1.5">
+<label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider ml-1">이름</label>
+<input class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary/20 transition-all font-medium" type="text" value="관리자"/>
+</div>
+<div class="space-y-1.5">
+<label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider ml-1">직함</label>
+<input class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary/20 transition-all font-medium" type="text" value="시니어 디지털 큐레이터"/>
+</div>
+<div class="md:col-span-2 space-y-1.5">
+<label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider ml-1">이메일 주소</label>
+<input class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary/20 transition-all font-medium" type="email" value="premium@curator.com"/>
+</div>
+<div class="md:col-span-2 space-y-1.5">
+<label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider ml-1">자기소개</label>
+<textarea class="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary/20 transition-all font-medium" rows="3">디지털 자산의 가치를 재발견하고 우아한 인터페이스를 구축하는 것에 열정을 가진 큐레이터입니다.</textarea>
+</div>
+</div>
+<div class="flex justify-end gap-3 pt-2">
+<button class="px-6 py-2.5 rounded-lg font-bold text-sm text-on-surface hover:bg-surface-container-high transition-colors">취소</button>
+<button class="px-6 py-2.5 bg-primary text-on-primary rounded-lg font-bold text-sm shadow-sm hover:opacity-90 transition-opacity">변경사항 저장</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Security Section -->
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm">
+<div class="p-6 border-b border-surface-container-high bg-surface-container-low/30">
+<h3 class="text-xl font-bold text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="security">security</span>
+                            보안 설정
+                        </h3>
+</div>
+<div class="p-0">
+<!-- 2FA Item -->
+<div class="p-6 flex items-center justify-between hover:bg-surface-container-low/50 transition-colors">
+<div class="flex items-center gap-4">
+<div class="p-3 bg-secondary-container text-on-secondary-container rounded-xl">
+<span class="material-symbols-outlined" data-icon="phonelink_lock">phonelink_lock</span>
+</div>
+<div>
+<p class="font-bold text-on-surface">2단계 인증 (2FA)</p>
+<p class="text-sm text-on-surface-variant">계정 로그인을 위해 추가 인증 코드가 필요합니다.</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="text-xs font-bold text-primary bg-primary-container px-2.5 py-1 rounded-full">활성화됨</span>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+<!-- Password Item -->
+<div class="p-6 flex items-center justify-between hover:bg-surface-container-low/50 transition-colors">
+<div class="flex items-center gap-4">
+<div class="p-3 bg-tertiary-container text-on-tertiary-container rounded-xl">
+<span class="material-symbols-outlined" data-icon="lock_reset">lock_reset</span>
+</div>
+<div>
+<p class="font-bold text-on-surface">비밀번호 변경</p>
+<p class="text-sm text-on-surface-variant">마지막 변경: 3개월 전</p>
+</div>
+</div>
+<button class="px-4 py-2 border border-outline-variant rounded-lg text-sm font-bold hover:bg-surface-container-low transition-colors">수정</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Sidebar / Notifications Section -->
+<aside class="lg:col-span-4 space-y-8">
+<!-- Notification Prefs -->
+<div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm">
+<h3 class="text-lg font-bold text-on-surface mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="notifications_active">notifications_active</span>
+                        알림 환경설정
+                    </h3>
+<div class="space-y-6">
+<div class="flex items-center justify-between">
+<div>
+<p class="text-sm font-bold text-on-surface">이메일 알림</p>
+<p class="text-xs text-on-surface-variant">새로운 큐레이션 및 소식</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex items-center justify-between">
+<div>
+<p class="text-sm font-bold text-on-surface">푸시 알림</p>
+<p class="text-xs text-on-surface-variant">업로드 및 활동 알림</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex items-center justify-between">
+<div>
+<p class="text-sm font-bold text-on-surface">보안 알림</p>
+<p class="text-xs text-on-surface-variant">새로운 로그인 시도 감지</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+<div class="mt-8 pt-6 border-t border-surface-container-high">
+<button class="w-full py-3 text-sm font-bold text-primary hover:bg-primary-container/30 rounded-lg transition-colors">모든 알림 관리</button>
+</div>
+</div>
+<!-- Membership Card -->
+<div class="bg-gradient-to-br from-primary-dim to-primary rounded-xl p-6 text-on-primary shadow-lg overflow-hidden relative group">
+<div class="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-125 transition-transform duration-700"></div>
+<div class="relative z-10">
+<div class="flex justify-between items-start mb-6">
+<div class="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+<span class="material-symbols-outlined" data-icon="workspace_premium" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+</div>
+<span class="text-xs font-bold bg-white/30 px-2 py-1 rounded-full">플래티넘 플랜</span>
+</div>
+<h4 class="text-xl font-black mb-1">Premium Curator</h4>
+<p class="text-sm text-primary-container/80 mb-6">12월 24일에 다음 결제가 예정되어 있습니다.</p>
+<button class="w-full bg-white text-primary py-2.5 rounded-lg font-bold text-sm hover:bg-opacity-90 transition-all active:scale-95">플랜 업그레이드</button>
+</div>
+</div>
+<!-- Danger Zone -->
+<div class="bg-error-container/10 border border-error/20 rounded-xl p-6">
+<h4 class="text-error font-bold mb-2 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="report">report</span>
+                        위험 구역
+                    </h4>
+<p class="text-xs text-on-error-container mb-4 leading-relaxed">계정을 삭제하면 모든 데이터와 설정이 영구적으로 제거되며 복구할 수 없습니다.</p>
+<button class="w-full py-2.5 text-xs font-black text-error border border-error/40 rounded-lg hover:bg-error hover:text-white transition-all">계정 삭제 요청</button>
+</div>
+</aside>
+</div>
+</main>
+</div>
+<!-- Mobile Navigation Bar -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg border-t border-surface-container-high px-6 py-3 flex justify-between items-center z-50">
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="text-[10px] font-bold">홈</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined" data-icon="explore">탐색</span>
+<span class="text-[10px] font-bold">탐색</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined" data-icon="bookmarks">bookmarks</span>
+<span class="text-[10px] font-bold">저장됨</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" data-icon="person" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="text-[10px] font-bold">프로필</span>
+</a>
+</nav>
+</body>
+
+<input type="file" id="demoUploadFile" style="display: none;">
+<script src="/static/js/upload.js"></script>
+
+</html>

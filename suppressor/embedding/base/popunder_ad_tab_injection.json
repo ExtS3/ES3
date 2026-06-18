@@ -1,0 +1,68 @@
+{
+  "scenario_id": "cnjkjjlanphmhcgfcgednjnlkljplkef",
+  "builtin": true,
+  "pattern_name": "popunder_ad_tab_injection",
+  "doc_ref": "scenario_docs/popunder_ad_tab_injection.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "broad",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "background"
+      ],
+      "permissions_hint": [
+        "tabs",
+        "storage"
+      ]
+    },
+    "capability_profile": [
+      "remote_configuration",
+      "background_tab_open",
+      "periodic_execution"
+    ],
+    "capability_combinations": [
+      "remote_config + tabs_create_inactive",
+      "newsPage + background_tab"
+    ],
+    "static_code_signals": {
+      "tabs": {
+        "apis": [
+          "chrome.tabs.create"
+        ],
+        "keywords": [
+          "newsPage"
+        ]
+      },
+      "network": {
+        "apis": [
+          "fetch"
+        ],
+        "methods": [
+          "POST"
+        ],
+        "keywords": [
+          "newsPage",
+          "config"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "config_received",
+        "source": "newsPage_value",
+        "path": [
+          "background",
+          "tabs_create"
+        ],
+        "sink": "background_tab_ad_page"
+      }
+    ],
+    "behavior_tags": [
+      "popunder_ad",
+      "background_tab",
+      "remote_config_abuse",
+      "ad_injection"
+    ]
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "scenario_id": "cjjldjkklifmcpjjbdjdbbkdeimfgmeh",
+  "builtin": true,
+  "pattern_name": "remote_browser_control_debugger_scripting",
+  "doc_ref": "scenario_docs/remote_browser_control_debugger_scripting.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "broad",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "background",
+        "content_script",
+        "popup"
+      ],
+      "permissions_hint": [
+        "debugger",
+        "scripting",
+        "tabs",
+        "activeTab",
+        "offscreen"
+      ]
+    },
+    "capability_profile": [
+      "debugger_access",
+      "script_injection",
+      "remote_control",
+      "tab_access",
+      "temporary_tab_access",
+      "offscreen_execution",
+      "background_execution",
+      "message_bridge",
+      "browser_automation"
+    ],
+    "capability_combinations": [
+      "debugger_access + scripting",
+      "debugger_access + tab_access",
+      "scripting + activeTab",
+      "offscreen + background_execution",
+      "message_bridge + remote_control"
+    ],
+    "static_code_signals": {
+      "debugger_control": {
+        "apis": [
+          "chrome.debugger",
+          "debugger.attach",
+          "debugger.detach",
+          "debugger.sendCommand",
+          "Runtime.evaluate",
+          "Page.captureScreenshot",
+          "Input.dispatchMouseEvent",
+          "Input.dispatchKeyEvent"
+        ],
+        "keywords": [
+          "debugger",
+          "sendCommand",
+          "Runtime.evaluate",
+          "Page.captureScreenshot",
+          "Input.dispatchMouseEvent",
+          "Input.dispatchKeyEvent",
+          "remote_control",
+          "devtools"
+        ],
+        "patterns": [
+          "chrome_debugger_attach",
+          "devtools_protocol_command",
+          "remote_page_control"
+        ]
+      },
+      "script_injection": {
+        "apis": [
+          "chrome.scripting.executeScript",
+          "scripting.executeScript"
+        ],
+        "keywords": [
+          "executeScript",
+          "inject",
+          "inject-bridge.js",
+          "helper.js"
+        ],
+        "patterns": [
+          "programmatic_script_injection",
+          "helper_script_bridge"
+        ]
+      },
+      "messaging": {
+        "apis": [
+          "runtime.onMessage",
+          "runtime.sendMessage",
+          "tabs.sendMessage"
+        ],
+        "patterns": [
+          "command_bridge",
+          "background_to_content_script"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "remote_command",
+        "source": "background_or_popup",
+        "path": [
+          "runtime_message",
+          "debugger.sendCommand"
+        ],
+        "sink": "page_control_or_capture"
+      },
+      {
+        "trigger": "remote_command",
+        "source": "background_or_popup",
+        "path": [
+          "scripting.executeScript",
+          "injected_helper"
+        ],
+        "sink": "dom_or_network_side_effect"
+      }
+    ],
+    "behavior_tags": [
+      "debugger_access",
+      "remote_browser_control",
+      "script_injection",
+      "browser_automation",
+      "message_passing_bridge",
+      "tab_control"
+    ]
+  }
+}

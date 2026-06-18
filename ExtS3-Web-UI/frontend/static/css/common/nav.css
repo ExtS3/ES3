@@ -1,0 +1,44 @@
+:root {
+  --exts3-nav-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --exts3-nav-font-size: 14px;
+  --exts3-nav-font-weight: 600;
+  --exts3-nav-line-height: 1.25;
+}
+
+body > header.fixed,
+body > aside.fixed,
+body > header.fixed input,
+body > aside.fixed input,
+body > header.fixed button,
+body > aside.fixed button {
+  font-family: var(--exts3-nav-font);
+}
+
+body > header.fixed nav a,
+body > aside.fixed nav a,
+body > aside.fixed #side-bottom a,
+body > aside.fixed #side-bottom button,
+body > header.fixed #sessionRoleBadge,
+body > header.fixed input {
+  font-family: var(--exts3-nav-font);
+  font-size: var(--exts3-nav-font-size);
+  font-weight: var(--exts3-nav-font-weight);
+  letter-spacing: 0;
+  line-height: var(--exts3-nav-line-height);
+}
+
+body > header.fixed nav a span:not(.material-symbols-outlined),
+body > aside.fixed nav a span:not(.material-symbols-outlined),
+body > aside.fixed #side-bottom span:not(.material-symbols-outlined) {
+  font: inherit;
+}
+
+body > header.fixed .material-symbols-outlined,
+body > aside.fixed .material-symbols-outlined {
+  font-size: 20px;
+  line-height: 1;
+}
+
+body > header.fixed input::placeholder {
+  font-weight: 500;
+}

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html class="light" lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Suppressor - 정책 설정</title>
+<script src="/static/vendor/tailwindcss-forms-container-queries.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "surface": "#f7f9fc",
+        "surface-container-low": "#f0f4f8",
+        "surface-container": "#e8eff4",
+        "surface-container-high": "#e1e9f0",
+        "surface-container-highest": "#d9e4ec",
+        "on-surface": "#29343a",
+        "on-surface-variant": "#566168",
+        "outline-variant": "#a8b3bb",
+        "primary": "#4c56af",
+        "primary-dim": "#4049a2",
+        "primary-container": "#e0e0ff",
+        "error": "#9e3f4e",
+        "error-container": "#ffdde3"
+      },
+      borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"}
+    }
+  }
+}
+</script>
+<style>
+  body { font-family: 'Pretendard', 'Inter', sans-serif; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+</style>
+<link rel="stylesheet" href="/static/css/common/nav.css">
+</head>
+<body class="bg-surface text-on-surface antialiased">
+<header class="fixed top-0 w-full z-40 bg-white/80 backdrop-blur-md shadow-sm">
+  <div class="flex justify-between items-center w-full px-6 h-16">
+    <a class="flex items-center gap-3" href="/admin">
+      <img src="/static/img/logo.png" alt="Suppressor Logo" class="h-14 ml-4">
+    </a>
+    <div class="flex items-center gap-3">
+      <a href="/admin" class="px-4 py-2 bg-surface-container-high rounded-lg text-sm font-bold hover:bg-surface-container-highest">대시보드</a>
+      <a href="/api/admin/policy/default.pdf" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-outline-variant/30 rounded-lg text-sm font-bold hover:bg-surface-container-low" download>
+        <span class="material-symbols-outlined text-base">download</span>
+        기본 정책 PDF
+      </a>
+      <button id="save-policy" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary-dim">저장</button>
+    </div>
+  </div>
+</header>
+
+<aside class="h-screen w-64 fixed left-0 top-0 bg-slate-50 z-30 hidden md:block">
+  <div class="flex flex-col h-full py-6 gap-2 pt-20">
+    <div class="px-6 py-4 mb-4 flex items-center gap-3">
+      <div class="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center text-primary">
+        <span class="material-symbols-outlined">hub</span>
+      </div>
+      <div>
+        <h2 class="text-lg font-black text-slate-900 leading-tight">Suppressor</h2>
+        <p class="text-xs text-slate-500">Enterprise Edition</p>
+      </div>
+    </div>
+    <nav class="flex flex-col space-y-1">
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 rounded-lg mx-2 text-sm font-medium" href="/">
+        <span class="material-symbols-outlined">home</span><span>홈</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 rounded-lg mx-2 text-sm font-medium" href="/search">
+        <span class="material-symbols-outlined">explore</span><span>검색</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 rounded-lg mx-2 text-sm font-medium" href="/library">
+        <span class="material-symbols-outlined">inventory_2</span><span>라이브러리</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 rounded-lg mx-2 text-sm font-medium" href="/admin">
+        <span class="material-symbols-outlined">dashboard_customize</span><span>관리자 대시보드</span>
+      </a>
+      <a class="flex items-center gap-3 bg-indigo-50 text-indigo-700 rounded-lg mx-2 px-4 py-3 text-sm font-bold" href="/admin/policy">
+        <span class="material-symbols-outlined">rule_settings</span><span>정책 설정</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 rounded-lg mx-2 text-sm font-medium" href="/admin/policy-catalog">
+        <span class="material-symbols-outlined">policy</span><span>Chrome 정책 카탈로그</span>
+      </a>
+    </nav>
+  </div>
+</aside>
+
+<main class="md:ml-64 pt-20 p-8 min-h-screen">
+  <header class="mb-8">
+    <p class="text-sm font-bold text-primary mb-2">AI Final Decision Policy</p>
+    <h1 class="text-3xl font-extrabold tracking-tight text-on-surface mb-2">정책 설정</h1>
+    <p class="text-on-surface-variant">심각도 결과에 따라 자동 승인 또는 자동 거부 여부만 설정합니다.</p>
+  </header>
+
+  <div id="status-message" class="hidden mb-6 rounded-lg px-4 py-3 text-sm font-bold"></div>
+
+  <section class="max-w-4xl bg-white rounded-xl border border-outline-variant/20 p-6">
+    <div class="flex items-center gap-3 mb-6">
+      <span class="material-symbols-outlined text-primary">rule_settings</span>
+      <h2 class="text-xl font-black">기본 정책</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <label class="flex items-start justify-between gap-4 bg-surface-container-low rounded-lg px-4 py-4">
+        <span>
+          <span class="block text-sm font-bold">Critical 자동 거부</span>
+          <span class="block text-xs text-on-surface-variant mt-1">critical 심각도가 포함된 분석 결과를 자동으로 거부합니다.</span>
+        </span>
+        <input id="critical-auto-reject-enabled" type="checkbox" class="mt-1 rounded text-primary focus:ring-primary"/>
+      </label>
+
+      <label class="flex items-start justify-between gap-4 bg-surface-container-low rounded-lg px-4 py-4">
+        <span>
+          <span class="block text-sm font-bold">Low 자동 승인</span>
+          <span class="block text-xs text-on-surface-variant mt-1">low 심각도만 확인된 분석 결과를 자동으로 승인합니다.</span>
+        </span>
+        <input id="low-auto-approve-enabled" type="checkbox" class="mt-1 rounded text-primary focus:ring-primary"/>
+      </label>
+    </div>
+
+    <div class="mt-6 rounded-lg bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant">
+      자동 정책에 해당하지 않는 결과는 기존처럼 관리자 검토 상태로 유지됩니다.
+    </div>
+  </section>
+</main>
+
+<script src="/static/js/admin/policy.js?v=20260529-policy-simple"></script>
+</body>
+</html>

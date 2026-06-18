@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+!.env.retro.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+credentials/
+
+# Runtime outputs
+retro_state.json
+retro_queue.jsonl
+logs/
+*.log
+
+# Optional local rules / temp data
+rules/*.compiled
+tmp/
+temp/
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

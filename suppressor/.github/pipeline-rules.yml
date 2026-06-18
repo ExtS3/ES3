@@ -1,0 +1,42 @@
+#Branch 이름 관련 규칙
+branch:
+  allowed_prefixes: #아래 브랜치만 허용
+    - feature/
+    - fix/
+    - docs/
+    - refactor/
+  max_length: 60 #브랜치 이름은 60자가 넘으면 거부됨
+  require_issue_number: false #이슈 번호가 없어도 거부가 아닌 오류 정도로 넘어감
+
+#README.md 내용 관련 규칙
+readme:
+  min_lines: 10
+
+#필수로 존재해야 하는 파일
+required_files:
+  - README.md
+  - .gitignore
+
+#존재하면 안 되는 파일
+blocked_files:
+  patterns:
+    - ".env"
+    - ".env.local"
+    - "*.pem"
+
+#Commit 메시지 형식 지정
+commit_message:
+  conventional_commits: fail #아래 type을 사용하지 않고 commit 메시지를 작성하면 거부
+  #type은 메시지 앞에 사용되는 것으로 {type}: 메시지 와 같은 형식으로 작성하면 됨
+  allowed_types:
+    - feat
+    - fix
+    - docs
+    - style
+    - refactor
+    - chore
+
+#PR 대상 Branch
+pr:
+  base_branch: develop
+  allow_fallback_to_main: true

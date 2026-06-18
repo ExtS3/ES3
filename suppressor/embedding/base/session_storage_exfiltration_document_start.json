@@ -1,0 +1,96 @@
+{
+  "scenario_id": "meoilhadanfaddhibdnpflaeeccpghgl",
+  "builtin": true,
+  "pattern_name": "session_storage_exfiltration_document_start",
+  "doc_ref": "scenario_docs/session_storage_exfiltration_document_start.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "limited",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "background",
+        "content_script"
+      ],
+      "content_script_run_at": [
+        "document_start"
+      ],
+      "permissions_hint": [
+        "storage",
+        "scripting"
+      ]
+    },
+    "capability_profile": [
+      "early_document_injection",
+      "page_storage_access",
+      "cookie_access",
+      "message_bridge",
+      "external_network",
+      "periodic_execution"
+    ],
+    "capability_combinations": [
+      "document_start + page_storage_access",
+      "runtime_message + background_forward",
+      "periodic_execution + repeated_transmission"
+    ],
+    "static_code_signals": {
+      "storage": {
+        "apis": [
+          "localStorage",
+          "localforage.getItem",
+          "JSON.stringify"
+        ]
+      },
+      "cookie": {
+        "apis": [
+          "chrome.cookies.getAll",
+          "chrome.cookies.get",
+          "chrome.cookies.onChanged"
+        ]
+      },
+      "network_intercept": {
+        "apis": [
+          "chrome.webRequest.onBeforeRequest.addListener"
+        ]
+      },
+      "messaging": {
+        "apis": [
+          "chrome.runtime.sendMessage",
+          "runtime.onMessage"
+        ]
+      },
+      "timer": {
+        "apis": [
+          "setInterval"
+        ]
+      },
+      "network": {
+        "apis": [
+          "fetch"
+        ],
+        "methods": [
+          "POST"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "document_start",
+        "source": "dummy_storage_cookie_data",
+        "path": [
+          "content_script",
+          "runtime_message",
+          "background"
+        ],
+        "sink": "localhost_post"
+      }
+    ],
+    "behavior_tags": [
+      "session_theft_pattern",
+      "page_storage_exfiltration",
+      "credential_or_token_exfiltration_pattern",
+      "repeated_exfiltration",
+      "external_communication"
+    ]
+  }
+}

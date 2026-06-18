@@ -1,0 +1,5 @@
+{
+  "critical_auto_reject_enabled": true,
+  "low_auto_approve_enabled": false,
+  "fallback_decision": "review"
+}

@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://suppressor/extension-profile.schema.json",
+  "title": "Extension Profile",
+  "description": "Objective, version-by-version change history of a browser extension. Not an analysis-result store: only manifest facts, file hashes/sizes, and a thin verdict breadcrumb are kept.",
+  "type": "object",
+  "required": ["schema_version", "ext_id", "browser", "latest_version", "snapshots"],
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": {"type": "string"},
+    "ext_id": {"type": "string"},
+    "browser": {"type": "string"},
+    "ext_name": {"type": ["string", "null"]},
+    "publisher": {"type": ["string", "null"]},
+    "first_seen": {"type": "string"},
+    "last_updated": {"type": "string"},
+    "latest_version": {"type": "string"},
+    "snapshots": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/snapshot"}
+    }
+  },
+  "$defs": {
+    "snapshot": {
+      "type": "object",
+      "required": ["version", "captured_at", "content_hash", "manifest_version", "permissions", "host_permissions", "files"],
+      "additionalProperties": true,
+      "properties": {
+        "version": {"type": "string"},
+        "captured_at": {"type": "string"},
+        "content_hash": {"type": "string"},
+        "manifest_version": {"type": ["integer", "null"]},
+        "permissions": {"type": "array", "items": {"type": "string"}},
+        "optional_permissions": {"type": "array", "items": {"type": "string"}},
+        "host_permissions": {"type": "array", "items": {"type": "string"}},
+        "content_scripts": {},
+        "background": {},
+        "content_security_policy": {},
+        "web_accessible_resources": {},
+        "files": {"type": "array", "items": {"$ref": "#/$defs/file"}},
+        "verdict": {"$ref": "#/$defs/verdict"},
+        "diff_from_previous": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/diff"}]}
+      }
+    },
+    "file": {
+      "type": "object",
+      "required": ["path", "sha256", "size"],
+      "additionalProperties": true,
+      "properties": {
+        "path": {"type": "string"},
+        "sha256": {"type": "string"},
+        "size": {"type": "integer", "minimum": 0}
+      }
+    },
+    "verdict": {
+      "type": "object",
+      "description": "Breadcrumb only: how this version was graded at capture time. Full result lives in the analysis-result store.",
+      "additionalProperties": true,
+      "properties": {
+        "risk_grade": {"type": ["string", "null"]},
+        "result_id": {"type": ["string", "null"]},
+        "analyzed_at": {"type": ["string", "null"]}
+      }
+    },
+    "diff": {
+      "type": "object",
+      "required": ["files"],
+      "additionalProperties": true,
+      "properties": {
+        "previous_version": {"type": ["string", "null"]},
+        "permissions": {"$ref": "#/$defs/set_delta"},
+        "optional_permissions": {"$ref": "#/$defs/set_delta"},
+        "host_permissions": {"$ref": "#/$defs/set_delta"},
+        "manifest_changes": {"type": "array", "items": {"$ref": "#/$defs/manifest_change"}},
+        "files": {"$ref": "#/$defs/file_diff"}
+      }
+    },
+    "set_delta": {
+      "type": "object",
+      "required": ["added", "removed"],
+      "additionalProperties": false,
+      "properties": {
+        "added": {"type": "array", "items": {"type": "string"}},
+        "removed": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "manifest_change": {
+      "type": "object",
+      "required": ["field", "from", "to"],
+      "additionalProperties": false,
+      "properties": {
+        "field": {"type": "string"},
+        "from": {},
+        "to": {}
+      }
+    },
+    "file_diff": {
+      "type": "object",
+      "required": ["added", "removed", "modified"],
+      "additionalProperties": false,
+      "properties": {
+        "added": {"type": "array", "items": {"type": "string"}},
+        "removed": {"type": "array", "items": {"type": "string"}},
+        "modified": {"type": "array", "items": {"$ref": "#/$defs/modified_file"}}
+      }
+    },
+    "modified_file": {
+      "type": "object",
+      "required": ["path", "from_sha256", "to_sha256", "blob_ref", "is_minified", "diff_format", "diff", "diff_truncated"],
+      "additionalProperties": false,
+      "properties": {
+        "path": {"type": "string"},
+        "from_sha256": {"type": "string"},
+        "to_sha256": {"type": "string"},
+        "blob_ref": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "from": {"type": ["string", "null"]},
+            "to": {"type": ["string", "null"]}
+          }
+        },
+        "is_minified": {"type": "boolean"},
+        "diff_format": {"type": "string"},
+        "diff": {"type": ["string", "null"]},
+        "diff_truncated": {"type": "boolean"}
+      }
+    }
+  }
+}

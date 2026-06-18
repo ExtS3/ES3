@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html class="light" lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Suppressor - Chrome 정책 카탈로그</title>
+<script src="/static/vendor/tailwindcss-forms-container-queries.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "surface": "#f7f9fc",
+        "surface-container-low": "#f0f4f8",
+        "surface-container": "#e8eff4",
+        "surface-container-high": "#e1e9f0",
+        "on-surface": "#29343a",
+        "on-surface-variant": "#566168",
+        "outline-variant": "#a8b3bb",
+        "primary": "#4c56af",
+        "primary-dim": "#4049a2",
+        "primary-container": "#e0e0ff",
+        "error": "#9e3f4e",
+        "error-container": "#ffdde3"
+      },
+      borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"}
+    }
+  }
+}
+</script>
+<style>
+  body { font-family: 'Pretendard', 'Inter', sans-serif; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+  pre.script-preview { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+</style>
+<link rel="stylesheet" href="/static/css/common/nav.css">
+</head>
+<body class="bg-surface text-on-surface antialiased">
+<header class="fixed top-0 w-full z-40 bg-white/80 backdrop-blur-md shadow-sm">
+  <div class="flex justify-between items-center w-full px-6 h-16">
+    <a class="flex items-center gap-3" href="/admin">
+      <img src="/static/img/logo.png" alt="Suppressor Logo" class="h-14 ml-4">
+    </a>
+    <div class="flex items-center gap-3">
+      <a href="/admin" class="px-4 py-2 bg-surface-container-high rounded-lg text-sm font-bold hover:bg-surface-container-highest">대시보드</a>
+    </div>
+  </div>
+</header>
+
+<aside class="h-screen w-64 fixed left-0 top-0 bg-slate-50 z-30 hidden md:block">
+  <div class="flex flex-col h-full py-6 gap-2 pt-20">
+    <div class="px-6 py-4 mb-4 flex items-center gap-3">
+      <div class="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center text-primary">
+        <span class="material-symbols-outlined">hub</span>
+      </div>
+      <div>
+        <h2 class="text-lg font-black text-slate-900 leading-tight">Suppressor</h2>
+        <p class="text-xs text-slate-500">Enterprise Edition</p>
+      </div>
+    </div>
+    <nav class="flex flex-col space-y-1">
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 rounded-lg mx-2 text-sm font-medium" href="/">
+        <span class="material-symbols-outlined">home</span><span>홈</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 rounded-lg mx-2 text-sm font-medium" href="/search">
+        <span class="material-symbols-outlined">explore</span><span>검색</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 rounded-lg mx-2 text-sm font-medium" href="/library">
+        <span class="material-symbols-outlined">inventory_2</span><span>라이브러리</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 rounded-lg mx-2 text-sm font-medium" href="/admin">
+        <span class="material-symbols-outlined">dashboard_customize</span><span>관리자 대시보드</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 rounded-lg mx-2 text-sm font-medium" href="/admin/policy">
+        <span class="material-symbols-outlined">rule_settings</span><span>정책 설정</span>
+      </a>
+      <a class="flex items-center gap-3 bg-indigo-50 text-indigo-700 rounded-lg mx-2 px-4 py-3 text-sm font-bold" href="/admin/policy-catalog">
+        <span class="material-symbols-outlined">policy</span><span>Chrome 정책 카탈로그</span>
+      </a>
+    </nav>
+  </div>
+</aside>
+
+<main class="md:ml-64 pt-20 p-8 min-h-screen">
+  <header class="mb-8">
+    <p class="text-sm font-bold text-primary mb-2">Chrome Enterprise Policy Catalog</p>
+    <h1 class="text-3xl font-extrabold tracking-tight text-on-surface mb-2">Chrome 정책 카탈로그</h1>
+    <p class="text-on-surface-variant">5종 표준 Chrome 관리 정책을 입력 → 미리보기 → .bat 다운로드. 사용자 PC에서 관리자 권한으로 실행하면 레지스트리에 정책이 등록됩니다.</p>
+  </header>
+
+  <div id="status-message" class="hidden mb-6 rounded-lg px-4 py-3 text-sm font-bold"></div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <section class="xl:col-span-2 space-y-6">
+      <div class="bg-white rounded-xl border border-outline-variant/20 p-6">
+        <div class="flex items-center gap-3 mb-6">
+          <span class="material-symbols-outlined text-primary">category</span>
+          <h2 class="text-xl font-black">정책 타입</h2>
+        </div>
+        <label class="space-y-2 block">
+          <span class="text-sm font-bold text-on-surface">선택</span>
+          <select id="policy-type" class="w-full rounded-lg border-outline-variant bg-surface-container-low"></select>
+        </label>
+        <p id="policy-description" class="mt-3 text-sm text-on-surface-variant"></p>
+      </div>
+
+      <div class="bg-white rounded-xl border border-outline-variant/20 p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="material-symbols-outlined text-primary">code</span>
+          <h2 class="text-xl font-black">입력 JSON</h2>
+        </div>
+        <p class="text-xs text-on-surface-variant mb-3">정책 타입을 바꾸면 예시 JSON으로 자동 채워집니다. 자유롭게 수정하세요.</p>
+        <textarea id="policy-payload" rows="14" class="w-full rounded-lg border-outline-variant bg-surface-container-low font-mono text-sm" spellcheck="false"></textarea>
+        <div class="flex flex-wrap gap-3 mt-4">
+          <button id="btn-preview" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary-dim inline-flex items-center gap-2">
+            <span class="material-symbols-outlined text-base">visibility</span>미리보기
+          </button>
+          <button id="btn-download" class="px-4 py-2 bg-white border border-outline-variant/30 rounded-lg text-sm font-bold hover:bg-surface-container-low inline-flex items-center gap-2">
+            <span class="material-symbols-outlined text-base">download</span>.bat 다운로드
+          </button>
+          <button id="btn-reset-example" class="px-4 py-2 bg-white border border-outline-variant/30 rounded-lg text-sm font-bold hover:bg-surface-container-low inline-flex items-center gap-2">
+            <span class="material-symbols-outlined text-base">restart_alt</span>예시로 되돌리기
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl border border-outline-variant/20 p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="material-symbols-outlined text-primary">terminal</span>
+          <h2 class="text-xl font-black">생성된 batch 미리보기</h2>
+        </div>
+        <pre id="script-output" class="script-preview bg-slate-900 text-slate-100 text-xs p-4 rounded-lg overflow-x-auto max-h-[480px] whitespace-pre">미리보기 버튼을 누르면 결과가 여기에 표시됩니다.</pre>
+      </div>
+    </section>
+
+    <aside class="space-y-6">
+      <div class="bg-white rounded-xl border border-outline-variant/20 p-6">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="material-symbols-outlined text-primary">info</span>
+          <h2 class="text-lg font-black">레지스트리 경로</h2>
+        </div>
+        <p class="text-sm text-on-surface-variant mb-2">모든 정책이 등록되는 루트:</p>
+        <code class="block bg-surface-container-low rounded-lg p-3 text-xs font-mono break-all">HKLM\Software\Policies\Google\Chrome</code>
+        <p id="policy-name-hint" class="text-xs text-on-surface-variant mt-3"></p>
+      </div>
+
+      <div class="bg-white rounded-xl border border-outline-variant/20 p-6">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="material-symbols-outlined text-primary">warning</span>
+          <h2 class="text-lg font-black">실행 주의</h2>
+        </div>
+        <ul class="text-sm text-on-surface-variant space-y-2 list-disc list-inside">
+          <li>다운로드한 .bat는 Windows에서 <b>관리자 권한</b>이 필요합니다.</li>
+          <li>실행 시 사용자 PC의 Chrome 정책이 즉시 변경됩니다 — 테스트 머신에서만 실행.</li>
+          <li>적용 후 Chrome 재시작 필요.</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<script src="/static/js/admin/policy_catalog.js"></script>
+</body>
+</html>

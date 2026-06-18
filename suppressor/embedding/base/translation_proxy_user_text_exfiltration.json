@@ -1,0 +1,71 @@
+{
+  "scenario_id": "eialpgiicfbbanpkmgnfikccipaakhdi",
+  "builtin": true,
+  "pattern_name": "translation_proxy_user_text_exfiltration",
+  "doc_ref": "scenario_docs/translation_proxy_user_text_exfiltration.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "limited",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "content_script",
+        "background"
+      ],
+      "permissions_hint": [
+        "proxy",
+        "webRequest",
+        "storage"
+      ]
+    },
+    "capability_profile": [
+      "user_input_access",
+      "external_network",
+      "request_modification"
+    ],
+    "capability_combinations": [
+      "user_input_access + proxy_path",
+      "webRequest_observe + fetch_post"
+    ],
+    "static_code_signals": {
+      "network": {
+        "apis": [
+          "fetch"
+        ],
+        "methods": [
+          "POST"
+        ]
+      },
+      "request": {
+        "apis": [
+          "chrome.webRequest.onCompleted"
+        ]
+      },
+      "proxy": {
+        "apis": [
+          "chrome.proxy.settings.set"
+        ],
+        "patterns": [
+          "pac_script_download"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "translation_submit",
+        "source": "dummy_user_text",
+        "path": [
+          "content_script",
+          "background_proxy"
+        ],
+        "sink": "localhost_post"
+      }
+    ],
+    "behavior_tags": [
+      "translation_proxy",
+      "user_text_exfiltration",
+      "proxy_configuration",
+      "external_communication"
+    ]
+  }
+}

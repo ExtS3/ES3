@@ -1,0 +1,416 @@
+<!doctype html>
+<html class="light" lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>시나리오 ID 관리 - Suppressor</title>
+    <script src="/static/vendor/tailwindcss-forms-container-queries.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              'surface-container': '#e8eff4',
+              'inverse-primary': '#929bfa',
+              'on-background': '#29343a',
+              background: '#f7f9fc',
+              'on-surface-variant': '#566168',
+              'on-surface': '#29343a',
+              'surface-variant': '#d9e4ec',
+              'on-primary-container': '#3f48a1',
+              'on-primary': '#f9f6ff',
+              'surface-container-highest': '#d9e4ec',
+              outline: '#717c84',
+              'outline-variant': '#a8b3bb',
+              'surface-container-low': '#f0f4f8',
+              'surface-bright': '#f7f9fc',
+              'on-secondary': '#faf8ff',
+              'surface-container-high': '#e1e9f0',
+              'primary-container': '#e0e0ff',
+              'on-primary-fixed': '#2c358e',
+              'surface-container-lowest': '#ffffff',
+              'primary-fixed-dim': '#ced1ff',
+              'primary-dim': '#4049a2',
+              primary: '#4c56af',
+              'surface-tint': '#4c56af',
+              surface: '#f7f9fc',
+            },
+            fontFamily: {
+              headline: ['Inter'],
+              body: ['Inter'],
+              label: ['Inter'],
+            },
+            borderRadius: {
+              DEFAULT: '0.125rem',
+              lg: '0.25rem',
+              xl: '0.5rem',
+              full: '0.75rem',
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings:
+          'FILL' 0,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24;
+        vertical-align: middle;
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .animate-spin {
+        animation: spin 1s linear infinite;
+        display: inline-block;
+      }
+    </style>
+    <link rel="stylesheet" href="/static/css/common/nav.css" />
+  </head>
+  <body class="bg-surface text-on-surface antialiased">
+    <!-- TopNavBar -->
+    <header class="fixed top-0 w-full z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm dark:shadow-none font-sans antialiased headline-sm font-semibold tracking-tight">
+      <div class="flex justify-between items-center w-full px-6 h-16">
+        <div class="flex items-center gap-8">
+          <span class="text-2xl font-bold tracking-tighter text-indigo-700 dark:text-indigo-400">
+            <img src="/static/img/logo.png" alt="Suppressor Logo" class="h-16 ml-4">
+          </span>
+          <nav class="hidden md:flex items-center gap-6 h-full">
+            <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/">대시보드</a>
+            <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/search">앱 탐색</a>
+            <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/library">라이브러리</a>
+            <a id="adminScenarioHeaderLink" class="text-indigo-700 dark:text-indigo-400 border-b-2 border-indigo-700 dark:border-indigo-400 pb-1 flex items-center h-full" href="/scenario">시나리오 관리</a>
+          </nav>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="relative hidden sm:block">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+            <input class="pl-10 pr-4 py-2 bg-slate-100/50 dark:bg-slate-800/50 border-none rounded-xl text-sm w-64 focus:ring-2 focus:ring-primary/20" placeholder="검색어를 입력하세요..." type="text"/>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- SideNavBar -->
+    <aside
+      class="h-screen w-64 fixed left-0 top-0 border-r-0 bg-slate-50 dark:bg-slate-950 z-30 hidden md:block"
+    >
+      <div class="flex flex-col h-full py-6 gap-2 pt-20">
+        <div class="px-6 py-4 mb-4 flex items-center gap-3">
+          <div
+            class="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center text-primary"
+          >
+            <span
+              class="material-symbols-outlined"
+              style="font-variation-settings: 'FILL' 1"
+              >hub</span
+            >
+          </div>
+          <div>
+            <h2 class="text-lg font-black text-slate-900 leading-tight">
+              Suppressor
+            </h2>
+            <p class="text-xs text-slate-500">Enterprise Edition</p>
+          </div>
+        </div>
+        <nav class="flex flex-col space-y-1">
+          <a
+            class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 rounded-lg mx-2 text-sm font-medium transition-all hover:scale-[1.02]"
+            href="/"
+          >
+            <span class="material-symbols-outlined">home</span><span>홈</span>
+          </a>
+          <a
+            class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 rounded-lg mx-2 text-sm font-medium transition-all hover:scale-[1.02]"
+            href="/search"
+          >
+            <span class="material-symbols-outlined">explore</span
+            ><span>앱 탐색</span>
+          </a>
+          <a
+            class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 rounded-lg mx-2 text-sm font-medium transition-all hover:scale-[1.02]"
+            href="/library"
+          >
+            <span class="material-symbols-outlined">inventory_2</span
+            ><span>라이브러리</span>
+          </a>
+          <a
+            class="flex items-center gap-3 bg-indigo-50 text-indigo-700 rounded-lg mx-2 px-4 py-3 transition-all hover:scale-[1.02]"
+            href="/scenario"
+          >
+            <span class="material-symbols-outlined">dataset</span
+            ><span>시나리오 관리</span>
+          </a>
+          <a
+            class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 rounded-lg mx-2 text-sm font-medium transition-all hover:scale-[1.02]"
+            href="/admin"
+          >
+            <span class="material-symbols-outlined">dashboard_customize</span
+            ><span>관리자 대시보드</span>
+          </a>
+        </nav>
+        <div id="side-bottom" class="mt-auto px-4 flex flex-col gap-4">
+          <script src="/static/js/common.js?v=session-fix-1"></script>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 pt-20 p-8 min-h-screen">
+      <!-- 페이지 헤더 -->
+      <header class="mb-8 flex justify-between items-end">
+        <div>
+          <h1
+            class="text-3xl font-extrabold tracking-tight text-on-surface mb-1"
+          >
+            시나리오 ID 관리
+          </h1>
+          <p class="text-on-surface-variant">
+            vectorDB에 적재되는 탐지 시나리오를 관리합니다.
+          </p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span
+            id="db-status"
+            class="text-sm font-medium text-on-surface-variant bg-surface-container px-3 py-1 rounded-full"
+          >
+            상태 확인 중...
+          </span>
+          <button
+            id="reload-btn"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold shadow-sm hover:opacity-90 transition-opacity"
+          >
+            <span class="material-symbols-outlined text-sm">refresh</span>
+            vectorDB 재적재
+          </button>
+        </div>
+      </header>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- 시나리오 목록 (좌 2/3) -->
+        <div class="lg:col-span-2 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-bold tracking-tight text-on-surface">
+                등록된 시나리오
+              </h2>
+              <p class="text-sm text-on-surface-variant mt-1" id="total-count">
+                불러오는 중...
+              </p>
+            </div>
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm"
+                >search</span
+              >
+              <input
+                id="search-input"
+                type="text"
+                placeholder="시나리오 ID 또는 태그 검색"
+                class="pl-9 pr-4 py-2 bg-surface-container-low border border-outline-variant/30 rounded-xl text-sm w-64 focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+          </div>
+
+          <div
+            class="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 shadow-sm overflow-hidden"
+          >
+            <table class="w-full text-left border-collapse">
+              <colgroup>
+                <col style="width: 35%" />
+                <col style="width: 35%" />
+                <col style="width: 15%" />
+                <col style="width: 15%" />
+              </colgroup>
+              <thead
+                class="bg-surface-container-low text-on-surface-variant text-xs uppercase tracking-wider font-bold sticky top-0"
+              >
+                <tr>
+                  <th class="px-6 py-4">시나리오 ID</th>
+                  <th class="px-6 py-4">Behavior Tags</th>
+                  <th class="px-6 py-4">문서</th>
+                  <th class="px-6 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody
+                id="scenario-tbody"
+                class="divide-y divide-surface-container"
+              ></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 업로드 패널 (우 1/3) -->
+        <div class="space-y-6">
+          <div
+            class="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 shadow-sm p-6"
+          >
+            <h2 class="text-lg font-bold text-on-surface mb-1">
+              시나리오 추가
+            </h2>
+            <p class="text-xs text-on-surface-variant mb-5">
+              시나리오 ID는 업로드 시 고유값으로 자동 생성됩니다.<br />
+              MD 문서는 선택 사항이지만 dynamic 분석에 필요합니다.
+            </p>
+
+            <form id="upload-form" class="space-y-4">
+              <!-- JSON 파일 -->
+              <div>
+                <label class="block text-sm font-semibold text-on-surface mb-2">
+                  시나리오 JSON <span class="text-red-500">*</span>
+                </label>
+                <label
+                  class="flex items-center gap-3 px-4 py-3 bg-surface-container-low border border-outline-variant/30 rounded-xl cursor-pointer hover:bg-surface-container transition-colors"
+                >
+                  <span class="material-symbols-outlined text-primary"
+                    >upload_file</span
+                  >
+                  <span
+                    id="json-file-label"
+                    class="text-sm text-on-surface-variant truncate"
+                    >JSON 파일 선택</span
+                  >
+                  <input
+                    id="json-file-input"
+                    type="file"
+                    accept=".json"
+                    class="hidden"
+                  />
+                </label>
+                <p class="text-xs text-on-surface-variant mt-1.5">
+                  pattern_name, vector_fingerprint 포함 필수
+                </p>
+              </div>
+
+              <!-- MD 파일 -->
+              <div>
+                <label class="block text-sm font-semibold text-on-surface mb-2">
+                  시나리오 문서 MD
+                  <span class="text-on-surface-variant font-normal"
+                    >(선택)</span
+                  >
+                </label>
+                <label
+                  class="flex items-center gap-3 px-4 py-3 bg-surface-container-low border border-outline-variant/30 rounded-xl cursor-pointer hover:bg-surface-container transition-colors"
+                >
+                  <span
+                    class="material-symbols-outlined text-on-surface-variant"
+                    >description</span
+                  >
+                  <span
+                    id="md-file-label"
+                    class="text-sm text-on-surface-variant truncate"
+                    >MD 파일 선택</span
+                  >
+                  <input
+                    id="md-file-input"
+                    type="file"
+                    accept=".md"
+                    class="hidden"
+                    onchange="
+                      document.getElementById('md-file-label').textContent =
+                        this.files[0]?.name || 'MD 파일 선택'
+                    "
+                  />
+                </label>
+                <p class="text-xs text-on-surface-variant mt-1.5">
+                  업로드한 JSON 시나리오의 설명 문서
+                </p>
+              </div>
+
+              <button
+                id="upload-btn"
+                type="submit"
+                class="w-full py-2.5 bg-primary text-white rounded-xl text-sm font-semibold shadow-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                업로드
+              </button>
+            </form>
+          </div>
+
+          <!-- 안내 카드 -->
+          <div
+            class="bg-indigo-50 rounded-2xl border border-indigo-100 p-5 space-y-3"
+          >
+            <div
+              class="flex items-center gap-2 text-indigo-700 font-bold text-sm"
+            >
+              <span class="material-symbols-outlined text-base">info</span>
+              업로드 후 작업 순서
+            </div>
+            <ol
+              class="text-xs text-indigo-600 space-y-2 list-decimal list-inside"
+            >
+              <li>JSON (+ MD 선택) 파일 업로드</li>
+              <li>업로드 완료 확인</li>
+              <li><strong>vectorDB 재적재</strong> 버튼 클릭</li>
+              <li>적재된 벡터 수 확인</li>
+            </ol>
+            <p class="text-xs text-indigo-500">
+              삭제 후에도 재적재가 필요합니다.
+            </p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- 확인 다이얼로그 -->
+    <div id="confirm-modal" class="fixed inset-0 z-50 hidden">
+      <div class="fixed inset-0 bg-black/40"></div>
+      <div class="fixed inset-0 flex items-center justify-center p-4">
+        <div
+          class="bg-surface-container-lowest rounded-2xl shadow-xl border border-outline-variant/10 w-full max-w-sm p-6"
+        >
+          <div class="flex items-center gap-3 mb-3">
+            <div class="p-2 rounded-full bg-primary/10 text-primary">
+              <span class="material-symbols-outlined">help</span>
+            </div>
+            <h3 class="font-bold text-on-surface" id="confirm-title"></h3>
+          </div>
+          <p
+            class="text-sm text-on-surface-variant mb-6 whitespace-pre-line"
+            id="confirm-message"
+          ></p>
+          <div class="flex justify-end gap-3">
+            <button
+              id="confirm-cancel"
+              class="px-5 py-2 rounded-full text-sm font-semibold text-on-surface-variant hover:bg-surface-container-high transition-colors"
+            >
+              취소
+            </button>
+            <button
+              id="confirm-ok"
+              class="px-5 py-2 rounded-full text-sm font-semibold bg-primary text-white hover:opacity-90 transition-opacity shadow-sm"
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 토스트 컨테이너 -->
+    <div
+      id="toast-container"
+      class="fixed bottom-6 right-6 z-[100] flex flex-col gap-2 max-w-sm"
+    ></div>
+
+    <script src="/static/js/admin/scenario_id.js?v=20260612-hashid-1"></script>
+  </body>
+</html>

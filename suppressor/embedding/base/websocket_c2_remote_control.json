@@ -1,0 +1,80 @@
+{
+  "scenario_id": "akbpdhcilicjoadogkojbgokbfbgeikm",
+  "builtin": true,
+  "pattern_name": "websocket_c2_remote_control",
+  "doc_ref": "scenario_docs/websocket_c2_remote_control.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "broad",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "background"
+      ],
+      "permissions_hint": [
+        "tabs",
+        "storage",
+        "declarativeNetRequest"
+      ]
+    },
+    "capability_profile": [
+      "websocket_connection",
+      "remote_command_execution",
+      "response_exfiltration",
+      "http_proxy"
+    ],
+    "capability_combinations": [
+      "websocket_connect + fetch_relay",
+      "socket_onmessage + response_headers_exfiltration"
+    ],
+    "static_code_signals": {
+      "websocket": {
+        "apis": [
+          "WebSocket",
+          "socket.onmessage",
+          "socket.send"
+        ],
+        "keywords": [
+          "readyState",
+          "arrayBuffer"
+        ]
+      },
+      "network": {
+        "apis": [
+          "fetch"
+        ],
+        "keywords": [
+          "response.headers.entries",
+          "response.status",
+          "Promise.all"
+        ]
+      },
+      "parsing": {
+        "apis": [
+          "JSON.parse"
+        ],
+        "keywords": [
+          "event.data"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "session_id_received",
+        "source": "c2_server",
+        "path": [
+          "websocket_connect",
+          "fetch_relay",
+          "response_collect"
+        ],
+        "sink": "socket_send"
+      }
+    ],
+    "behavior_tags": [
+      "websocket_c2",
+      "http_relay",
+      "response_exfiltration",
+      "remote_command_execution"
+    ]
+  }
+}

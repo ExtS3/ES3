@@ -1,0 +1,50 @@
+# ── 환경 변수 / 시크릿 ──────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+
+# ── Python 가상 환경 ─────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── Python 캐시 / 빌드 산출물 ────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+*.egg-info/
+
+# ── 런타임 생성 파일 ─────────────────────────────────────────
+# 업로드 대기 파일 (디렉토리 자체는 유지)
+backend/security_scan/scan_pending/*
+!backend/security_scan/scan_pending/.gitkeep
+
+downloads/
+
+# suppressor로부터 수신한 분석 결과
+analysis_result/
+
+# 거부 목록 (운영 중 갱신되는 런타임 데이터)
+backend/admin/reject_list.json
+
+# ── 로그 ────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── OS / 에디터 ──────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+__MACOSX/
+.vscode/
+.idea/
+.es3
+es3/

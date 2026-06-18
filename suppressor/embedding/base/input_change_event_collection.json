@@ -1,0 +1,76 @@
+{
+  "scenario_id": "hcbgfcpdimjechnieabafjfhgmljneio",
+  "builtin": true,
+  "pattern_name": "input_change_event_collection",
+  "doc_ref": "scenario_docs/input_change_event_collection.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "targeted",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "content_script",
+        "background"
+      ],
+      "permissions_hint": [
+        "activeTab",
+        "storage"
+      ]
+    },
+    "capability_profile": [
+      "user_input_access",
+      "message_bridge",
+      "external_network"
+    ],
+    "capability_combinations": [
+      "input_event_hook + runtime_message",
+      "user_input_access + external_network"
+    ],
+    "static_code_signals": {
+      "input": {
+        "apis": [
+          "$('input').change",
+          "Date().getTime"
+        ],
+        "patterns": [
+          "input_change_hook",
+          "HTMLInputElement_getter_hook",
+          "HTMLTextAreaElement_getter_hook"
+        ]
+      },
+      "messaging": {
+        "apis": [
+          "chrome.runtime.sendMessage"
+        ],
+        "keywords": [
+          "input_payload"
+        ]
+      },
+      "context": {
+        "apis": [
+          "window.location.href"
+        ],
+        "keywords": [
+          "page_url_context"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "input_change",
+        "source": "form_field_value",
+        "path": [
+          "content_script",
+          "runtime_message",
+          "background"
+        ],
+        "sink": "localhost_post"
+      }
+    ],
+    "behavior_tags": [
+      "input_collection",
+      "form_monitoring",
+      "data_exfiltration"
+    ]
+  }
+}

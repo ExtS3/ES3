@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="/static/vendor/tailwindcss-forms-container-queries.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;family=Noto+Sans+KR:wght@300;400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "outline": "#717c84",
+              "on-tertiary-fixed": "#333d55",
+              "primary-fixed": "#e0e0ff",
+              "primary-container": "#e0e0ff",
+              "on-primary-fixed-variant": "#4953ac",
+              "surface-container-low": "#f0f4f8",
+              "tertiary-fixed": "#d5dffd",
+              "background": "#f7f9fc",
+              "surface-variant": "#d9e4ec",
+              "surface-container": "#e8eff4",
+              "on-surface": "#29343a",
+              "tertiary": "#545f78",
+              "surface-container-high": "#e1e9f0",
+              "on-background": "#29343a",
+              "on-secondary": "#faf8ff",
+              "inverse-surface": "#0b0f11",
+              "surface-dim": "#cedce5",
+              "tertiary-fixed-dim": "#c7d1ee",
+              "inverse-on-surface": "#9a9da0",
+              "secondary-fixed": "#dee0ff",
+              "surface-container-highest": "#d9e4ec",
+              "secondary": "#4958ac",
+              "on-surface-variant": "#566168",
+              "primary-dim": "#4049a2",
+              "on-secondary-fixed-variant": "#4555a8",
+              "on-primary-container": "#3f48a1",
+              "tertiary-container": "#d5dffd",
+              "primary-fixed-dim": "#ced1ff",
+              "outline-variant": "#a8b3bb",
+              "error": "#9e3f4e",
+              "on-error-container": "#782232",
+              "on-primary-fixed": "#2c358e",
+              "on-secondary-container": "#3b4a9e",
+              "on-tertiary-fixed-variant": "#4f5a72",
+              "on-secondary-fixed": "#27378a",
+              "on-primary": "#f9f6ff",
+              "secondary-dim": "#3d4c9f",
+              "primary": "#4c56af",
+              "on-tertiary": "#f9f8ff",
+              "error-dim": "#4f0116",
+              "on-tertiary-container": "#455068",
+              "surface-tint": "#4c56af",
+              "surface-container-lowest": "#ffffff",
+              "secondary-container": "#dee0ff",
+              "error-container": "#ff8b9a",
+              "on-error": "#fff7f7",
+              "secondary-fixed-dim": "#ccd2ff",
+              "inverse-primary": "#929bfa",
+              "surface": "#f7f9fc",
+              "surface-bright": "#f7f9fc",
+              "tertiary-dim": "#49536b"
+            },
+            fontFamily: {
+              "headline": ["Inter", "Noto Sans KR"],
+              "body": ["Inter", "Noto Sans KR"],
+              "label": ["Inter", "Noto Sans KR"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Pretendard', 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    </style>
+<link rel="stylesheet" href="/static/css/common/nav.css">
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="fixed inset-0 z-[999] bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm flex items-center justify-center hidden">
+  <div class="flex flex-col items-center gap-3">
+    <svg class="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+    <span class="text-sm font-medium text-on-surface-variant">분석 데이터 로딩 중...</span>
+  </div>
+</div>
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm dark:shadow-none font-sans antialiased headline-sm font-semibold tracking-tight">
+<div class="flex justify-between items-center w-full px-6 h-16">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-bold tracking-tighter text-indigo-700 dark:text-indigo-400">
+  <img src="/static/img/logo.png" alt="Suppressor Logo" class="h-16 ml-4">
+</span>
+<nav class="hidden md:flex items-center gap-6 h-full">
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/">대시보드</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/search">앱 탐색</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/library">라이브러리</a>
+<a id="adminScenarioHeaderLink" class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/scenario">시나리오 관리</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="pl-10 pr-4 py-2 bg-slate-100/50 dark:bg-slate-800/50 border-none rounded-xl text-sm w-64 focus:ring-2 focus:ring-primary/20" placeholder="검색어를 입력하세요..." type="text"/>
+</div>
+<div class="flex items-center gap-4"></div>
+</div>
+</div>
+</div>
+<!-- Notification Panel (Hidden by default) -->
+<div class="absolute right-6 top-16 mt-2 w-80 bg-surface-container-lowest rounded-xl shadow-2xl border border-outline-variant/10 overflow-hidden z-[60] hidden" id="notification-panel">
+<div class="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50">
+<span class="font-bold text-sm">알림</span>
+<button class="text-[10px] text-primary font-bold hover:underline">모두 읽음으로 표시</button>
+</div>
+<div class="max-h-[320px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+<div class="p-4 hover:bg-slate-50 transition-colors cursor-pointer group">
+<div class="flex gap-3">
+<div class="w-2 h-2 mt-1.5 rounded-full bg-primary flex-shrink-0"></div>
+<div>
+<p class="text-xs font-medium text-on-surface mb-1">시스템 점검 완료</p>
+<p class="text-[10px] text-on-surface-variant line-clamp-2">모든 저장소가 안정적인 상태입니다.</p>
+<span class="text-[10px] text-slate-400 mt-2 block">10분 전</span>
+</div>
+</div>
+</div>
+</div>
+<a class="block p-3 text-center text-[10px] font-bold text-on-surface-variant hover:bg-slate-50 border-t border-slate-100 dark:border-slate-800" href="#">전체 알림 보기</a>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r-0 bg-slate-50 dark:bg-slate-950 z-30 hidden md:block flat no-line-rule">
+<div class="flex flex-col h-full py-6 gap-2 pt-20">
+<!-- Brand Info -->
+<div class="px-6 py-4 mb-4 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="hub" style="font-variation-settings: 'FILL' 1;">hub</span>
+</div>
+<div>
+<h2 class="text-lg font-black text-slate-900 dark:text-white leading-tight">Suppressor</h2>
+<p class="text-xs text-slate-500 dark:text-slate-400">Enterprise Edition</p>
+</div>
+</div>
+<!-- Main Navigation -->
+<nav class="flex flex-col space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span>홈</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/search">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+<span>앱 탐색</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/library">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span>라이브러리</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/scenario">
+<span class="material-symbols-outlined" data-icon="dataset">dataset</span>
+<span>시나리오 관리</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/admin">
+<span class="material-symbols-outlined" data-icon="dashboard_customize">dashboard_customize</span>
+<span>관리자 대시보드</span>
+</a>
+</nav>
+<!-- Side Bottom Common -->
+<div id="side-bottom" class="mt-auto px-4 flex flex-col gap-4">
+<script src="/static/js/common.js?v=session-fix-1"></script>
+</div>
+</aside>
+
+
+
+<!-- Main Content Area -->
+<main class="lg:ml-64 pt-16 min-h-screen">
+<div class="max-w-[1400px] mx-auto p-6 md:p-8 space-y-8">
+<!-- Page Header -->
+<header class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<nav class="flex items-center gap-2 text-xs font-medium text-on-surface-variant mb-2">
+<span>애플리케이션</span>
+<span class="material-symbols-outlined text-xs">chevron_right</span>
+<span>승인 대기</span>
+</nav>
+<h1 class="text-3xl font-extrabold tracking-tight text-on-surface mb-1">승인 대기 앱 상세 분석</h1>
+<div class="flex items-center gap-3">
+<span id="head-app_name" class="text-xl font-semibold text-primary">N/A</span>
+<span class="bg-secondary-container text-on-secondary-container px-2.5 py-0.5 rounded-full text-xs font-bold uppercase">Pending</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button id="reject_btn" class="flex items-center gap-2 px-6 py-2.5 bg-surface-container-high text-on-surface font-bold rounded-xl hover:bg-surface-container-highest transition-all active:scale-95">
+<span class="material-symbols-outlined text-[20px]">close</span>
+                        반려
+                    </button>
+<button id="approve_btn" class="flex items-center gap-2 px-6 py-2.5 bg-primary text-white font-bold rounded-xl shadow-lg shadow-primary/20 hover:bg-primary-dim transition-all active:scale-95">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+                        최종 승인
+                    </button>
+</div>
+</header>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+<!-- Left Column (Column 1-4) -->
+<div class="xl:col-span-4 space-y-6">
+<!-- 앱 기본 정보 -->
+<section class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm transition-transform hover:-translate-y-1 duration-300">
+<div class="flex items-center justify-between mb-6">
+<h2 class="text-sm font-bold text-on-surface-variant uppercase tracking-wider">앱 기본 정보</h2>
+<span class="material-symbols-outlined text-outline">info</span>
+</div>
+<div class="flex items-center gap-4 mb-8">
+<div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white shadow-inner">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">neurology</span>
+</div>
+<div>
+<p class="text-xs text-on-surface-variant font-medium">Title</p>
+<p id="info-app_name" class="font-bold text-on-surface">N/A</p>
+</div>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between items-center text-sm">
+<span class="text-on-surface-variant">신청 일시</span>
+<span id="info-submmit_date" class="font-semibold text-on-surface">N/A</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="text-on-surface-variant">카테고리</span>
+<span id="info-app_type" class="font-semibold text-on-surface">N/A</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="text-on-surface-variant">브라우저</span>
+<span id="info-app_browser" class="font-semibold text-on-surface">N/A</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="text-on-surface-variant">버전</span>
+<span id="info-version" class="font-semibold text-on-surface">N/A</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="text-on-surface-variant">확장 ID</span>
+<span id="info-id" class="font-semibold text-on-surface font-mono text-xs break-all">N/A</span>
+</div>
+</div>
+</section>
+
+</div>
+<!-- Right Column (Column 5-12) - Expanded Report Section -->
+<div class="xl:col-span-8 space-y-6">
+<!-- 보안 및 정적 분석 리포트 -->
+<section id="security-analysis-report-section" class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm">
+<div class="flex items-center justify-between mb-6">
+    <h2 class="text-sm font-bold text-on-surface-variant uppercase tracking-wider">보안 및 정적 분석 리포트</h2>
+    <div class="flex gap-2">
+        <div class="flex items-center gap-1.5 px-3 py-1 bg-error-container text-on-error-container rounded-lg text-xs font-bold">
+            <span class="material-symbols-outlined text-sm">dangerous</span>
+            <span id="count-critical">0</span> critical
+        </div>
+        <div class="flex items-center gap-1.5 px-3 py-1 bg-orange-100 text-orange-700 rounded-lg text-xs font-bold">
+            <span class="material-symbols-outlined text-sm">warning</span>
+            <span id="count-high">0</span> high
+        </div>
+        <div class="flex items-center gap-1.5 px-3 py-1 bg-amber-100 text-amber-700 rounded-lg text-xs font-bold">
+            <span class="material-symbols-outlined text-sm">report_problem</span>
+            <span id="count-medium">0</span> medium
+        </div>
+        <div class="flex items-center gap-1.5 px-3 py-1 bg-surface-container-high text-on-surface-variant rounded-lg text-xs font-bold">
+            <span class="material-symbols-outlined text-sm">info</span>
+            <span id="count-low">0</span> low
+        </div>
+    </div>
+</div>
+<div class="space-y-8">
+<div id="analysis-report" class="space-y-6">
+    <section class="bg-surface-container-low rounded-xl p-5 border border-outline/10">
+        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-5">
+            <div>
+                <h3 class="text-lg font-bold text-on-surface flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">assessment</span>
+                    분석 요약
+                </h3>
+                <p id="summary-reason" class="mt-2 text-sm text-on-surface-variant leading-6">분석 결과를 불러오는 중입니다.</p>
+            </div>
+            <button id="export-analysis-pdf" type="button" class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white text-primary border border-primary/30 rounded-lg text-sm font-bold hover:bg-primary-container transition-colors">
+                <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+                PDF 내보내기
+            </button>
+            <button id="download-summary-json" type="button" class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary-dim transition-colors">
+                <span class="material-symbols-outlined text-[18px]">download</span>
+                JSON 다운로드
+            </button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+            <div class="bg-white rounded-lg border border-outline/10 p-4">
+                <p class="text-xs font-bold text-on-surface-variant mb-1">판정</p>
+                <p id="card-decision" class="text-xl font-black text-on-surface">-</p>
+            </div>
+            <div class="bg-white rounded-lg border border-outline/10 p-4">
+                <p class="text-xs font-bold text-on-surface-variant mb-1">위험도</p>
+                <p id="card-risk-level" class="text-xl font-black text-on-surface">-</p>
+            </div>
+            <div class="bg-white rounded-lg border border-outline/10 p-4">
+                <p class="text-xs font-bold text-on-surface-variant mb-1">점수</p>
+                <p id="card-risk-score" class="text-xl font-black text-on-surface">-</p>
+            </div>
+            <div class="bg-white rounded-lg border border-outline/10 p-4">
+                <p class="text-xs font-bold text-on-surface-variant mb-1">권장 조치</p>
+                <p id="card-action" class="text-base font-black text-on-surface leading-6">-</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="bg-surface-container-low rounded-xl p-5 border border-outline/10">
+        <h3 class="text-base font-bold text-on-surface mb-3 flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">priority_high</span>
+            주요 위험 근거
+        </h3>
+        <div id="human-risk-summary" class="space-y-2 text-sm text-on-surface leading-6"></div>
+    </section>
+
+    <section id="version-diff-section" class="hidden bg-surface-container-low rounded-xl p-5 border border-outline/10">
+        <div class="flex items-start justify-between gap-3 mb-3">
+            <h3 class="text-base font-bold text-on-surface flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">history</span>
+                버전 변경 사항
+            </h3>
+            <button id="view-version-diff" type="button"
+                class="shrink-0 inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-white hover:opacity-90 transition">
+                <span class="material-symbols-outlined text-sm">difference</span>
+                자세한 변경 내용 보러가기
+            </button>
+        </div>
+        <div id="version-diff-summary" class="text-sm text-on-surface leading-6"></div>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <article class="bg-white rounded-xl border border-outline/10 p-5">
+            <h4 class="text-sm font-black text-on-surface mb-3">정적 분석</h4>
+            <div id="static-section" class="text-sm text-on-surface-variant leading-6"></div>
+        </article>
+        <article class="bg-white rounded-xl border border-outline/10 p-5">
+            <h4 class="text-sm font-black text-on-surface mb-3">동적 분석</h4>
+            <div id="dynamic-section" class="text-sm text-on-surface-variant leading-6"></div>
+        </article>
+        <article class="bg-white rounded-xl border border-outline/10 p-5">
+            <h4 class="text-sm font-black text-on-surface mb-3">난독화 분석</h4>
+            <div id="obfuscation-section" class="text-sm text-on-surface-variant leading-6"></div>
+        </article>
+        <article class="bg-white rounded-xl border border-outline/10 p-5">
+            <h4 class="text-sm font-black text-on-surface mb-3">RAG 분석</h4>
+            <div id="rag-section" class="text-sm text-on-surface-variant leading-6"></div>
+        </article>
+    </section>
+
+    <section class="bg-surface-container-low rounded-xl p-5 border border-outline/10">
+        <h3 class="text-base font-bold text-on-surface mb-3 flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">fact_check</span>
+            권장 검토 사항
+        </h3>
+        <ol id="review-checklist" class="list-decimal pl-5 space-y-2 text-sm text-on-surface leading-6"></ol>
+    </section>
+
+    <details class="bg-slate-950 rounded-xl border border-outline/10 overflow-hidden">
+        <summary class="cursor-pointer px-5 py-3 text-sm font-bold text-slate-100">개발자용 raw JSON 보기</summary>
+        <pre id="json-summary" class="text-green-300 p-5 overflow-x-auto text-xs font-mono leading-relaxed max-h-[520px]"></pre>
+    </details>
+</div>
+
+</div>
+</div>
+</div>
+</main>
+<!-- Visual Accents -->
+<div class="fixed top-20 right-[-100px] w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] pointer-events-none -z-10"></div>
+<div class="fixed bottom-[-100px] left-[-100px] w-[400px] h-[400px] bg-secondary/5 rounded-full blur-[100px] pointer-events-none -z-10"></div>
+</body>
+
+<script src="/static/js/upload.js"></script>
+<script src="/static/vendor/html2canvas.min.js"></script>
+<script src="/static/vendor/jspdf.umd.min.js"></script>
+<script src="/static/js/admin/admin_log.js?v=20260612-version-diff-2"></script>
+<script src="/static/js/admin/decision.js?v=20260517-source-path-fix"></script>
+
+</html>

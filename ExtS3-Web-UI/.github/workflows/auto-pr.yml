@@ -1,0 +1,124 @@
+name: 🤖 Auto PR Pipeline
+
+on: #아래 브랜치 형식으로 Commit 생성 시 아래 jobs workflow 실행
+  push:
+    branches:
+      - 'feature/**'
+      - 'fix/**'
+      - 'docs/**'
+      - 'refactor/**'
+
+permissions: #Workflow 권한
+  contents: read #commit 내용 조회
+  pull-requests: write #pr 생성
+
+jobs:
+  rule-check-and-pr:
+    name: 규칙 검사 및 자동 PR 생성
+    runs-on: ubuntu-latest
+
+    steps: 
+      - name: Code Download #git action 서버에서 git clone
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Python Install #python 설치
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Python Setting #python 라이브러리 설치
+        run: |
+          pip install pyyaml --quiet
+
+      - name: Rule Check #해당 Repo 내의 scripts 디렉토리 안에 위치한 check_rules.py를 실행
+        id: rule_check
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python scripts/check_rules.py
+        continue-on-error: true
+
+      - name: Result Report #Rule 기반의 검사 결과 요약
+        if: always()
+        run: |
+          if [ -f rule_check_result.json ]; then
+            echo "## 🔍 규칙 검사 결과 요약" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            python3 - << 'PY'
+          import json
+          import os
+
+          with open("rule_check_result.json", encoding="utf-8") as f:
+              data = json.load(f)
+
+          summary = os.environ.get("GITHUB_STEP_SUMMARY", "")
+          rule_names = {
+              "rule1_branch": "브랜치 이름",
+              "rule2_readme": "README 양식",
+              "rule3_required_files": "필수 파일",
+              "rule4_blocked_files": "금지 파일",
+              "rule5_commit_message": "커밋 메시지",
+          }
+          status_icons = {"PASS": "✅", "FAIL": "❌", "WARNING": "⚠️", "SKIP": "⏭️"}
+
+          lines = [
+              "| # | 규칙 | 상태 | 내용 |",
+              "|---|------|------|------|",
+          ]
+          for i, (key, rdata) in enumerate(data.get("rules", {}).items(), 1):
+              icon = status_icons.get(rdata["status"], "❓")
+              msg = rdata["messages"][0][:80] if rdata["messages"] else ""
+              lines.append(f"| {i} | {rule_names.get(key, key)} | {icon} {rdata['status']} | {msg} |")
+
+          with open(summary, "a", encoding="utf-8") as f:
+              f.write("\n".join(lines) + "\n\n")
+              if data.get("has_fail"):
+                  f.write("### ❌ 검사 실패 — PR이 생성되지 않습니다.\n\n")
+                  f.write("**실패 원인을 수정한 후 다시 push해 주세요.**\n")
+              elif data.get("warnings"):
+                  f.write("### ⚠️ 경고 있음 — PR에 경고 내용이 포함됩니다.\n")
+              else:
+                  f.write("### ✅ 모든 검사 통과 — PR을 자동 생성합니다.\n")
+          PY
+          fi
+
+      - name: PR Fail #Rule을 통과하지 못한 경우 PR 실패 처리
+        if: steps.rule_check.outcome == 'failure'
+        run: |
+          echo "::error title=규칙 검사 실패::하나 이상의 규칙을 통과하지 못했습니다. 위 로그를 확인하세요."
+          if [ -f rule_check_result.json ]; then
+            python3 - << 'PY'
+          import json
+          with open("rule_check_result.json", encoding="utf-8") as f:
+              data = json.load(f)
+          print("\n📋 실패한 규칙 목록:")
+          for key, rdata in data.get("rules", {}).items():
+              if rdata["status"] == "FAIL":
+                  print(f"  ❌ {key}: {rdata['messages'][0] if rdata['messages'] else ''}")
+          PY
+          fi
+          exit 1
+
+      - name: Auto PR #Rule을 모두 통과했다면 PR 자동 생성 (scripts 디렉토리 안에 위치한 create_pr.py를 실행)
+        if: steps.rule_check.outcome == 'success'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_HEAD_REF: ${{ github.ref_name }}
+          PR_BASE_BRANCH: develop
+          PR_ALLOW_FALLBACK_TO_MAIN: 'false'
+        run: |
+          python scripts/create_pr.py
+
+      - name: PR Link #PR 링크 추가
+        if: steps.rule_check.outcome == 'success'
+        run: |
+          if [ -f created_pr_url.txt ]; then
+            PR_URL=$(cat created_pr_url.txt)
+            echo "## 🎉 PR 생성 완료" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "[$PR_URL]($PR_URL)" >> "$GITHUB_STEP_SUMMARY"
+            echo "✅ PR URL: $PR_URL"
+          fi

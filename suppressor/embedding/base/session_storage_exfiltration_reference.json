@@ -1,0 +1,114 @@
+{
+  "scenario_id": "diaomlklmchphfolkkngjdjkbempnnkg",
+  "builtin": true,
+  "pattern_name": "session_storage_exfiltration_reference",
+  "doc_ref": "scenario_docs/session_storage_exfiltration_reference.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "limited",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "background",
+        "content_script"
+      ],
+      "content_script_run_at": [
+        "document_start"
+      ]
+    },
+    "capability_profile": [
+      "background_execution",
+      "early_document_injection",
+      "event_based_background_execution",
+      "external_network",
+      "limited_page_access",
+      "message_bridge",
+      "page_context_access",
+      "page_storage_access",
+      "periodic_execution",
+      "storage_access"
+    ],
+    "capability_combinations": [
+      "content_script + message_bridge + background",
+      "page_storage_access + message_bridge + external_network",
+      "periodic_execution + repeated_external_transmission"
+    ],
+    "static_code_signals": {
+      "storage": {
+        "apis": [
+          "localStorage"
+        ],
+        "keywords": [
+          "auth",
+          "session",
+          "user_id"
+        ]
+      },
+      "messaging": {
+        "apis": [
+          "runtime.onMessage",
+          "runtime.sendMessage"
+        ],
+        "patterns": [
+          "content_script_to_background"
+        ],
+        "message_actions": [
+          "save_session"
+        ]
+      },
+      "network": {
+        "apis": [
+          "fetch"
+        ],
+        "external_origin_present": true,
+        "methods": [
+          "POST"
+        ],
+        "endpoint_keywords": [
+          "session"
+        ]
+      },
+      "cookie": {
+        "apis": [
+          "chrome.cookies.getAll",
+          "chrome.cookies.get",
+          "chrome.cookies.onChanged"
+        ]
+      },
+      "network_intercept": {
+        "apis": [
+          "chrome.webRequest.onBeforeRequest.addListener"
+        ]
+      },
+      "delayed_execution": {
+        "apis": [
+          "setInterval"
+        ],
+        "patterns": [
+          "periodic_session_collection",
+          "repeated_transmission"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "document_start",
+        "source": "page_local_storage",
+        "path": [
+          "content_script",
+          "runtime_message",
+          "background"
+        ],
+        "sink": "external_network"
+      }
+    ],
+    "behavior_tags": [
+      "credential_or_token_exfiltration_pattern",
+      "external_communication",
+      "message_passing_bridge",
+      "page_storage_exfiltration",
+      "repeated_exfiltration",
+      "session_theft_pattern"
+    ]
+  }
+}

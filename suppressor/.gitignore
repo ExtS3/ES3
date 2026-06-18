@@ -1,0 +1,73 @@
+# ── 환경 변수 / 시크릿 ──────────────────────────────────────
+.env
+.env.*
+.env.example
+!.env.example
+*.pem
+*.key
+*.crt
+
+# ── Python 가상 환경 ─────────────────────────────────────────
+.suppressor/
+.venv/
+venv/
+env/
+ENV/
+
+# -- 팬딩 파일
+pending_files/
+
+# ── Python 캐시 / 빌드 산출물 ────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+*.egg-info/
+
+# ── 런타임 분석 출력 ─────────────────────────────────────────
+# 메인 분석 결과 디렉토리
+analysis_result/
+backend/results/
+results_json/
+storage/
+profiles/
+
+# ExtAnalysis 분석 임시 디렉토리 및 결과
+ExtAnalysis/lab/
+ExtAnalysis/reports/*
+ExtAnalysis/reports.json
+ExtAnalysis/extanalysis.log
+backend/.tmp/
+
+# Dynamic_RAG 출력 (디렉토리 자체는 유지)
+Dynamic_RAG/out/*
+!Dynamic_RAG/out/.gitkeep
+
+# embedding 런타임 캐시
+embedding/embedding.json
+embedding/debug_prompts/
+
+# ── hm_new 홀딩 매니저 ───────────────────────────────────────
+# 홀딩 대기 파일 (디렉토리 자체는 유지)
+pending_files/*.zip
+hm_new/pending/*
+!hm_new/pending/.gitkeep
+
+# ── retro 모니터 런타임 데이터 ───────────────────────────────
+retro_state.json
+retro_queue.jsonl
+
+# ── 로그 ────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── OS / 에디터 ──────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+__MACOSX/
+.vscode/
+.idea/

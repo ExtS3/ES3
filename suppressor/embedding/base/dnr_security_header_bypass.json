@@ -1,0 +1,69 @@
+{
+  "scenario_id": "knfdfgomknhggpcmjcnkfihjklopnifl",
+  "builtin": true,
+  "pattern_name": "dnr_security_header_bypass",
+  "doc_ref": "scenario_docs/dnr_security_header_bypass.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "broad",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "background"
+      ],
+      "permissions_hint": [
+        "declarativeNetRequest",
+        "declarativeNetRequestWithHostAccess"
+      ]
+    },
+    "capability_profile": [
+      "dnr_ruleset",
+      "header_modification",
+      "request_modification"
+    ],
+    "capability_combinations": [
+      "dnr_ruleset + modifyHeaders",
+      "request_modification + csp_remove"
+    ],
+    "static_code_signals": {
+      "dnr": {
+        "apis": [
+          "declarativeNetRequest",
+          "updateSessionRules",
+          "updateDynamicRules",
+          "modifyHeaders",
+          "addRules",
+          "removeRuleIds",
+          "webRequest.onBeforeSendHeaders"
+        ],
+        "keywords": [
+          "Content-Security-Policy",
+          "Content-Security-Policy-Report-Only",
+          "X-Frame-Options",
+          "operation_remove",
+          "urlFilter_wildcard",
+          "main_frame",
+          "volumeHeaderRules",
+          "Access-Control-Allow-Origin"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "request_intercept",
+        "source": "mock_request",
+        "path": [
+          "dnr_rules",
+          "header_modify"
+        ],
+        "sink": "modified_headers"
+      }
+    ],
+    "behavior_tags": [
+      "security_header_bypass",
+      "csp_removal",
+      "header_spoofing",
+      "request_modification"
+    ]
+  }
+}

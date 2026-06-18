@@ -1,0 +1,140 @@
+services:
+  exts3-demo:
+    build:
+      context: .
+    image: exts3-demo:local
+    depends_on:
+      db:
+        condition: service_healthy
+      nexus:
+        condition: service_healthy
+      suppressor:
+        condition: service_healthy
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    environment:
+      DB_HOST: "${DB_HOST:-db}"
+      DB_PORT: "${DB_PORT:-5432}"
+      DB_USER: "${DB_USER:-example_db_user}"
+      DB_PASSWORD: "${DB_PASSWORD:-example_db_password}"
+      DB_NAME: "${DB_NAME:-example_db_name}"
+      NEXUS_BASE_URL: "${NEXUS_BASE_URL:-http://nexus:8081}"
+      NEXUS_REPOSITORY: "${NEXUS_REPOSITORY:-extension-demo}"
+      NEXUS_USERNAME: "${NEXUS_USERNAME:-example_nexus_user}"
+      NEXUS_PASSWORD: "${NEXUS_PASSWORD:-example_nexus_password}"
+      NEXUS_STORAGE_LIMIT_BYTES: "${NEXUS_STORAGE_LIMIT_BYTES:-}"
+      SUPPRESSOR_PRIVATE_IP: "${SUPPRESSOR_PRIVATE_IP:-suppressor}"
+      PORT: "${SUPPRESSOR_PORT:-8001}"
+      ENABLE_LOCAL_LIBRARY_FALLBACK: "${ENABLE_LOCAL_LIBRARY_FALLBACK:-true}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./downloads:/app/downloads
+      - ./analysis_result:/app/analysis_result
+      - ./backend/security_scan/scan_pending:/app/backend/security_scan/scan_pending
+
+  suppressor:
+    build:
+      context: ../suppressor
+    image: suppressor:local
+    depends_on:
+      vector-db:
+        condition: service_healthy
+      nexus:
+        condition: service_healthy
+      nexus-init:
+        condition: service_completed_successfully
+    ports:
+      - "${SUPPRESSOR_PUBLISHED_PORT:-8001}:8001"
+    environment:
+      WEB_SERVER_URL: "http://exts3-demo:8000"
+      NEXUS_BASE_URL: "${NEXUS_BASE_URL:-http://nexus:8081}"
+      NEXUS_REPOSITORY: "${NEXUS_REPOSITORY:-extension-demo}"
+      NEXUS_USERNAME: "${NEXUS_USERNAME:-example_nexus_user}"
+      NEXUS_PASSWORD: "${NEXUS_PASSWORD:-example_nexus_password}"
+      PGVECTOR_DB_HOST: "${PGVECTOR_DB_HOST:-vector-db}"
+      PGVECTOR_DB_PORT: "${PGVECTOR_DB_PORT:-5432}"
+      PGVECTOR_DB_USER: "${PGVECTOR_DB_USER:-vector_db_user}"
+      PGVECTOR_DB_PASSWORD: "${PGVECTOR_DB_PASSWORD:-vector_db_password}"
+      PGVECTOR_DB_NAME: "${PGVECTOR_DB_NAME:-vector_db}"
+      EMBEDDING_DIM: "${EMBEDDING_DIM:-1024}"
+      PGVECTOR_TABLE: "${PGVECTOR_TABLE:-public.es3_vector}"
+      PGVECTOR_MATCH_THRESHOLD: "${PGVECTOR_MATCH_THRESHOLD:-0}"
+      PGVECTOR_MATCH_COUNT: "${PGVECTOR_MATCH_COUNT:-10}"
+      EXTERNAL_RUNNER_MODE: "${EXTERNAL_RUNNER_MODE:-file}"
+      FILE_SCAN_URL: "http://127.0.0.1:8001/file_scan"
+    volumes:
+      - suppressor_storage:/app/storage
+      - suppressor_pending_files:/app/pending_files
+      - suppressor_results:/app/results_json
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: "${DB_USER:-example_db_user}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD:-example_db_password}"
+      POSTGRES_DB: "${DB_NAME:-example_db_name}"
+    ports:
+      - "${DB_PUBLISHED_PORT:-5432}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./docker/db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-example_db_user} -d ${DB_NAME:-example_db_name}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  vector-db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: "${PGVECTOR_DB_USER:-vector_db_user}"
+      POSTGRES_PASSWORD: "${PGVECTOR_DB_PASSWORD:-vector_db_password}"
+      POSTGRES_DB: "${PGVECTOR_DB_NAME:-vector_db}"
+    ports:
+      - "${PGVECTOR_DB_PUBLISHED_PORT:-5433}:5432"
+    volumes:
+      - vector_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PGVECTOR_DB_USER:-vector_db_user} -d ${PGVECTOR_DB_NAME:-vector_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nexus:
+    image: sonatype/nexus3:3.75.1
+    environment:
+      INSTALL4J_ADD_VM_PARAMS: "-Xms512m -Xmx1024m -XX:MaxDirectMemorySize=1024m -Dnexus.security.randompassword=false"
+    ports:
+      - "${NEXUS_PUBLISHED_PORT:-8081}:8081"
+    volumes:
+      - nexus_data:/nexus-data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8081/service/rest/v1/status"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
+
+  nexus-init:
+    image: curlimages/curl:8.11.1
+    depends_on:
+      nexus:
+        condition: service_healthy
+    environment:
+      NEXUS_BASE_URL: "http://nexus:8081"
+      NEXUS_REPOSITORY: "${NEXUS_REPOSITORY:-extension-demo}"
+      NEXUS_USERNAME: "${NEXUS_USERNAME:-example_nexus_user}"
+      NEXUS_PASSWORD: "${NEXUS_PASSWORD:-example_nexus_password}"
+    volumes:
+      - ./docker/nexus/init-repository.sh:/init-repository.sh:ro
+    entrypoint: ["/bin/sh", "/init-repository.sh"]
+    restart: "no"
+
+volumes:
+  db_data:
+  vector_db_data:
+  nexus_data:
+  suppressor_storage:
+  suppressor_pending_files:
+  suppressor_results:

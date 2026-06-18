@@ -1,0 +1,71 @@
+/* 귀여운 아기 공룡 로딩 애니메이션 (개별 4장 즉시 교체)
+ *
+ * 프레임 이미지 (dino_frame_01.png 제외, 가로 정렬 순서대로 4장):
+ *   frontend/static/img/dino_frame_02.png ~ dino_frame_05.png  (각 248 x 263, 투명 배경)
+ *
+ * 4장을 겹쳐 두고 매 순간 한 장만 즉시 켜고 끕니다(opacity 0/1 즉시 전환).
+ * 따라서 프레임이 바뀔 때 흐릿한 페이드가 전혀 없습니다.
+ *
+ * div 로 그렸던 이전(CSS) 버전은 dino-loader.v1-backup.css 에 백업되어 있습니다.
+ */
+.dino-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+    padding: 3.5rem 1rem;
+    user-select: none;
+}
+
+/* 5장을 같은 자리에 겹쳐 둠 */
+.dino-sprite {
+    position: relative;
+    width: 150px;
+    height: 128px;
+}
+.dino-frame {
+    position: absolute;
+    inset: 0;
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    background-size: auto 122px;
+    image-rendering: auto;
+    opacity: 0;                 /* 기본은 숨김, 자기 차례에만 켜짐 */
+    /* 0.4초에 4장 = 프레임당 0.1초. steps 가 아닌 즉시 on/off 키프레임 사용 */
+    animation: dino-flip 0.4s linear infinite;
+}
+.dino-frame.f2 { background-image: url('/static/img/dino_frame_02.png'); animation-delay: 0s;   }
+.dino-frame.f3 { background-image: url('/static/img/dino_frame_03.png'); animation-delay: 0.1s; }
+.dino-frame.f4 { background-image: url('/static/img/dino_frame_04.png'); animation-delay: 0.2s; }
+.dino-frame.f5 { background-image: url('/static/img/dino_frame_05.png'); animation-delay: 0.3s; }
+
+/* 로딩 텍스트 */
+.dino-loading-text {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #566168;
+    letter-spacing: 0.01em;
+}
+.dino-loading-text .dot {
+    animation: dino-dot 1.4s infinite;
+}
+.dino-loading-text .dot:nth-child(2) { animation-delay: 0.2s; }
+.dino-loading-text .dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* 각 프레임: 자기 차례(전체의 1/4 = 0~25%)에만 불투명, 나머지는 즉시 투명.
+ * 24.999%->25% 사이에서 opacity 1->0 으로 사실상 즉시 꺼져 페이드가 없습니다. */
+@keyframes dino-flip {
+    0%,  24.999% { opacity: 1; }
+    25%, 100%    { opacity: 0; }
+}
+
+@keyframes dino-dot {
+    0%, 60%, 100% { opacity: 0.2; }
+    30%           { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dino-frame { animation: none; }
+    .dino-frame.f2 { opacity: 1; }   /* 정지 시 첫 프레임만 표시 */
+}

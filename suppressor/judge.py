@@ -1,0 +1,2 @@
+def judge():
+    return "safe"

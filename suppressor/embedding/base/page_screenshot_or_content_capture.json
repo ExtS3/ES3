@@ -1,0 +1,134 @@
+{
+  "scenario_id": "bffmneckgkmiafcnjdandmomnhidjcki",
+  "builtin": true,
+  "pattern_name": "page_screenshot_or_content_capture",
+  "doc_ref": "scenario_docs/page_screenshot_or_content_capture.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "broad",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "background",
+        "content_script",
+        "popup"
+      ],
+      "permissions_hint": [
+        "tabs",
+        "activeTab",
+        "scripting",
+        "debugger",
+        "offscreen"
+      ]
+    },
+    "capability_profile": [
+      "screen_capture",
+      "page_content_capture",
+      "tab_access",
+      "temporary_tab_access",
+      "script_injection",
+      "message_bridge",
+      "background_execution",
+      "external_network",
+      "user_triggered_ui_execution"
+    ],
+    "capability_combinations": [
+      "tab_access + screen_capture",
+      "activeTab + captureVisibleTab",
+      "scripting + page_content_capture",
+      "content_script + message_bridge + background",
+      "screen_capture + external_network"
+    ],
+    "static_code_signals": {
+      "screenshot_capture": {
+        "apis": [
+          "chrome.tabs.captureVisibleTab",
+          "tabs.captureVisibleTab",
+          "captureVisibleTab",
+          "chrome_screenshot",
+          "Page.captureScreenshot"
+        ],
+        "keywords": [
+          "screenshot",
+          "screen_capture",
+          "captureScreenshot",
+          "captureVisible",
+          "captureTab",
+          "page_screenshot",
+          "browser_screenshot",
+          "screenshot-helper.js"
+        ],
+        "patterns": [
+          "capture_visible_tab_api",
+          "screenshot_helper_script",
+          "page_capture_payload"
+        ]
+      },
+      "messaging": {
+        "apis": [
+          "runtime.onMessage",
+          "runtime.sendMessage",
+          "tabs.sendMessage"
+        ],
+        "patterns": [
+          "content_script_to_background",
+          "popup_to_background",
+          "capture_request_message"
+        ],
+        "message_actions": [
+          "screenshot",
+          "capture",
+          "chrome_screenshot",
+          "takeScreenshot",
+          "captureVisibleTab"
+        ]
+      },
+      "network": {
+        "apis": [
+          "fetch",
+          "XMLHttpRequest"
+        ],
+        "methods": [
+          "POST"
+        ],
+        "endpoint_keywords": [
+          "upload",
+          "capture",
+          "screenshot",
+          "image",
+          "save",
+          "sync"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "user_action_or_remote_command",
+        "source": "active_tab",
+        "path": [
+          "popup_or_background",
+          "captureVisibleTab",
+          "serialize_image"
+        ],
+        "sink": "external_network_or_storage"
+      },
+      {
+        "trigger": "runtime_message",
+        "source": "content_script_or_popup",
+        "path": [
+          "background",
+          "tabs.captureVisibleTab"
+        ],
+        "sink": "network_post"
+      }
+    ],
+    "behavior_tags": [
+      "screen_capture",
+      "page_content_capture",
+      "browser_screenshot",
+      "message_passing_bridge",
+      "external_communication",
+      "data_exfiltration"
+    ]
+  }
+}

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>빌드 설정 - Nexus Repository</title>
+<script src="/static/vendor/tailwindcss-forms-container-queries.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-fixed-dim": "#ccd2ff",
+                    "primary-fixed": "#e0e0ff",
+                    "secondary-container": "#dee0ff",
+                    "on-surface": "#29343a",
+                    "surface-variant": "#d9e4ec",
+                    "surface-container-lowest": "#ffffff",
+                    "on-tertiary-container": "#455068",
+                    "secondary-fixed": "#dee0ff",
+                    "on-error-container": "#782232",
+                    "surface": "#f7f9fc",
+                    "inverse-surface": "#0b0f11",
+                    "surface-dim": "#cedce5",
+                    "on-background": "#29343a",
+                    "inverse-primary": "#929bfa",
+                    "on-primary": "#f9f6ff",
+                    "primary-container": "#e0e0ff",
+                    "on-surface-variant": "#566168",
+                    "inverse-on-surface": "#9a9da0",
+                    "on-secondary-fixed": "#27378a",
+                    "on-primary-fixed-variant": "#4953ac",
+                    "on-secondary-fixed-variant": "#4555a8",
+                    "on-primary-container": "#3f48a1",
+                    "surface-bright": "#f7f9fc",
+                    "on-tertiary-fixed-variant": "#4f5a72",
+                    "on-secondary-container": "#3b4a9e",
+                    "surface-container-low": "#f0f4f8",
+                    "on-secondary": "#faf8ff",
+                    "on-primary-fixed": "#2c358e",
+                    "tertiary-dim": "#49536b",
+                    "error-dim": "#4f0116",
+                    "tertiary-container": "#d5dffd",
+                    "tertiary-fixed": "#d5dffd",
+                    "surface-tint": "#4c56af",
+                    "primary-fixed-dim": "#ced1ff",
+                    "error-container": "#ff8b9a",
+                    "on-tertiary-fixed": "#333d55",
+                    "on-tertiary": "#f9f8ff",
+                    "surface-container": "#e8eff4",
+                    "background": "#f7f9fc",
+                    "error": "#9e3f4e",
+                    "secondary-dim": "#3d4c9f",
+                    "surface-container-highest": "#d9e4ec",
+                    "on-error": "#fff7f7",
+                    "tertiary-fixed-dim": "#c7d1ee",
+                    "tertiary": "#545f78",
+                    "primary": "#4c56af",
+                    "surface-container-high": "#e1e9f0",
+                    "outline": "#717c84",
+                    "primary-dim": "#4049a2",
+                    "outline-variant": "#a8b3bb",
+                    "secondary": "#4958ac"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+<link rel="stylesheet" href="/static/css/common/nav.css">
+</head>
+<body class="bg-surface text-on-surface min-h-screen">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm dark:shadow-none font-sans antialiased headline-sm font-semibold tracking-tight">
+<div class="flex justify-between items-center w-full px-6 h-16">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-bold tracking-tighter text-indigo-700 dark:text-indigo-400">
+  <img src="/static/img/logo.png" alt="Suppressor Logo" class="h-16 ml-4">
+</span>
+<nav class="hidden md:flex items-center gap-6 h-full">
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/">대시보드</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/search">앱 탐색</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/library">라이브러리</a>
+<a id="adminScenarioHeaderLink" class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/scenario">시나리오 관리</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="pl-10 pr-4 py-2 bg-slate-100/50 dark:bg-slate-800/50 border-none rounded-xl text-sm w-64 focus:ring-2 focus:ring-primary/20" placeholder="검색어를 입력하세요..." type="text"/>
+</div>
+
+</div>
+</div>
+<!-- Notification Panel (Hidden by default) -->
+<div class="absolute right-6 top-16 mt-2 w-80 bg-surface-container-lowest rounded-xl shadow-2xl border border-outline-variant/10 overflow-hidden z-[60] hidden" id="notification-panel">
+<div class="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50">
+<span class="font-bold text-sm">알림</span>
+<button class="text-[10px] text-primary font-bold hover:underline">모두 읽음으로 표시</button>
+</div>
+<div class="max-h-[320px] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+<div class="p-4 hover:bg-slate-50 transition-colors cursor-pointer group">
+<div class="flex gap-3">
+<div class="w-2 h-2 mt-1.5 rounded-full bg-primary flex-shrink-0"></div>
+<div>
+<p class="text-xs font-medium text-on-surface mb-1">시스템 점검 완료</p>
+<p class="text-[10px] text-on-surface-variant line-clamp-2">모든 저장소가 안정적인 상태입니다.</p>
+<span class="text-[10px] text-slate-400 mt-2 block">10분 전</span>
+</div>
+</div>
+</div>
+</div>
+<a class="block p-3 text-center text-[10px] font-bold text-on-surface-variant hover:bg-slate-50 border-t border-slate-100 dark:border-slate-800" href="#">전체 알림 보기</a>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r-0 bg-slate-50 dark:bg-slate-950 z-30 hidden md:block flat no-line-rule">
+<div class="flex flex-col h-full py-6 gap-2 pt-20">
+<!-- Brand Info -->
+<div class="px-6 py-4 mb-4 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="hub" style="font-variation-settings: 'FILL' 1;">hub</span>
+</div>
+<div>
+<h2 class="text-lg font-black text-slate-900 dark:text-white leading-tight">Suppressor</h2>
+<p class="text-xs text-slate-500 dark:text-slate-400">Enterprise Edition</p>
+</div>
+</div>
+<!-- Main Navigation -->
+<nav class="flex flex-col space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span>홈</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/search">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+<span>앱 탐색</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/library">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span>라이브러리</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/scenario">
+<span class="material-symbols-outlined" data-icon="dataset">dataset</span>
+<span>시나리오 관리</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/admin">
+<span class="material-symbols-outlined" data-icon="dashboard_customize">dashboard_customize</span>
+<span>관리자 대시보드</span>
+</a>
+</nav>
+<!-- Side Bottom Common -->
+<div id="side-bottom" class="mt-auto px-4 flex flex-col gap-4">
+<script src="/static/js/common.js?v=session-fix-1"></script>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="ml-64 pt-24 px-8 pb-12">
+<header class="mb-10 max-w-5xl mx-auto flex justify-between items-end">
+<div>
+<nav class="flex items-center gap-2 text-sm text-on-surface-variant mb-2">
+<span>내 파일 업로드</span>
+
+<span class="mx-1 text-outline">|</span>
+      <div class="flex items-center gap-1.5 px-2 py-0.5 bg-surface-container-high rounded-md border border-outline-variant/20 group cursor-pointer hover:border-primary/50 transition-colors">
+        <span class="material-symbols-outlined text-[16px] text-on-surface-variant">description</span>
+        <span id="selectFile" class="text-xs font-mono text-on-surface">N/A</span>
+        <span class="material-symbols-outlined text-[14px] text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">edit</span>
+      </div>
+      <button id="selectBuildFile" class="px-2 py-1 bg-primary text-on-primary text-sm font-semibold rounded-lg hover:bg-primary/80 transition-colors">파일 선택</button>
+
+</nav>
+<h1 class="text-4xl font-extrabold tracking-tight text-on-surface">설정</h1>
+<p class="mt-2 text-on-surface-variant max-w-2xl">프로그램 업로드 전, 검사를 위한 설정을 입력하세요.</p>
+</div>
+<div class="flex gap-3">
+<button class="px-6 py-2.5 rounded-xl border border-outline-variant text-on-surface font-semibold text-sm hover:bg-surface-container-low transition-colors">취소</button>
+<button id="buildBtn" class="px-6 py-2.5 rounded-xl bg-primary text-on-primary font-semibold text-sm shadow-md hover:translate-y-[-1px] active:translate-y-0 transition-all">검사 실행</button>
+</div>
+
+
+
+<!--    예쁜>< 확인창           -->
+
+<div id="custom-confirm-modal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center">
+    <div id="modal-backdrop" class="absolute inset-0 bg-black/50 opacity-0 transition-opacity duration-300"></div>
+    
+    <div id="modal-content" class="relative bg-surface-container-high rounded-[28px] p-6 shadow-2xl max-w-sm w-full mx-4 scale-90 opacity-0 transition-all duration-300">
+        <div class="flex flex-col items-center text-center gap-4">
+            <div id="modal-icon-container" class="p-3 rounded-full">
+                <span id="modal-icon" class="material-symbols-rounded text-3xl text-inherit"></span>
+            </div>
+            
+            <div class="space-y-2">
+                <h3 id="modal-title" class="text-2xl font-semibold text-on-surface"></h3>
+                <p id="modal-message" class="text-sm text-on-surface-variant leading-relaxed"></p>
+            </div>
+
+            <div class="flex gap-3 w-full mt-2">
+                <button id="modal-cancel-btn" class="flex-1 px-5 py-2.5 rounded-full text-sm font-semibold text-primary hover:bg-primary/5 transition-colors">
+                    취소
+                </button>
+                <button id="modal-confirm-btn" class="flex-1 px-5 py-2.5 rounded-full text-sm font-semibold transition-colors shadow-sm">
+                    확인
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!--------------------->
+
+</header>
+<div class="max-w-5xl mx-auto grid grid-cols-12 gap-6">
+
+    <section class="col-span-12 bg-surface-container-lowest rounded-xl p-8 border border-outline-variant/10 shadow-sm mb-6">
+    <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center">
+            <span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">extension</span>
+        </div>
+        <h3 class="text-xl font-bold">확장 프로그램 정보 (Extension Info)</h3>
+    </div>
+
+    <!-- 업로드 모드 선택 -->
+    <div class="mb-6">
+        <label class="text-sm font-semibold text-on-surface-variant ml-1 block mb-2">업로드 유형</label>
+        <div class="inline-flex p-1 bg-surface-container-low rounded-xl gap-1">
+            <button type="button" id="mode-first"
+                    class="px-5 py-2 rounded-lg text-sm font-semibold transition-colors bg-primary text-on-primary">
+                첫 업로드
+            </button>
+            <button type="button" id="mode-update"
+                    class="px-5 py-2 rounded-lg text-sm font-semibold transition-colors text-on-surface-variant hover:bg-surface-container">
+                추가 업로드
+            </button>
+        </div>
+        <p id="mode-hint" class="text-xs text-on-surface-variant mt-2 ml-1">새로운 확장을 처음 업로드합니다. 버전은 자동으로 1.0.0으로 설정됩니다.</p>
+    </div>
+
+    <!-- 추가 업로드: 내 확장 선택 -->
+    <div id="update-select-wrap" class="hidden mb-6 space-y-2">
+        <label class="text-sm font-semibold text-on-surface-variant ml-1">업로드한 확장 선택</label>
+        <div class="relative">
+            <select id="extSelect" class="w-full bg-surface-container-low border-none rounded-xl py-3 px-4 text-sm appearance-none focus:ring-2 focus:ring-primary/20">
+                <option value="">불러오는 중...</option>
+            </select>
+            <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">expand_more</span>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="space-y-2">
+            <label class="text-sm font-semibold text-on-surface-variant ml-1">확장 프로그램 이름</label>
+            <input type="text" id="extName" name="extName" placeholder="예: My Extension"
+                   class="w-full bg-surface-container-low border-none rounded-xl py-3 px-4 text-sm focus:ring-2 focus:ring-primary/20">
+        </div>
+
+        <div class="space-y-2">
+            <label class="text-sm font-semibold text-on-surface-variant ml-1">버전 (자동)</label>
+            <input type="text" id="version" name="version" value="1.0.0" readonly
+                   class="w-full bg-surface-container border-none rounded-xl py-3 px-4 text-sm text-on-surface-variant cursor-not-allowed focus:ring-0">
+        </div>
+
+        <div class="space-y-2">
+            <label class="text-sm font-semibold text-on-surface-variant ml-1">브라우저</label>
+            <div class="relative">
+                <select id="browser" name="browser" class="w-full bg-surface-container-low border-none rounded-xl py-3 px-4 text-sm appearance-none focus:ring-2 focus:ring-primary/20">
+                    <option value="Chrome">Google Chrome</option>
+                    <option value="edge">Microsoft Edge</option>
+                    <option value="firefox">Mozilla Firefox</option>
+                    <option value="opera">Opera</option>
+                </select>
+                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">expand_more</span>
+            </div>
+        </div>
+    </div>
+    <input type="hidden" id="extID" name="extID" value="">
+</section>
+
+</footer>
+</main>
+</body>
+
+<input type="file" id="UploadFile" style="display: none;">
+
+<script src="/static/js/upload.js"></script>
+<script src="/static/js/upload/build.js?v=20260612-upload-modes"></script>
+
+</html>

@@ -1,0 +1,6 @@
+flask
+python-whois
+requests
+maxminddb
+Flask-WTF
+certifi

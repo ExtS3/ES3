@@ -1,0 +1,70 @@
+{
+  "scenario_id": "bmpbjkjkiabihpahahcgcdjgdnbhbkhd",
+  "builtin": true,
+  "pattern_name": "browser_fingerprinting_environment_collection",
+  "doc_ref": "scenario_docs/browser_fingerprinting_environment_collection.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "limited",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "content_script",
+        "background"
+      ],
+      "permissions_hint": [
+        "storage"
+      ]
+    },
+    "capability_profile": [
+      "browser_fingerprinting",
+      "external_network"
+    ],
+    "capability_combinations": [
+      "browser_fingerprinting + external_network"
+    ],
+    "static_code_signals": {
+      "environment": {
+        "apis": [
+          "navigator.userAgent",
+          "navigator.language",
+          "screen.width",
+          "screen.height",
+          "Date.prototype.getTimezoneOffset"
+        ],
+        "patterns": [
+          "environment_fingerprint_bundle"
+        ]
+      },
+      "network": {
+        "apis": [
+          "fetch"
+        ],
+        "methods": [
+          "POST"
+        ],
+        "endpoint_keywords": [
+          "fingerprint",
+          "environment"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "page_load",
+        "source": "browser_environment",
+        "path": [
+          "content_script",
+          "serialize",
+          "background"
+        ],
+        "sink": "localhost_post"
+      }
+    ],
+    "behavior_tags": [
+      "browser_fingerprinting",
+      "environment_collection",
+      "external_communication"
+    ]
+  }
+}

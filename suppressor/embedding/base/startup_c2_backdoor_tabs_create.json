@@ -1,0 +1,68 @@
+{
+  "scenario_id": "ddplcepolkjmkminkjkdnjaiekoachlk",
+  "builtin": true,
+  "pattern_name": "startup_c2_backdoor_tabs_create",
+  "doc_ref": "scenario_docs/startup_c2_backdoor_tabs_create.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "limited",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "background"
+      ],
+      "permissions_hint": [
+        "tabs",
+        "alarms"
+      ]
+    },
+    "capability_profile": [
+      "startup_execution",
+      "remote_configuration",
+      "tab_access",
+      "external_network"
+    ],
+    "capability_combinations": [
+      "startup_execution + remote_configuration",
+      "remote_command + tabs_create"
+    ],
+    "static_code_signals": {
+      "startup": {
+        "apis": [
+          "chrome.runtime.id",
+          "runtime.onStartup",
+          "runtime.onInstalled"
+        ]
+      },
+      "tabs": {
+        "apis": [
+          "chrome.tabs.create"
+        ]
+      },
+      "network": {
+        "apis": [
+          "fetch"
+        ],
+        "methods": [
+          "POST"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "browser_startup",
+        "source": "runtime_context",
+        "path": [
+          "background",
+          "mock_config_fetch"
+        ],
+        "sink": "mock_tab_create"
+      }
+    ],
+    "behavior_tags": [
+      "startup_backdoor",
+      "remote_command_or_config",
+      "tab_open_from_remote_response"
+    ]
+  }
+}

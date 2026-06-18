@@ -1,0 +1,72 @@
+{
+  "scenario_id": "lnkdhkldnojafdcoickoggcckelpjile",
+  "builtin": true,
+  "pattern_name": "webmail_dom_content_tampering",
+  "doc_ref": "scenario_docs/webmail_dom_content_tampering.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "targeted",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "content_script"
+      ],
+      "permissions_hint": [
+        "activeTab",
+        "scripting"
+      ]
+    },
+    "capability_profile": [
+      "dom_mutation",
+      "periodic_execution",
+      "dom_access"
+    ],
+    "capability_combinations": [
+      "dom_access + dom_mutation",
+      "periodic_execution + dom_rewrite"
+    ],
+    "static_code_signals": {
+      "dom_query": {
+        "apis": [
+          "$(document).find(':contains()')",
+          "$('div:contains()')"
+        ],
+        "patterns": [
+          "targeted_text_query"
+        ]
+      },
+      "dom_write": {
+        "apis": [
+          "$(item).html"
+        ],
+        "patterns": [
+          "content_replace_loop"
+        ]
+      },
+      "timer": {
+        "apis": [
+          "setInterval"
+        ],
+        "patterns": [
+          "repeated_dom_tampering"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "interval_tick",
+        "source": "matched_webmail_dom_nodes",
+        "path": [
+          "content_script",
+          "jquery_html_replace"
+        ],
+        "sink": "page_content_mutation"
+      }
+    ],
+    "behavior_tags": [
+      "email_modification",
+      "content_tampering",
+      "dom_injection"
+    ]
+  }
+}

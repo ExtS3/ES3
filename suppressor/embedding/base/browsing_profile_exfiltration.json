@@ -1,0 +1,80 @@
+{
+  "scenario_id": "bjgcjlhihffpdcopmhamgninpcbfmooc",
+  "builtin": true,
+  "pattern_name": "browsing_profile_exfiltration",
+  "doc_ref": "scenario_docs/browsing_profile_exfiltration.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "broad",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "background",
+        "content_script"
+      ],
+      "permissions_hint": [
+        "tabs",
+        "storage"
+      ]
+    },
+    "capability_profile": [
+      "tab_event_monitoring",
+      "url_exfiltration",
+      "persistent_user_tracking",
+      "external_data_pipeline"
+    ],
+    "capability_combinations": [
+      "tabs_onUpdated + url_post",
+      "distinct_id + page_visit_event"
+    ],
+    "static_code_signals": {
+      "tabs": {
+        "apis": [
+          "chrome.tabs.onUpdated"
+        ],
+        "keywords": [
+          "url",
+          "referrer"
+        ]
+      },
+      "tracking": {
+        "keywords": [
+          "distinct_id",
+          "tab_id",
+          "browser_version",
+          "page_visit"
+        ]
+      },
+      "network": {
+        "apis": [
+          "fetch"
+        ],
+        "methods": [
+          "POST"
+        ],
+        "keywords": [
+          "amazonaws",
+          "alooma",
+          "EventTracking"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "tab_updated",
+        "source": "current_url",
+        "path": [
+          "collect_metadata",
+          "post_to_endpoint"
+        ],
+        "sink": "browsing_profile_server"
+      }
+    ],
+    "behavior_tags": [
+      "browsing_history_exfiltration",
+      "persistent_tracking",
+      "user_profiling",
+      "silent_telemetry"
+    ]
+  }
+}

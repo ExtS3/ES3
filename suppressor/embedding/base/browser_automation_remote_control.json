@@ -1,0 +1,146 @@
+{
+  "scenario_id": "jopbobkiihaohndkafaboogaokbekhao",
+  "builtin": true,
+  "pattern_name": "browser_automation_remote_control",
+  "doc_ref": "scenario_docs/browser_automation_remote_control.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "broad",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "background",
+        "content_script",
+        "popup"
+      ],
+      "permissions_hint": [
+        "debugger",
+        "scripting",
+        "tabs",
+        "activeTab",
+        "offscreen",
+        "webRequest"
+      ]
+    },
+    "capability_profile": [
+      "remote_browser_control",
+      "browser_automation",
+      "debugger_access",
+      "script_injection",
+      "tab_access",
+      "temporary_tab_access",
+      "offscreen_execution",
+      "message_bridge",
+      "background_execution",
+      "dom_access",
+      "network_observation"
+    ],
+    "capability_combinations": [
+      "debugger_access + tab_access",
+      "scripting + broad_page_access",
+      "activeTab + scripting + tabs",
+      "offscreen_execution + background",
+      "content_script + message_bridge + background",
+      "remote_command + browser_automation"
+    ],
+    "static_code_signals": {
+      "automation": {
+        "apis": [
+          "chrome.debugger",
+          "debugger.attach",
+          "debugger.sendCommand",
+          "chrome.scripting.executeScript",
+          "scripting.executeScript",
+          "chrome.tabs.query",
+          "chrome.tabs.update",
+          "chrome.tabs.sendMessage"
+        ],
+        "keywords": [
+          "click-helper.js",
+          "fill-helper.js",
+          "keyboard-helper.js",
+          "form-submit-helper.js",
+          "network-helper.js",
+          "web-fetcher-helper.js",
+          "inject-bridge.js",
+          "remote_control",
+          "browser_automation",
+          "automation",
+          "command",
+          "tool"
+        ],
+        "patterns": [
+          "remote_command_dispatch",
+          "helper_script_injection",
+          "automated_click_fill_keyboard",
+          "browser_control_bridge"
+        ]
+      },
+      "dom_interaction": {
+        "apis": [
+          "document.querySelector",
+          "dispatchEvent",
+          "MouseEvent",
+          "KeyboardEvent",
+          "Input.dispatchMouseEvent",
+          "Input.dispatchKeyEvent"
+        ],
+        "patterns": [
+          "automated_click",
+          "automated_input",
+          "automated_form_submit"
+        ]
+      },
+      "messaging": {
+        "apis": [
+          "runtime.onMessage",
+          "runtime.sendMessage",
+          "tabs.sendMessage"
+        ],
+        "patterns": [
+          "background_command_router",
+          "content_script_command_bridge"
+        ],
+        "message_actions": [
+          "click",
+          "fill",
+          "keyboard",
+          "submit",
+          "fetch",
+          "screenshot",
+          "automation"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "remote_command_or_popup_action",
+        "source": "background",
+        "path": [
+          "command_router",
+          "scripting.executeScript",
+          "helper_script"
+        ],
+        "sink": "dom_action_or_network_request"
+      },
+      {
+        "trigger": "debugger_command",
+        "source": "background",
+        "path": [
+          "chrome.debugger",
+          "devtools_protocol"
+        ],
+        "sink": "page_control_or_capture"
+      }
+    ],
+    "behavior_tags": [
+      "remote_browser_control",
+      "browser_automation",
+      "debugger_abuse",
+      "script_injection",
+      "dom_manipulation",
+      "message_passing_bridge",
+      "tab_control"
+    ]
+  }
+}

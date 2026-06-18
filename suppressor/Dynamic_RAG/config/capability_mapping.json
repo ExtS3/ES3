@@ -1,0 +1,58 @@
+{
+  "permission_to_capability": {
+    "storage": ["storage_access"],
+    "tabs": ["tab_access"],
+    "activeTab": ["temporary_tab_access"],
+    "scripting": ["script_injection"],
+    "webRequest": ["network_observation"],
+    "webRequestBlocking": ["network_modification"],
+    "declarativeNetRequest": ["request_rule_control"],
+    "declarativeNetRequestWithHostAccess": ["request_rule_control", "host_request_control"],
+    "cookies": ["cookie_access"],
+    "debugger": ["debugger_access"],
+    "downloads": ["download_control"],
+    "clipboardRead": ["clipboard_read"],
+    "clipboardWrite": ["clipboard_write"]
+  },
+  "host_permission_to_capability": {
+    "<all_urls>": ["broad_page_access"],
+    "*://*/*": ["broad_page_access"],
+    "http://*/*": ["broad_page_access"],
+    "https://*/*": ["broad_page_access"],
+    "specific_domain": ["limited_page_access"]
+  },
+  "entrypoint_to_capability": {
+    "content_script": ["dom_access", "page_context_access"],
+    "background": ["background_execution"],
+    "service_worker": ["event_based_background_execution"],
+    "popup": ["user_triggered_ui_execution"],
+    "options": ["settings_page_execution"],
+    "extension_page": ["extension_page_execution"],
+    "offscreen": ["hidden_document_execution"],
+    "side_panel": ["side_panel_execution"],
+    "declarative_net_request_ruleset": ["ruleset_execution"]
+  },
+  "api_to_capability": {
+    "fetch": ["external_network"],
+    "XMLHttpRequest": ["external_network"],
+    "jquery.ajax": ["external_network"],
+    "jquery.get": ["external_network"],
+    "jquery.post": ["external_network"],
+    "axios": ["external_network"],
+    "sendBeacon": ["external_network"],
+    "WebSocket": ["persistent_external_connection"],
+    "EventSource": ["persistent_external_connection"],
+    "runtime.sendMessage": ["message_bridge"],
+    "runtime.onMessage": ["message_bridge"],
+    "tabs.sendMessage": ["message_bridge"],
+    "eval": ["dynamic_execution"],
+    "new Function": ["dynamic_execution"],
+    "importScripts": ["script_loading"],
+    "chrome.storage.local": ["storage_access"],
+    "localStorage": ["page_storage_access"],
+    "sessionStorage": ["page_storage_access"],
+    "tabs.update": ["navigation_control"],
+    "tabs.create": ["navigation_control"],
+    "location.href": ["navigation_control"]
+  }
+}

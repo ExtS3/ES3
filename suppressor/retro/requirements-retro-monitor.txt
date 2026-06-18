@@ -1,0 +1,4 @@
+requests>=2.31.0
+playwright>=1.45.0
+yara-python>=4.5.0
+beautifulsoup4>=4.12.0

@@ -1,0 +1,140 @@
+name: 🔍 PR Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - develop
+      - main
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  code-review:
+    name: 코드 변경 분석 및 PM 리뷰 리포트 생성
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 전체 히스토리 포함 체크아웃 ─────────
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # diff 추출을 위해 전체 히스토리 필요
+
+      # ── Python 및 분석 도구 설치 ─────────────
+      - name: Python Setup
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Analysis Tools
+        run: |
+          pip install pyflakes --quiet
+
+      # ── PR 메타 정보 환경변수로 세팅 ─────────
+      - name: Set Review Environment
+        run: |
+          echo "REVIEW_BASE_SHA=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_ENV"
+          echo "REVIEW_HEAD_SHA=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_ENV"
+          echo "REVIEW_BRANCH=${{ github.head_ref }}"                       >> "$GITHUB_ENV"
+          echo "PR_NUMBER=${{ github.event.pull_request.number }}"          >> "$GITHUB_ENV"
+
+          # base 브랜치를 remote에서 가져와서 diff 기준점 확보
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=1
+
+      # ── 핵심 분석 실행 ───────────────────────
+      - name: Run Code Review Analysis
+        id: analysis
+        run: |
+          python scripts/review_pr.py
+        continue-on-error: true # BLOCK이어도 코멘트는 게시해야 하므로
+
+      # ── PR 코멘트로 결과 게시 ────────────────
+      - name: Post Review Comment
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+
+            // ── Markdown 리포트 읽기 ──
+            let body = '';
+            try {
+              body = fs.readFileSync('pr_review_result.md', 'utf8');
+            } catch {
+              body = '## ⚠️ 코드 리뷰 실행 실패\n\n분석 스크립트 오류가 발생했습니다. Actions 로그를 확인하세요.';
+            }
+
+            // ── 인라인 코멘트 추가 (BLOCK / HIGH 이슈) ──
+            let reviewData = { issues: [] };
+            try {
+              reviewData = JSON.parse(fs.readFileSync('pr_review_result.json', 'utf8'));
+            } catch {}
+
+            const headSha = context.payload.pull_request.head.sha;
+            const inlineIssues = (reviewData.issues || [])
+              .filter(i => ['BLOCK', 'HIGH'].includes(i.severity) && i.line > 0);
+
+            for (const issue of inlineIssues.slice(0, 20)) {
+              try {
+                await github.rest.pulls.createReviewComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: context.issue.number,
+                  commit_id: headSha,
+                  path: issue.file,
+                  line: issue.line,
+                  body: [
+                    `**${issue.severity === 'BLOCK' ? '🚫' : '🔴'} [${issue.severity}] ${issue.category}**`,
+                    issue.message
+                  ].join('\n')
+                });
+              } catch (e) {
+                // 라인이 diff 범위를 벗어나면 인라인 코멘트 실패 — 무시
+              }
+            }
+
+            // ── 기존 봇 코멘트 업데이트 or 신규 생성 ──
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('PR 코드 리뷰 —')
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      # ── GitHub Actions Step Summary ──────────
+      - name: Write Step Summary
+        if: always()
+        run: |
+          if [ -f pr_review_result.md ]; then
+            cat pr_review_result.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # ── BLOCK 판정 시 워크플로우 실패 처리 ──
+      - name: Fail on BLOCK
+        if: steps.analysis.outcome == 'failure'
+        run: |
+          echo "::error title=코드 리뷰 BLOCK::자동 분석에서 Merge를 차단할 이슈가 발견됐습니다. PR 코멘트를 확인하세요."
+          exit 1

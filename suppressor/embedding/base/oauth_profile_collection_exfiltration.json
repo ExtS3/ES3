@@ -1,0 +1,72 @@
+{
+  "scenario_id": "hbjejegfgicdaoklklakcagkjbeklbnf",
+  "builtin": true,
+  "pattern_name": "oauth_profile_collection_exfiltration",
+  "doc_ref": "scenario_docs/oauth_profile_collection_exfiltration.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "limited",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "background"
+      ],
+      "permissions_hint": [
+        "identity",
+        "storage"
+      ]
+    },
+    "capability_profile": [
+      "identity_access",
+      "storage_access",
+      "external_network"
+    ],
+    "capability_combinations": [
+      "identity_access + profile_collection",
+      "storage_access + external_network"
+    ],
+    "static_code_signals": {
+      "identity": {
+        "apis": [
+          "chrome.identity.getAuthToken"
+        ]
+      },
+      "storage": {
+        "apis": [
+          "chrome.storage.sync.get"
+        ]
+      },
+      "headers": {
+        "apis": [
+          "Authorization",
+          "X-Custom-Auth"
+        ]
+      },
+      "network": {
+        "apis": [
+          "fetch"
+        ],
+        "methods": [
+          "POST"
+        ]
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "token_or_profile_collect",
+        "source": "dummy_oauth_profile",
+        "path": [
+          "background",
+          "payload_build"
+        ],
+        "sink": "localhost_post"
+      }
+    ],
+    "behavior_tags": [
+      "oauth_token_usage",
+      "account_profile_collection",
+      "identity_abuse",
+      "data_exfiltration"
+    ]
+  }
+}
