@@ -14,8 +14,6 @@ admin/
 │   ├── approve.py             # 승인 API → Nexus review → safe 이동
 │   ├── reject.py              # 거절 API → Nexus 파일 삭제 + 이력 기록
 │   └── nexus_file.py          # Nexus 연동 유틸 (두 파일 공유)
-├── pending/
-│   └── pending.json           # ⚠️ 비활성 더미 데이터 (삭제 권장)
 ├── log.py                     # 분석 결과 조회 + PDF 리포트 생성
 ├── pending.py                 # ⚠️ 비활성 라우터 (main.py에서 주석처리됨)
 ├── permissions.py             # 유저·롤·권한 CRUD + 회원가입 승인·거절

@@ -11,7 +11,10 @@
 | `risk_scoring.py`            | dynamic/static/obfuscation 결과를 가중 합산해 최종 리스크 계산 |
 | `clamav_scan.py`             | ClamAV로 원본 ZIP과 추출 루트 2단계 스캔                       |
 | `web_payload.py`             | ExtS3 Web UI 전송용 결과 페이로드 구성                         |
-| `scanners/`                  | 4개 개별 정적 스캐너 모듈                                      |
+| `scanners/`                  | 4개 개별 정적 스캐너 모듈 + 난독화 탐지 (minify_obfuscation)   |
+| `vscode_analysis/`           | VSCode(VSIX) 전용 Tier1 정적 룰 분석 파이프라인                |
+| `profile/`                   | 버전별 Extension 변경 이력 · diff 생성                         |
+| `tests/`                     | 단위 테스트 (pytest, 88개 — vscode_analysis 66 · profile 22)   |
 
 ## 주요 함수
 

@@ -95,7 +95,6 @@ suppressor/
 │   ├── risk_scoring.py             # 가중치 기반 최종 리스크 계산
 │   ├── clamav_scan.py              # ClamAV 보조 스캔
 │   ├── web_payload.py              # 결과 페이로드 구성
-│   ├── database.py                 # PostgreSQL 연결 풀
 │   ├── vscode_analysis/            # VSCode(VSIX) 전용 Tier1 정적 분석
 │   ├── profile/                    # 버전별 Extension 변경 이력 · diff
 │   ├── scanners/                   # 4개 정적 스캐너 + 난독화 탐지
