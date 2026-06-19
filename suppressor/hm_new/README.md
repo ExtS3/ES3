@@ -1,99 +1,98 @@
-# hm_new — 확장 홀딩 매니저
+# hm_new — 홀딩 큐 매니저
 
-보안 검토가 필요한 확장 프로그램을 Nexus에 임시 보관(홀딩)했다가, 지정된 시간이 경과하면 자동으로 `/file_scan`으로 재분석을 요청하는 스케줄러입니다.
+확장 프로그램을 즉시 분석하지 않고 일정 시간 **홀딩(보류)** 했다가 만료 시점에 `/file_scan`으로 전달하는 파이프라인입니다.
 
-> **주의**: 홀딩 만료 시 `released/` 폴더에 파일이 생성되지 않습니다. 만료 후 동작은 Nexus ZIP 다운로드 → `/file_scan` POST → Nexus 삭제입니다.
+`main.py`의 `lifespan`에서 `hm_start()`로 서버 시작 시 자동으로 실행됩니다.
 
-## 구조
+---
 
-```
-hm_new/
-├── config.py      환경변수 로드 및 전역 설정 (HOLDING_SECONDS, FILE_SCAN_URL 등)
-├── nexus.py       Nexus raw repository 연동 (ZIP 업로드/다운로드/삭제)
-├── manager.py     홀딩 등록 (Nexus 업로드 + pending 파일 생성)
-├── scheduler.py   pending 폴더 watchdog 감시 + APScheduler 만료 잡 등록
-├── __main__.py    CLI 진입점 (스케줄러 시작 또는 hold 명령)
-├── pending/       홀딩 대기 JSON 파일 저장소 ({extension_id}.json)
-└── released/      (레거시 폴더, 현재 코드에서 사용하지 않음)
-```
-
-## 실제 홀딩 플로우
+## 동작 흐름
 
 ```
-hold 요청 (request_holding)
-    │
-    ├─ Nexus 업로드: extensions/chrome/{ext_name}/{version}/{ext_id}.zip
-    │
-    └─ pending/{ext_id}.json 생성:
-       { "extension_id": "...", "browser": "...", "version": "...",
-         "ext_name": "...", "release_at": "2026-05-26T10:00:00+00:00" }
+holding.py (/api/holding 라우터)
+  └── request_holding(ext_id, browser, version, ext_name, file_data)
+        ├── nexus.upload()             → Nexus holding/ 경로에 ZIP 저장
+        └── pending/{ext_id}.json 생성 → 스케줄러가 파일 감지
 
-watchdog가 파일 감지 → APScheduler에 trigger="date" 잡 등록
-
-만료 시각 도달 → _release_job 실행:
-    1. Nexus에서 ZIP 다운로드
-    2. /file_scan으로 multipart POST (재분석 요청)
-    3. Nexus에서 ZIP 삭제
-    4. pending/{ext_id}.json 삭제
+scheduler.py (watchdog + APScheduler)
+  ├── pending/ 폴더 감시 (watchdog)
+  │     └── .json 파일 생성 감지 → trigger=date 잡 등록
+  ├── 서버 재시작 시 pending/ 기존 파일로 잡 재등록
+  └── 만료 시각 도달 (_release_job)
+        ├── nexus.download()           → Nexus에서 ZIP 다운로드
+        ├── POST /file_scan            → 분석 파이프라인으로 전달
+        ├── nexus.delete()             → Nexus holding/ 파일 삭제
+        └── pending/{ext_id}.json 삭제
 ```
 
-## 재시작 복구
+---
 
-스케줄러 시작 시 `pending/` 폴더에 남아있는 `.json` 파일을 전부 읽어 잡 재등록합니다.
-이미 만료된 항목은 즉시 `_release_job`을 실행합니다.
+## 파일 구성
 
-## FastAPI 통합 (main.py에서 호출)
+### config.py
 
-```python
-from hm_new import start as hm_start, stop as hm_stop
+환경변수 로드 및 전역 설정입니다. `.env`를 `hm_new/` → 부모(suppressor 루트) 순으로 탐색합니다.
 
-# lifespan startup
-hm_start()
+| 변수               | 기본값                            | 설명                                          |
+| ------------------ | --------------------------------- | --------------------------------------------- |
+| `HOLDING_SECONDS`  | `30`                              | 홀딩 대기 시간 (초). 실서비스: `604800` (7일) |
+| `NEXUS_BASE_URL`   | `http://localhost:8081`           | Nexus 서버 URL                                |
+| `NEXUS_REPOSITORY` | `es3`                             | Nexus 레포지토리명                            |
+| `NEXUS_USERNAME`   | `admin`                           | Nexus 사용자                                  |
+| `NEXUS_PASSWORD`   | `admin123`                        | Nexus 비밀번호                                |
+| `PENDING_DIR`      | `hm_new/pending`                  | 대기 파일 디렉토리                            |
+| `OUTPUT_DIR`       | `hm_new/released`                 | 릴리즈 완료 디렉토리                          |
+| `FILE_SCAN_URL`    | `http://localhost:8000/file_scan` | 분석 전달 엔드포인트                          |
 
-# lifespan shutdown
-hm_stop()
-```
+### manager.py
 
-`POST /api/holding` 엔드포인트는 `holding.py`를 통해 `request_holding`을 호출합니다.
+`request_holding()` — 홀딩 등록 진입점입니다. 이미 홀딩 중인 확장(`pending/` 파일 존재)은 중복 등록을 거부합니다.
 
-## CLI 사용
+### nexus.py
+
+Nexus raw repository와 통신합니다. 저장 경로: `holding/{browser}/{ext_name}/{version}/{ext_id}.zip`
+
+| 함수         | 역할                      |
+| ------------ | ------------------------- |
+| `upload()`   | ZIP 바이너리 PUT 업로드   |
+| `download()` | ZIP 바이너리 GET 다운로드 |
+| `delete()`   | 파일 삭제 (404는 무시)    |
+
+### scheduler.py
+
+APScheduler `BackgroundScheduler` + watchdog `Observer`로 구성됩니다.
+
+- **watchdog**: `pending/` 폴더에 `.json` 파일이 생성되면 즉시 `_register_from_pending()` 호출
+- **APScheduler**: `trigger="date"`로 정확한 만료 시각에 `_release_job()` 실행
+- **재시작 복구**: 서버 재시작 시 `pending/`에 남은 `.json` 파일들을 읽어 잡 재등록. 이미 만료된 파일은 즉시 릴리즈
+
+### **main**.py
+
+CLI 진입점입니다.
 
 ```bash
-# 터미널 1 — 스케줄러 실행 (계속 켜놓기)
-python -m hm_new
-
-# 터미널 2 — 홀딩 등록 (미사용; 실제 운영에서는 /api/holding API 사용)
-python -m hm_new hold <extension_id>
+python -m hm_new              # 스케줄러 단독 실행 (Ctrl+C로 종료)
+python -m hm_new hold <id>   # 특정 확장 홀딩 등록
 ```
 
-## 주요 함수
+`_ensure_packages()`가 실행 시 `requirements.txt`의 패키지를 자동 설치합니다. 단, 루트 `requirements.txt`에 이미 동일 패키지가 포함되어 있어 suppressor 통합 환경에서는 불필요합니다.
 
-### `request_holding(extension_id, browser, version, ext_name, file_data)` — `manager.py`
+---
 
-- 이미 `pending/{extension_id}.json`이 존재하면 중복 홀딩 방지 후 반환
-- Nexus에 ZIP 업로드 → pending 파일 생성
-- `HOLDING_SECONDS` 후 만료 시각(`release_at`)을 ISO 형식으로 저장
+## 디렉토리
 
-### `start()` / `stop()` — `scheduler.py`
+### pending/
 
-- `start()`: BackgroundScheduler(UTC) 시작 → pending 폴더 복구 → watchdog Observer 시작
-- `stop()`: scheduler shutdown
+홀딩 대기 중인 확장의 메타 JSON 파일이 저장됩니다.
 
-## 환경 변수 (.env)
+```json
+{
+  "extension_id": "abcdefg...",
+  "browser": "chrome",
+  "version": "1.0.0",
+  "ext_name": "My Extension",
+  "release_at": "2025-01-01T00:00:00+00:00"
+}
+```
 
-| 키 | 기본값 | 설명 |
-|----|--------|------|
-| `HOLDING_SECONDS` | 30 | 홀딩 시간 (실서비스: 604800 = 7일) |
-| `FILE_SCAN_URL` | http://localhost:8001/file_scan | 만료 시 재분석 전송 주소 |
-| `NEXUS_BASE_URL` | http://localhost:8081 | Nexus 주소 |
-| `NEXUS_REPO` | holding | Nexus 홀딩용 레포 이름 |
-| `NEXUS_USER` | admin | Nexus 계정 |
-| `NEXUS_PASSWORD` | — | Nexus 비밀번호 |
-| `PENDING_DIR` | pending | 홀딩 대기 파일 폴더 |
-
-## 의존 관계
-
-- `APScheduler` — 만료 시각 기반 잡 실행
-- `watchdog` — pending 폴더 파일 시스템 감시
-- `requests` — Nexus HTTP 및 `/file_scan` POST
-- 상위 `main.py`의 `lifespan`에서 `start`/`stop` 호출
+런타임 생성 파일이므로 `.gitkeep`으로 폴더 구조만 git에 유지합니다.
