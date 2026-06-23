@@ -83,6 +83,7 @@ def _register_from_pending(filepath: str):
                 args=[ext_id, browser, version, ext_name],
                 id=f"release_{ext_id}",
                 replace_existing=True,
+                misfire_grace_time=None,  # 실행이 늦어도 무조건 릴리즈 (기본 1초 grace로 인한 드롭 방지)
             )
             log.info("pending 감지: ext=%s → %.0f초 후 릴리즈 예약", ext_id, remaining)
 
