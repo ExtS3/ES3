@@ -98,3 +98,11 @@ document.getElementById('exploreBtn').addEventListener('click', async () => {
     location.href = `/search_list?${paramKey}=${encodeURIComponent(searchValue)}&browser=${selectBrow}`;
 });
 
+//////////////////// 검색창 Enter 키로 검색 실행 ////////////////////
+document.getElementById('searchInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('exploreBtn').click();
+    }
+});
+
