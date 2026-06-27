@@ -2,6 +2,7 @@ const API = '/api/admin/scenario'
 
 // ── 상태 ───────────────────────────────────────────────────────────────────────
 let allScenarios = []
+let templatesLoaded = false
 
 // ── 초기화 ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -20,6 +21,22 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('search-input').addEventListener('input', (e) => {
     renderTable(filterScenarios(e.target.value))
   })
+
+  document
+    .getElementById('open-template-modal')
+    .addEventListener('click', openTemplateModal)
+  document
+    .getElementById('template-modal-close')
+    .addEventListener('click', closeTemplateModal)
+  document
+    .getElementById('template-modal-backdrop')
+    .addEventListener('click', closeTemplateModal)
+  document
+    .getElementById('tpl-tab-json')
+    .addEventListener('click', () => switchTemplateTab('json'))
+  document
+    .getElementById('tpl-tab-md')
+    .addEventListener('click', () => switchTemplateTab('md'))
 })
 
 // ── vectorDB 상태 조회 ─────────────────────────────────────────────────────────
@@ -199,11 +216,14 @@ async function handleUpload(e) {
     return
   }
 
+  if (!mdInput.files[0]) {
+    showToast('MD 문서를 선택해주세요.', 'error')
+    return
+  }
+
   const formData = new FormData()
   formData.append('json_file', jsonInput.files[0])
-  if (mdInput.files[0]) {
-    formData.append('md_file', mdInput.files[0])
-  }
+  formData.append('md_file', mdInput.files[0])
 
   btn.disabled = true
   btn.textContent = '업로드 중...'
@@ -311,6 +331,51 @@ function showConfirm(title, message) {
     confirmBtn.addEventListener('click', onOk)
     cancelBtn.addEventListener('click', onCancel)
   })
+}
+
+// ── 양식(템플릿) 모달 ──────────────────────────────────────────────────────────
+async function openTemplateModal() {
+  document.getElementById('template-modal').classList.remove('hidden')
+  if (templatesLoaded) return
+
+  try {
+    const [jsonRes, mdRes] = await Promise.all([
+      fetch('/static/templates/scenario_template.json'),
+      fetch('/static/templates/scenario_template.md'),
+    ])
+    if (!jsonRes.ok || !mdRes.ok) throw new Error('템플릿 로드 실패')
+
+    document.getElementById('tpl-json-content').textContent =
+      await jsonRes.text()
+    document.getElementById('tpl-md-content').textContent =
+      await mdRes.text()
+    templatesLoaded = true
+  } catch {
+    const msg = '템플릿을 불러올 수 없습니다.'
+    document.getElementById('tpl-json-content').textContent = msg
+    document.getElementById('tpl-md-content').textContent = msg
+  }
+}
+
+function closeTemplateModal() {
+  document.getElementById('template-modal').classList.add('hidden')
+}
+
+function switchTemplateTab(tab) {
+  const isJson = tab === 'json'
+  document.getElementById('tpl-panel-json').classList.toggle('hidden', !isJson)
+  document.getElementById('tpl-panel-md').classList.toggle('hidden', isJson)
+
+  const jsonTab = document.getElementById('tpl-tab-json')
+  const mdTab = document.getElementById('tpl-tab-md')
+  jsonTab.classList.toggle('border-primary', isJson)
+  jsonTab.classList.toggle('text-primary', isJson)
+  jsonTab.classList.toggle('border-transparent', !isJson)
+  jsonTab.classList.toggle('text-on-surface-variant', !isJson)
+  mdTab.classList.toggle('border-primary', !isJson)
+  mdTab.classList.toggle('text-primary', !isJson)
+  mdTab.classList.toggle('border-transparent', isJson)
+  mdTab.classList.toggle('text-on-surface-variant', isJson)
 }
 
 // ── 토스트 알림 ────────────────────────────────────────────────────────────────

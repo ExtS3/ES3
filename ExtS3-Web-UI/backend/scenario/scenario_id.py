@@ -57,15 +57,14 @@ async def get_scenario(scenario_id: str):
 @router.post("/upload", dependencies=[Depends(require_admin)])
 async def upload_scenario(
     json_file: UploadFile = File(...),
-    md_file: UploadFile = File(None),
+    md_file: UploadFile = File(...),
 ):
     async with httpx.AsyncClient(timeout=60) as client:
         try:
             files: dict = {
                 "json_file": (json_file.filename, await json_file.read(), "application/json"),
+                "md_file": (md_file.filename, await md_file.read(), "text/markdown"),
             }
-            if md_file and md_file.filename:
-                files["md_file"] = (md_file.filename, await md_file.read(), "text/markdown")
 
             res = await client.post(_suppressor_url("upload"), files=files)
             res.raise_for_status()
