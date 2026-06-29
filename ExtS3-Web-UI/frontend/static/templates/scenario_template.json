@@ -1,0 +1,44 @@
+{
+  "pattern_name": "",
+  "doc_ref": "scenario_docs/.md",
+  "vector_fingerprint": {
+    "manifest_profile": {
+      "manifest_version": 3,
+      "host_access": "targeted",
+      "background_type": "service_worker",
+      "entrypoint_roles": [
+        "content_script"
+      ],
+      "permissions_hint": []
+    },
+    "capability_profile": [],
+    "capability_combinations": [],
+    "static_code_signals": {
+      "dom_query": {
+        "apis": [],
+        "patterns": []
+      },
+      "network": {
+        "apis": [
+          "fetch"
+        ],
+        "external_origin_present": true,
+        "methods": [],
+        "endpoint_keywords": []
+      },
+      "storage": {
+        "apis": [],
+        "keywords": []
+      }
+    },
+    "predicted_flows": [
+      {
+        "trigger": "",
+        "source": "",
+        "path": [],
+        "sink": ""
+      }
+    ],
+    "behavior_tags": []
+  }
+}

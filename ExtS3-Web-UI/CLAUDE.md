@@ -111,6 +111,7 @@ ExtS3-Web-UI/
 | 라이브러리 페이지 UI/JS | `frontend/templates/library/` + `frontend/static/js/library/` | `frontend/templates/library/README.md`, `frontend/static/js/library/README.md` |
 | 업로드 페이지 UI/JS | `frontend/templates/upload/` + `frontend/static/js/upload/` | `frontend/templates/upload/README.md`, `frontend/static/js/upload/README.md` |
 | 시나리오 관리 페이지 | `frontend/templates/scenario/` | `frontend/templates/scenario/README.md` |
+| 시나리오 양식(JSON/MD 템플릿) | `frontend/static/templates/` | `frontend/static/templates/README.md` |
 | 사용자 설정 페이지 | `frontend/templates/setting/` | `frontend/templates/setting/README.md` |
 | 전체 공통 세션·네비게이션 | `frontend/static/js/common.js` | `frontend/static/js/README.md` |
 | 메인 대시보드 | `frontend/templates/index.html` + `frontend/static/js/index.js` | `frontend/templates/README.md` |

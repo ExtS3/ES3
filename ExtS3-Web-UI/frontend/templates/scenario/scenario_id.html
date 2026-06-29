@@ -261,12 +261,22 @@
           <div
             class="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 shadow-sm p-6"
           >
-            <h2 class="text-lg font-bold text-on-surface mb-1">
-              시나리오 추가
-            </h2>
+            <div class="flex items-center justify-between mb-1">
+              <h2 class="text-lg font-bold text-on-surface">
+                시나리오 추가
+              </h2>
+              <button
+                id="open-template-modal"
+                type="button"
+                class="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+              >
+                <span class="material-symbols-outlined text-sm">description</span>
+                양식 보기
+              </button>
+            </div>
             <p class="text-xs text-on-surface-variant mb-5">
               시나리오 ID는 업로드 시 고유값으로 자동 생성됩니다.<br />
-              MD 문서는 선택 사항이지만 dynamic 분석에 필요합니다.
+              JSON과 MD 문서 모두 업로드해야 합니다.
             </p>
 
             <form id="upload-form" class="space-y-4">
@@ -301,10 +311,7 @@
               <!-- MD 파일 -->
               <div>
                 <label class="block text-sm font-semibold text-on-surface mb-2">
-                  시나리오 문서 MD
-                  <span class="text-on-surface-variant font-normal"
-                    >(선택)</span
-                  >
+                  시나리오 문서 MD <span class="text-red-500">*</span>
                 </label>
                 <label
                   class="flex items-center gap-3 px-4 py-3 bg-surface-container-low border border-outline-variant/30 rounded-xl cursor-pointer hover:bg-surface-container transition-colors"
@@ -330,7 +337,7 @@
                   />
                 </label>
                 <p class="text-xs text-on-surface-variant mt-1.5">
-                  업로드한 JSON 시나리오의 설명 문서
+                  업로드한 JSON 시나리오의 설명 문서 (필수)
                 </p>
               </div>
 
@@ -357,7 +364,7 @@
             <ol
               class="text-xs text-indigo-600 space-y-2 list-decimal list-inside"
             >
-              <li>JSON (+ MD 선택) 파일 업로드</li>
+              <li>JSON + MD 파일 업로드</li>
               <li>업로드 완료 확인</li>
               <li><strong>vectorDB 재적재</strong> 버튼 클릭</li>
               <li>적재된 벡터 수 확인</li>
@@ -410,6 +417,98 @@
       id="toast-container"
       class="fixed bottom-6 right-6 z-[100] flex flex-col gap-2 max-w-sm"
     ></div>
+
+    <!-- 양식(템플릿) 모달 -->
+    <div id="template-modal" class="fixed inset-0 z-50 hidden">
+      <div id="template-modal-backdrop" class="fixed inset-0 bg-black/40"></div>
+      <div class="fixed inset-0 flex items-center justify-center p-4">
+        <div
+          class="bg-surface-container-lowest rounded-2xl shadow-xl border border-outline-variant/10 w-full max-w-2xl max-h-[85vh] flex flex-col"
+        >
+          <div
+            class="flex items-center justify-between px-6 py-4 border-b border-outline-variant/10"
+          >
+            <h3 class="font-bold text-on-surface">시나리오 양식 미리보기</h3>
+            <button
+              id="template-modal-close"
+              class="text-on-surface-variant hover:text-on-surface"
+            >
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+
+          <div class="flex border-b border-outline-variant/10 px-6">
+            <button
+              id="tpl-tab-json"
+              data-tab="json"
+              class="px-4 py-3 text-sm font-semibold border-b-2 border-primary text-primary transition-colors"
+            >
+              JSON 양식
+            </button>
+            <button
+              id="tpl-tab-md"
+              data-tab="md"
+              class="px-4 py-3 text-sm font-semibold border-b-2 border-transparent text-on-surface-variant transition-colors"
+            >
+              MD 양식
+            </button>
+          </div>
+
+          <div class="flex-1 overflow-y-auto px-6 py-4">
+            <div id="tpl-panel-json">
+              <p class="text-xs text-on-surface-variant mb-3">
+                <code class="font-mono">pattern_name</code>,
+                <code class="font-mono">manifest_profile</code>,
+                <code class="font-mono">predicted_flows</code>,
+                <code class="font-mono">behavior_tags</code> 등 고정 필드는
+                채워서 사용하세요.
+                <code class="font-mono">static_code_signals</code>는 예시로
+                넣어둔 dom_query / network / storage 외에 필요한 카테고리를
+                자유롭게 추가하거나 불필요한 항목은 삭제해도 됩니다.
+                <code class="font-mono">scenario_id</code>는 업로드 시
+                자동 생성되므로 비워두세요.
+              </p>
+              <pre
+                id="tpl-json-content"
+                class="text-xs bg-surface-container-low rounded-xl p-4 overflow-x-auto font-mono whitespace-pre"
+              >불러오는 중...</pre>
+            </div>
+            <div id="tpl-panel-md" class="hidden">
+              <p class="text-xs text-on-surface-variant mb-3">
+                1, 2, 3, 6, 7, 13번 섹션은 시나리오 내용에 맞게 채우고,
+                나머지(4, 5, 8~12번)는 안전 검증 표준 항목이라 그대로 두는
+                걸 권장합니다.
+              </p>
+              <pre
+                id="tpl-md-content"
+                class="text-xs bg-surface-container-low rounded-xl p-4 overflow-x-auto font-mono whitespace-pre"
+              >불러오는 중...</pre>
+            </div>
+          </div>
+
+          <div
+            class="flex justify-end gap-3 px-6 py-4 border-t border-outline-variant/10"
+          >
+            <a
+              id="tpl-download-json"
+              href="/static/templates/scenario_template.json"
+              download="scenario_template.json"
+              class="px-4 py-2 rounded-full text-sm font-semibold bg-surface-container-high hover:bg-surface-container-highest transition-colors"
+            >
+              JSON 다운로드
+            </a>
+            <a
+              id="tpl-download-md"
+              href="/static/templates/scenario_template.md"
+              download="scenario_template.md"
+              class="px-4 py-2 rounded-full text-sm font-semibold bg-primary text-white hover:opacity-90 transition-opacity shadow-sm"
+            >
+              MD 다운로드
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <script src="/static/js/admin/scenario_id.js?v=20260612-hashid-1"></script>
   </body>
