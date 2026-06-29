@@ -30,7 +30,7 @@ POST /file_scan
   │                   embedding/scenario/           → LLM + Playwright 동적 실행
   │
   ├─ 2. 정적 분석     backend/extanalysis_integration.py → ExtAnalysis 래퍼
-  │                   backend/static_analysis.py         → 4개 스캐너 실행
+  │                   backend/static_analysis.py         → 5개 스캐너 실행
   │                   backend/clamav_scan.py             → ClamAV (선택)
   │
   ├─ 3. 난독화 탐지   backend/scanners/minify_obfuscation.py
@@ -62,7 +62,7 @@ suppressor/
 │   ├── web_payload.py               # 결과 페이로드 구성
 │   ├── vscode_analysis/             # VSCode(VSIX) 전용 Tier1 정적 분석
 │   ├── profile/                     # 버전별 Extension 변경 이력 · diff
-│   ├── scanners/                    # 4개 정적 스캐너 + 난독화 탐지
+│   ├── scanners/                    # 5개 정적 스캐너 + 난독화 탐지
 │   └── tests/                       # 단위 테스트 (pytest, 88개)
 │
 ├── Dynamic_RAG/                     # 확장 정적 지문 추출

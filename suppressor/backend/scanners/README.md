@@ -1,7 +1,7 @@
 # backend/scanners
 
-확장 프로그램 정적 분석을 수행하는 5개의 독립 스캐너 모듈입니다.
-`manifest_permission_scan`, `manifest_behavior_scan`, `code_execution_scan`, `code_navigation_scan` 4개는 `static_analysis.py`의 `run_static_analysis`에서 순차 실행됩니다.
+확장 프로그램 정적 분석을 수행하는 6개의 독립 스캐너 모듈입니다.
+`manifest_permission_scan`, `manifest_behavior_scan`, `code_execution_scan`, `code_navigation_scan`, `evasion_injection_scan` 5개는 `static_analysis.py`의 `run_static_analysis`에서 순차 실행됩니다.
 `minify_obfuscation.py`(PracticalScanner)는 `main.py`에서 직접 호출됩니다.
 
 ## 공통 반환 구조
@@ -110,6 +110,31 @@ URL 문맥 분류:
 - 문서/README/GitHub 이슈 링크 → 제외
 - 테스트 도메인, `${...}` 템플릿 URL → 제외
 - 실제 네트워크 통신 가능성 있는 URL → `reputation_targets`에 보존
+
+---
+
+### `evasion_injection_scan.py`
+
+`run_evasion_injection_scan(report, source_entries)`
+
+페이지에 숨겨진 코드를 주입하고 특정 조건에서만 동작해 탐지를 회피하는 패턴을 탐지합니다.
+정상 확장이 악성 업데이트로 바뀌는 공급망형 위협(예: boannews idx=144344 — 인기 광고차단 확장이 업데이트로 숨겨진 JS를 주입)을 겨냥합니다.
+
+탐지 패턴:
+
+| rule_id                  | 심각도 | 의미                                                                  |
+| ------------------------ | ------ | --------------------------------------------------------------------- |
+| `inject_remote_script`   | HIGH   | `createElement('script')` + `.src=` — 원격 스크립트를 페이지에 주입   |
+| `inject_inline_script`   | HIGH   | `createElement('script')` + `.text/.textContent/.innerHTML=` — 인라인 코드 주입 |
+| `create_script_element`  | MEDIUM | `<script>` 동적 생성 (주입 가능성)                                    |
+| `host_conditional_exec`  | MEDIUM | `location.hostname` 비교/부분일치 — 특정 사이트에서만 실행 (회피)      |
+| `time_conditional_exec`  | LOW    | `getHours()` 등 시간 기반 게이팅 (time-bomb 신호)                     |
+
+결합 판정 (스모킹 건):
+
+- 같은 파일에서 **주입 패턴 + 회피 패턴이 동시에** 나타나면 `evasive_injection` finding을 추가로 생성
+- 주입 신호 중 HIGH가 있으면 `CRITICAL`, 아니면 `HIGH`
+- 라이브러리 파일(`.min.js`, `/vendor/` 등)은 전 패턴 `LOW`로 완화
 
 ---
 

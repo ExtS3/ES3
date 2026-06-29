@@ -16,6 +16,7 @@ try:
     from backend.scanners.manifest_permission_scan import run_manifest_permission_scan
     from backend.scanners.code_execution_scan import run_code_execution_scan
     from backend.scanners.code_navigation_scan import run_code_navigation_scan
+    from backend.scanners.evasion_injection_scan import run_evasion_injection_scan
 except ModuleNotFoundError:
     from scanners.common import (
         ensure_dict,
@@ -28,6 +29,7 @@ except ModuleNotFoundError:
     from scanners.manifest_permission_scan import run_manifest_permission_scan
     from scanners.code_execution_scan import run_code_execution_scan
     from scanners.code_navigation_scan import run_code_navigation_scan
+    from scanners.evasion_injection_scan import run_evasion_injection_scan
 
 
 JsonDict = Dict[str, Any]
@@ -47,6 +49,7 @@ def run_static_analysis(report: JsonDict, report_dir: Optional[str] = None, sour
         run_manifest_behavior_scan(report),
         run_code_execution_scan(report, source_entries),
         run_code_navigation_scan(report, source_entries),
+        run_evasion_injection_scan(report, source_entries),
     ]
 
     findings: List[Dict[str, Any]] = []
