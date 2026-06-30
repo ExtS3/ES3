@@ -1,0 +1,29 @@
+# 로컬 전용 override (미추적) — 임베딩용 Ollama 추가 후 suppressor 연결
+# 목적: 시나리오 RAG 벡터 적재 (bge-m3, 1024-dim)
+services:
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  suppressor:
+    environment:
+      OLLAMA_EMBED_URL: "http://ollama:11434/api/embed"
+      OLLAMA_EMBED_LEGACY_URL: "http://ollama:11434/api/embeddings"
+      EMBEDDING_MODEL: "bge-m3"
+      ENABLE_WEB_FORWARD: "true"
+      WEB_RECEIVE_URL: "http://exts3-demo:8000/api/receive"
+    depends_on:
+      ollama:
+        condition: service_healthy
+
+volumes:
+  ollama_data:
