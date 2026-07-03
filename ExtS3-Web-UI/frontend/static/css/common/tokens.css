@@ -1,0 +1,83 @@
+/* ES3 design tokens — 색/그라데이션/공용 컴포넌트의 단일 진실 원천.
+   Tailwind 색 이름 매핑은 /static/js/es3-theme.js 참고. */
+/* 스크롤바 유무로 mx-auto 콘텐츠가 좌우로 밀리지 않게 고정 */
+html { scrollbar-gutter: stable; }
+
+:root {
+  --es3-bg: #F7F8FC;
+  --es3-surface: #FFFFFF;
+  --es3-ink: #1E2130;
+  --es3-muted: #64748B;
+  --es3-line: #E6E8F0;
+
+  --es3-primary: #4A5BE0;        /* 로고 로열블루-바이올렛 */
+  --es3-primary-strong: #3B49C4;
+  --es3-primary-soft: #EEF1FE;
+  --es3-sky: #38B6F8;            /* 로고 하늘색 */
+  --es3-violet: #A06AF0;         /* 로고 연보라 */
+  --es3-gradient: linear-gradient(120deg, #38B6F8 0%, #4A5BE0 55%, #A06AF0 100%);
+
+  --es3-danger: #D9394F;
+  --es3-danger-soft: #FDECEF;
+  --es3-warn: #C97F1B;
+  --es3-warn-soft: #FBF3E4;
+  --es3-ok: #2E9E6B;
+  --es3-ok-soft: #E7F6EF;
+
+  --es3-radius: 12px;
+  --es3-ease: 180ms ease-out;
+}
+
+/* 브랜드 모먼트 전용 그라데이션 (로고 스윕) — 남발 금지 */
+.es3-gradient-bg { background: var(--es3-gradient); }
+.es3-gradient-text {
+  background: var(--es3-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* 버튼 위계: primary(화면당 1개) / ghost / danger */
+.es3-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 16px; border-radius: 10px; border: none; cursor: pointer;
+  font: 600 14px/1.25 'Pretendard', 'Inter', sans-serif;
+  background: var(--es3-primary); color: #fff;
+  transition: background var(--es3-ease), transform var(--es3-ease);
+}
+.es3-btn:hover { background: var(--es3-primary-strong); }
+.es3-btn:active { transform: scale(0.98); }
+.es3-btn-ghost {
+  background: transparent; color: var(--es3-ink);
+  border: 1px solid var(--es3-line);
+}
+.es3-btn-ghost:hover { background: var(--es3-primary-soft); color: var(--es3-primary-strong); }
+.es3-btn-danger { background: transparent; color: var(--es3-danger); border: 1px solid var(--es3-danger-soft); }
+.es3-btn-danger:hover { background: var(--es3-danger-soft); }
+
+/* 심각도 칩 (시나리오 태그/판정 결과) */
+.es3-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 10px; border-radius: 999px;
+  font: 500 12px/1.6 'Pretendard', 'Inter', sans-serif;
+  background: var(--es3-primary-soft); color: var(--es3-primary-strong);
+}
+.es3-chip--neutral { background: #F1F3F9; color: var(--es3-muted); }
+.es3-chip--warn { background: var(--es3-warn-soft); color: var(--es3-warn); }
+.es3-chip--danger { background: var(--es3-danger-soft); color: var(--es3-danger); }
+.es3-chip--ok { background: var(--es3-ok-soft); color: var(--es3-ok); }
+
+/* 빈 상태: 아이콘 + 설명 + CTA */
+.es3-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 48px 24px; text-align: center; color: var(--es3-muted);
+}
+.es3-empty .material-symbols-outlined {
+  font-size: 40px; color: var(--es3-primary);
+  background: var(--es3-primary-soft); border-radius: 999px; padding: 14px;
+}
+.es3-empty p { font-size: 14px; margin: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}

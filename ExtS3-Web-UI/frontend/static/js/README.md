@@ -134,3 +134,7 @@ ZIP/VSIX 직접 업로드 1개 파일. 첫 업로드 / 버전 업 모드 분기,
 | `showCustomConfirm()` / `showConfirm()` | `admin/admin_pending.js`, `admin/scenario_id.js`, `admin/scenario_detail.js`, `upload/build.js`         |
 | `showToast()`                           | `admin/scenario_id.js`, `admin/scenario_detail.js`                                                      |
 | `splitVersionDiff()`                    | `admin/admin_log.js`, `admin/version_diff.js`                                                           |
+
+## ES3 테마/셸 (2026-07)
+- `es3-theme.js` — 공유 Tailwind config(템플릿 인라인 config 대체). 색 이름은 기존 M3 명칭 유지, 값만 ES3 팔레트.
+- `common.js` — `#es3-header`/`#es3-sidebar` 플레이스홀더에 헤더/사이드바 마크업 주입(네비 단일 소스) + 기존 세션 로직.
