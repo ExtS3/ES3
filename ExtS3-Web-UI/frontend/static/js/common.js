@@ -1,21 +1,81 @@
+// ES3 공통 셸(헤더/사이드바) 주입 + 세션·네비게이션.
+// 마이그레이션된 템플릿은 <header id="es3-header"></header> / <aside id="es3-sidebar"></aside>
+// 플레이스홀더만 두고, 이 파일이 마크업을 채운다(네비 단일 소스).
+// 구형 템플릿(자체 aside 마크업 + #side-bottom)도 그대로 동작한다.
+
+(function injectShell() {
+    const NAV_ITEMS = [
+        { href: '/', icon: 'home', label: '홈' },
+        { href: '/search', icon: 'explore', label: '앱 탐색' },
+        { href: '/library', icon: 'inventory_2', label: '라이브러리' },
+        { href: '/scenario', icon: 'dataset', label: '시나리오 관리' },
+        { href: '/admin', icon: 'dashboard_customize', label: '관리자 대시보드' },
+    ];
+
+    function activeHref() {
+        const p = window.location.pathname;
+        if (p.startsWith('/admin')) return '/admin';
+        if (p.startsWith('/scenario')) return '/scenario';
+        if (p.startsWith('/library')) return '/library';
+        if (p.startsWith('/search') || p.startsWith('/list') || p.startsWith('/detail') || p.startsWith('/no_result')) return '/search';
+        return '/';
+    }
+
+    const aside = document.getElementById('es3-sidebar');
+    if (aside) {
+        const active = activeHref();
+        aside.className = 'fixed left-0 top-0 h-screen w-60 z-30 hidden md:flex flex-col bg-surface-container-lowest border-r border-outline-variant';
+        aside.innerHTML = `
+<div class="pt-6 pb-6 flex justify-center">
+    <a href="/"><img src="/static/img/logo.png" alt="ES3" class="h-12"></a>
+</div>
+<nav class="flex flex-col gap-1 px-3">
+    ${NAV_ITEMS.map(item => {
+        const isActive = item.href === active;
+        return `
+    <a href="${item.href}" class="relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive
+            ? 'bg-primary-container text-on-primary-container'
+            : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface'}">
+        ${isActive ? '<span class="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-full es3-gradient-bg"></span>' : ''}
+        <span class="material-symbols-outlined" data-icon="${item.icon}">${item.icon}</span>
+        <span>${item.label}</span>
+    </a>`;
+    }).join('')}
+</nav>
+<div id="side-bottom" class="mt-auto"></div>
+`;
+    }
+
+    const header = document.getElementById('es3-header');
+    if (header) {
+        header.className = 'fixed top-0 right-0 left-0 md:left-60 h-14 z-40 bg-surface-container-lowest/80 backdrop-blur-md border-b border-outline-variant';
+        header.innerHTML = `
+<div class="flex justify-end items-center h-full px-6">
+    <div class="flex items-center gap-4">
+        <div class="relative hidden sm:block">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+            <input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-lg text-sm w-64 focus:ring-2 focus:ring-primary/30" placeholder="라이브러리에서 검색..." type="text"/>
+        </div>
+    </div>
+</div>
+`;
+    }
+})();
+
 const sideBottom = document.getElementById('side-bottom');
 if (sideBottom) {
     sideBottom.innerHTML = `
-<div class="mt-auto px-4 flex flex-col gap-4">
-    <button id="moveBuild" class="w-full bg-indigo-600 text-white px-4 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all active:scale-95 shadow-lg shadow-indigo-200 dark:shadow-none">
+<div class="px-4 pb-3">
+    <button id="moveBuild" class="es3-btn w-full">
         <span class="material-symbols-outlined text-sm" data-icon="upload">upload</span>
         Upload
     </button>
-    <div class="flex flex-col gap-1 border-t border-slate-200 dark:border-slate-800 pt-4 pb-2">
-        <a class="flex items-center gap-3 p-3 text-slate-600 dark:text-slate-400 hover:bg-slate-100 rounded-lg text-sm font-medium transition-all" href="#">
-            <span class="material-symbols-outlined">help</span>
-            Help
-        </a>
-        <a id="user" class="flex items-center gap-3 px-4 py-3 text-error dark:text-error-container hover:bg-error-container/10 rounded-lg mx-2 text-sm font-medium Inter transition-all hover:scale-[1.02]" href="/login">
-            <span class="material-symbols-outlined" data-icon="login">login</span>
-            <span>Login</span>
-        </a>
-    </div>
+</div>
+<div class="px-4 pb-4 flex flex-col gap-1 border-t border-outline-variant pt-3">
+    <a id="user" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-primary hover:bg-primary-container" href="/login">
+        <span class="material-symbols-outlined" data-icon="login">login</span>
+        <span>Login</span>
+    </a>
 </div>
 `;
 }
@@ -68,7 +128,7 @@ window.exts3SessionPromise = window.exts3SessionPromise || (async () => {
     if (headerActions && !document.getElementById('sessionRoleBadge')) {
         const badge = document.createElement('div');
         badge.id = 'sessionRoleBadge';
-        badge.className = 'hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 text-xs font-bold';
+        badge.className = 'hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary-container text-on-primary-container text-xs font-bold';
         badge.innerHTML = `
             <span class="material-symbols-outlined text-sm">${isAdmin ? 'admin_panel_settings' : session.authenticated ? 'person' : 'public'}</span>
             <span>${roleLabel}</span>
@@ -112,6 +172,8 @@ window.exts3SessionPromise = window.exts3SessionPromise || (async () => {
     if (userLink) {
         if (session.authenticated) {
             userLink.href = '#';
+            // Logout은 중립 회색, 호버 시에만 위험 색 힌트
+            userLink.className = 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-on-surface-variant hover:bg-error-container hover:text-error-dim';
             userLink.innerHTML = `
                 <span class="material-symbols-outlined" data-icon="logout">logout</span>
                 <span>Logout</span>
