@@ -115,7 +115,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         repoContainer.innerHTML = '';
 
         if (safeItems.length === 0) {
-            repoContainer.innerHTML = '<p class="text-on-surface-variant text-center py-10">안전 검사가 완료된 항목이 없습니다.</p>';
+            repoContainer.innerHTML = '<div class="es3-empty col-span-full"><span class="material-symbols-outlined">travel_explore</span><p>아직 검증된 확장 프로그램이 없습니다.</p><a href="/search" class="es3-btn">앱 탐색하기</a></div>';
             return;
         }
 
@@ -171,6 +171,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
         console.error('데이터 로딩 실패:', error);
         updateDashboardStats([], []);
-        repoContainer.innerHTML = '<p class="text-red-500">데이터를 불러오는 중 에러가 발생했습니다.</p>';
+        repoContainer.innerHTML = '<p class="text-error text-center py-10">데이터를 불러오는 중 에러가 발생했습니다.</p>';
     }
 });

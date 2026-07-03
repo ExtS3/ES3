@@ -3,6 +3,8 @@
 시나리오 관리 페이지 템플릿 모음입니다.
 모든 라우트는 admin 롤 필요 (`require_admin_page`).
 
+**변경 이력**: ES3 리빌딩 — 두 템플릿 모두 공용 셸(`#es3-header`/`#es3-sidebar`) + `es3-theme.js`/`tokens.css` 적용, JS 렌더링 칩은 템플릿 내 CSS 오버라이드로 재도색(태그=neutral, 문서 있음=ok), scenario_id의 "vectorDB 재적재" 버튼 ghost 강등(프라이머리는 업로드 1개), 두 페이지 끝에 `common.js` 로드 추가.
+
 ---
 
 ## 파일 구성
