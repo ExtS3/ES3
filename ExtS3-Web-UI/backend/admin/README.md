@@ -14,6 +14,7 @@ admin/
 │   ├── approve.py             # 승인 API → Nexus review → safe 이동
 │   ├── reject.py              # 거절 API → Nexus 파일 삭제 + 이력 기록
 │   └── nexus_file.py          # Nexus 연동 유틸 (두 파일 공유)
+├── infra_cluster.py           # 인프라 클러스터 오염 판정 (BadBlocker 자매 확장 대응)
 ├── log.py                     # 분석 결과 조회 + PDF 리포트 생성
 ├── pending.py                 # ⚠️ 비활성 라우터 (main.py에서 주석처리됨)
 ├── permissions.py             # 유저·롤·권한 CRUD + 회원가입 승인·거절
@@ -98,6 +99,22 @@ suppressor가 결과를 전송하면 `recevie_result.py`가 `analysis_result/{de
 
 ---
 
+### infra_cluster.py
+
+인프라 클러스터 오염 판정. BadBlocker(island.io, 2026-06) 사례 대응 — 거부 이력이 있는
+확장과 백엔드 인프라(코드 내 외부 도메인)를 공유하는 확장은 risk_score와 무관하게
+자동 승인을 차단하고 수동 review로 강등합니다.
+
+- `record_signals(...)` — `recevie_result.py`가 결과 수신 시마다 확장별 외부 도메인
+  (`web_payload.static_analysis.external_domains`)을 `extension_infra.json`에 누적
+- `find_cluster_taint(...)` — 거부 기록(`reject_list.json`)과 도메인 조인으로 오염 판정.
+  오염 상태를 저장하지 않고 판정 시점에 도출하므로 거부 기록 변경에 자동으로 일관됨
+- 공용 CDN·플랫폼 도메인(`BENIGN_DOMAINS` allowlist)은 연관 근거에서 제외
+- 오염 시 `summary.json`의 `auto_policy.cluster_taint`에 근거(공유 도메인·상대 확장) 기록,
+  자동 승인이던 판정은 `reason: cluster_tainted`로 review 강등
+
+---
+
 ### pending.py ⚠️
 
 **현재 비활성 상태.** `main.py`에서 import가 주석처리돼 있고, DB에 `pending_files` 테이블도 없습니다.
@@ -111,6 +128,7 @@ suppressor가 결과를 전송하면 `recevie_result.py`가 `analysis_result/{de
 | ---------------------- | -------------------- | ------------------------------------------ |
 | `policy_settings.json` | `policy.py`          | 정책 설정값. Git 추적 O (기본값 관리 목적) |
 | `reject_list.json`     | `decision/reject.py` | 거절 이력 누적. `.gitignore` 등록 O        |
+| `extension_infra.json` | `infra_cluster.py`   | 확장별 인프라 신호 누적. `.gitignore` 등록 O |
 
 ---
 
