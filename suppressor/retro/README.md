@@ -34,8 +34,15 @@ Nexus raw repository
     │   └─ 연관 도메인 평판
     │   └─ 악화 감지 → HOLD_FOR_REPUTATION_REVIEW / QUARANTINE_RECOMMENDED 이벤트
     │
-    └─ YARA 매칭 (선택, YARA_RULE_PATH 필요)
-        └─ 새 매치 → HOLD_FOR_REPUTATION_REVIEW 이벤트
+    ├─ YARA 매칭 (선택, YARA_RULE_PATH 필요)
+    │   └─ 새 매치 → HOLD_FOR_REPUTATION_REVIEW 이벤트
+    │
+    └─ 원격 config 채널 감시 (RemoteConfigChecker)
+        ├─ JS에서 fetch/XHR URL 리터럴 추출 (extension당 최대 10개)
+        ├─ endpoint 응답을 정규화(공백·숫자 제거) 후 sha256 baseline 비교
+        └─ 실행성 콘텐츠(<script, eval, function(, scriptlet/scriplet 등) 존재 시
+           최초 관측 또는 해시 변경 → HOLD_FOR_REPUTATION_REVIEW 이벤트
+           (BadBlocker형 대응: 확장 코드는 그대로, 서버 응답만 바꿔 임의 JS 배포)
 
 이벤트 → retro_queue.jsonl 적재
 상태 → retro_state.json 갱신
@@ -62,8 +69,13 @@ Nexus raw repository
 | 이벤트 | 조건 | 권장 조치 |
 |--------|------|-----------|
 | `HOLD_FOR_NEW_VERSION` | store 버전 > Nexus 버전 | holding 큐 또는 재분석 큐로 전달 |
-| `HOLD_FOR_REPUTATION_REVIEW` | VT/YARA 평판 악화 | 임시 보류 후 재분석 |
+| `HOLD_FOR_REPUTATION_REVIEW` | LayerX/YARA 평판 악화, 또는 원격 config 응답에 실행성 콘텐츠 최초 관측·변경 (`remote_config_executable_content` / `remote_config_changed_with_executable_content`) | 임시 보류 후 재분석 |
 | `QUARANTINE_RECOMMENDED` | 강한 악성 신호 | 운영자 검토 대상으로 전달 |
+
+### 원격 config 감시 한계
+
+- 서버가 User-Agent·지역 타게팅을 하면 모니터가 받는 응답과 실사용자 응답이 다를 수 있음 — 완전 방어가 아닌 관측 확률을 높이는 장치
+- 응답 정규화는 공백·숫자 제거 근사 방식. timestamp류 churn은 흡수하지만, 숫자만 바뀌는 악성 변경도 함께 흡수됨
 
 ## 핵심 클래스
 
