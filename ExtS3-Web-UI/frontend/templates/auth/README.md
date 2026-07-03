@@ -2,6 +2,8 @@
 
 인증 관련 페이지 템플릿 모음입니다.
 
+> 2026-07-02: 3개 템플릿 전부 ES3 리디자인 적용 — 인라인 tailwind.config → `/static/js/es3-theme.js` + `tokens.css`, 브랜드 문구를 ES3로 통일(로고 이미지 `/static/img/logo.png`, 카드 상단 그라데이션 바), JS 훅(id) 전부 보존. login.html은 `auth/login.css` 의존 제거(Tailwind 전환).
+
 ---
 
 ## 파일 구성

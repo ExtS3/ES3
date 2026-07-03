@@ -1,38 +1,76 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html class="light" lang="ko">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nexus Repository - Login</title>
-  <link rel="stylesheet" href="/static/css/auth/login.css">
-  <link rel="stylesheet" href="/static/css/common/nav.css">
+  <title>ES3 · 로그인</title>
+  <script src="/static/vendor/tailwindcss-forms-container-queries.js"></script>
+  <script src="/static/js/es3-theme.js"></script>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/common/tokens.css">
   <script src="/static/js/auth/login.js?v=session-fix-1" defer></script>
 </head>
-<body>
-  <main class="login-shell">
-    <section class="login-panel" aria-labelledby="login-title">
-      <div class="brand-mark" aria-hidden="true">N</div>
-      <h1 id="login-title">Nexus Repository</h1>
-      <p class="subtitle">확장 프로그램 분석 서비스에 로그인합니다.</p>
+<body class="bg-surface text-on-surface min-h-screen font-body">
+  <div class="min-h-screen flex">
 
-      <form id="login_form" class="login-form">
-        <div class="field">
-          <label for="id">아이디</label>
-          <input id="id" name="id" type="text" autocomplete="username" placeholder="사용자 아이디" required>
-        </div>
+    <!-- 좌: 브랜드 패널 (모바일 숨김) -->
+    <aside class="hidden md:flex md:w-[60%] es3-gradient-bg relative overflow-hidden flex-col justify-between p-12" aria-hidden="true">
+      <!-- 장식: 은은한 빛망울 -->
+      <div class="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white/10 blur-3xl"></div>
+      <div class="absolute bottom-0 left-1/3 w-80 h-80 rounded-full bg-white/10 blur-3xl"></div>
 
-        <div class="field">
-          <label for="pw">비밀번호</label>
-          <input id="pw" name="pw" type="password" autocomplete="current-password" placeholder="비밀번호" required>
-        </div>
+      <div class="relative">
+        <img src="/static/img/logo-trans.png" alt="ES3" class="h-24 brightness-0 invert drop-shadow-[0_4px_14px_rgba(0,0,0,0.25)]">
+      </div>
 
-        <button id="login_btn" type="submit">로그인</button>
-      </form>
+      <div class="relative">
+        <h2 class="text-5xl font-black text-white leading-tight tracking-tight">
+          설치하기 전에,<br>ES3가 먼저 검사합니다
+        </h2>
+        <p class="mt-5 text-white/80 text-base leading-relaxed max-w-md">
+          크롬·VS Code 확장 프로그램의 위험 행동을 업로드 즉시 분석하고,<br>
+          안전한 것만 저장소에 올립니다.
+        </p>
+      </div>
 
-      <p class="signup-link">
-        계정이 없으면 <a href="/signup">회원가입 신청</a>
-      </p>
-    </section>
-  </main>
+      <p class="relative text-white/60 text-sm">© 2026 ES3. All rights reserved.</p>
+    </aside>
+
+    <!-- 우: 로그인 폼 -->
+    <main class="relative flex-1 flex items-center justify-center p-6 bg-surface-container-lowest overflow-hidden" aria-labelledby="login-title">
+      <!-- 글래스 카드 뒤로 비치는 브랜드 컬러 블롭 -->
+      <div class="absolute -top-24 -right-16 w-80 h-80 rounded-full bg-primary/15 blur-3xl" aria-hidden="true"></div>
+      <div class="absolute -bottom-24 -left-16 w-96 h-96 rounded-full bg-[#A06AF0]/15 blur-3xl" aria-hidden="true"></div>
+      <div class="absolute top-1/3 left-1/2 w-56 h-56 rounded-full bg-[#38B6F8]/10 blur-3xl" aria-hidden="true"></div>
+      <div class="relative w-full max-w-sm bg-white/50 backdrop-blur-xl border border-white/60 rounded-2xl shadow-xl shadow-primary/10 p-8">
+        <img src="/static/img/logo.png" alt="ES3" class="h-10 md:hidden mx-auto mb-8">
+
+        <h1 id="login-title" class="text-2xl font-bold">ES3에 로그인</h1>
+        <p class="mt-1 text-sm text-on-surface-variant">확장 프로그램 보안 심사 플랫폼</p>
+
+        <form id="login_form" class="mt-8 space-y-5">
+          <div>
+            <label class="block text-sm font-semibold mb-2" for="id">아이디</label>
+            <input id="id" name="id" type="text" autocomplete="username" placeholder="사용자 아이디" required
+                   class="w-full bg-white/70 border border-outline-variant rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary">
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold mb-2" for="pw">비밀번호</label>
+            <input id="pw" name="pw" type="password" autocomplete="current-password" placeholder="비밀번호" required
+                   class="w-full bg-white/70 border border-outline-variant rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary">
+          </div>
+
+          <button id="login_btn" type="submit"
+                  class="w-full bg-primary hover:bg-primary-dim text-white rounded-lg px-4 py-3 font-bold transition-colors">로그인</button>
+        </form>
+
+        <p class="mt-6 text-sm text-on-surface-variant">
+          계정이 없으면 <a href="/signup" class="font-bold text-primary hover:underline">회원가입</a>
+        </p>
+      </div>
+    </main>
+
+  </div>
 </body>
 </html>
