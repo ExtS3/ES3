@@ -127,13 +127,17 @@ URL 문맥 분류:
 | `inject_remote_script`   | HIGH   | `createElement('script')` + `.src=` — 원격 스크립트를 페이지에 주입   |
 | `inject_inline_script`   | HIGH   | `createElement('script')` + `.text/.textContent/.innerHTML=` — 인라인 코드 주입 |
 | `create_script_element`  | MEDIUM | `<script>` 동적 생성 (주입 가능성)                                    |
+| `trusted_types_bypass`   | HIGH   | `trustedTypes.createPolicy` + `createScript` — 임의 문자열을 실행 코드로 세탁 (CSP 우회) |
 | `host_conditional_exec`  | MEDIUM | `location.hostname` 비교/부분일치 — 특정 사이트에서만 실행 (회피)      |
 | `time_conditional_exec`  | LOW    | `getHours()` 등 시간 기반 게이팅 (time-bomb 신호)                     |
 
 결합 판정 (스모킹 건):
 
 - 같은 파일에서 **주입 패턴 + 회피 패턴이 동시에** 나타나면 `evasive_injection` finding을 추가로 생성
-- 주입 신호 중 HIGH가 있으면 `CRITICAL`, 아니면 `HIGH`
+  - 주입 신호 중 HIGH가 있으면 `CRITICAL`, 아니면 `HIGH`
+- 같은 파일에서 **원격 수신(`fetch`/`XMLHttpRequest`) + 인라인 실행 계열(`inject_inline_script`/`trusted_types_bypass`)이 동시에** 나타나면 `remote_config_injection` finding(`CRITICAL`)을 추가로 생성
+  - 서버 응답만 바뀌면 확장 업데이트 없이 임의 JS가 실행되는 원격 제어 주입 경로 대응 (예: BadBlocker — island.io, 2026-06)
+  - fetch 단독은 finding을 만들지 않음 (단독 보고는 `code_navigation_scan` 담당)
 - 라이브러리 파일(`.min.js`, `/vendor/` 등)은 전 패턴 `LOW`로 완화
 
 ---

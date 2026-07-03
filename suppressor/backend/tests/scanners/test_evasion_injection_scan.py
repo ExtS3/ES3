@@ -92,3 +92,60 @@ def test_library_file_is_downgraded():
     result = _run(content, relative_path="vendor/analytics.min.js")
     inj = [f for f in result["findings"] if f["rule_id"] == "inject_remote_script"]
     assert inj and inj[0]["severity"] == "LOW"
+
+
+# --- BadBlocker(island.io, 2026-06) 시나리오 대응 ---
+# 원격 서버 config의 scriptlet을 trustedTypes로 세탁해 페이지에 <script>로 주입.
+# 서버 응답만 바뀌면 확장 업데이트 없이 임의 JS 실행이 가능한 구조.
+
+BADBLOCKER_SNIPPET = (
+    "fetch('https://api.adblock-for-youtube.com/api/v2/rules?version=7.2.1');"
+    "var policy = window.trustedTypes.createPolicy('default', {"
+    "  createScript: function (input) { return input; },"
+    "});"
+    "var safeScriptContent = policy.createScript(script);"
+    "var scriptTag = document.createElement('script');"
+    "scriptTag.textContent = safeScriptContent;"
+    "(document.head || document.documentElement).appendChild(scriptTag);"
+)
+
+
+def test_trusted_types_bypass_flagged():
+    content = (
+        "var policy = window.trustedTypes.createPolicy('default', "
+        "{ createScript: function (input) { return input; } });"
+    )
+    result = _run(content)
+    hits = [f for f in result["findings"] if f["rule_id"] == "trusted_types_bypass"]
+    assert hits and hits[0]["severity"] == "HIGH"
+
+
+def test_fetch_alone_has_no_finding():
+    result = _run("fetch('https://api.example.com/rules').then(r => r.json());")
+    assert result["findings"] == []
+
+
+def test_badblocker_remote_config_injection_is_critical():
+    result = _run(BADBLOCKER_SNIPPET)
+    ids = _rule_ids(result)
+    assert "inject_inline_script" in ids
+    assert "trusted_types_bypass" in ids
+    combined = [f for f in result["findings"] if f["rule_id"] == "remote_config_injection"]
+    assert combined, "fetch + 인라인 주입 동시 발생 시 결합 finding이 있어야 함"
+    assert combined[0]["severity"] == "CRITICAL"
+
+
+def test_inline_injection_without_fetch_has_no_remote_combo():
+    content = (
+        "var t = document.createElement('script');"
+        "t.textContent = 'console.log(1)';"
+        "document.head.appendChild(t);"
+    )
+    result = _run(content)
+    assert "remote_config_injection" not in _rule_ids(result)
+
+
+def test_remote_combo_in_library_file_is_downgraded():
+    result = _run(BADBLOCKER_SNIPPET, relative_path="vendor/adlib.min.js")
+    combined = [f for f in result["findings"] if f["rule_id"] == "remote_config_injection"]
+    assert combined and combined[0]["severity"] == "LOW"
