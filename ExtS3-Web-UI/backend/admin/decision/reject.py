@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import Response, JSONResponse
 from backend.auth.security import require_permission
+from backend.extension_registry import upsert_registry_entry
 
 from backend.admin.decision.nexus_file import (
     append_reject_record,
@@ -31,6 +32,13 @@ async def reject_extension(
     })
     delete_nexus_file(source_path)
     deleted_analysis_path = delete_analysis_result_for_review_path(source_path)
+    upsert_registry_entry(
+        ext_id=payload["id"],
+        ext_name=payload["app_name"],
+        browser=payload["browser"],
+        version=payload["version"],
+        status="reject",
+    )
 
     return JSONResponse({
         "success": True,

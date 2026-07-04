@@ -19,6 +19,7 @@ Nexus: review/{browser}/{name}/{version}/{id}.zip
        safe/{browser}/{name}/{version}/{id}.zip
 
 analysis_result/review/{browser}/{name}/{version}/{id}/ → 삭제
+extension_registry: status="safe"로 upsert (decided_at 기록)
 ```
 
 ---
@@ -36,9 +37,14 @@ Nexus: review/{browser}/{name}/{version}/{id}.zip → 삭제
 
 backend/admin/reject_list.json 에 이력 추가
 analysis_result/review/{browser}/{name}/{version}/{id}/ → 삭제
+extension_registry: status="reject"로 upsert (decided_at 기록)
 ```
 
 `reject_list.json`은 `.gitignore`에 등록된 런타임 파일입니다.
+
+> `extension_registry`는 Nexus 파일 삭제와 별개로 (ext_id, version) 행을 `status="reject"`로 남겨둡니다.
+> 그래서 거절된 조합을 그대로 재요청하면 `check_registry_duplicate()`에 걸려 차단됩니다(상세는
+> `backend/README.md`의 "extension_registry.py" 섹션 참고).
 
 ---
 
@@ -58,7 +64,7 @@ analysis_result/review/{browser}/{name}/{version}/{id}/ → 삭제
 | `delete_nexus_file(path)`                              | Nexus 파일 삭제 (404도 성공 처리)                          |
 | `delete_analysis_result_for_review_path(path)`         | `analysis_result/` 내 해당 폴더 삭제                       |
 | `append_reject_record(record)`                         | `reject_list.json`에 거절 이력 추가                        |
-| `build_reject_report_pdf(records)`                     | 거절 이력 PDF 바이트 생성 (외부 라이브러리 없이 직접 구현) |
+| `build_reject_report_pdf(records)`                     | 거절 이력 PDF 바이트 생성 (reportlab 표 레이아웃)         |
 
 ---
 

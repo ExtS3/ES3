@@ -77,7 +77,8 @@
 
 - CRITICAL 자동 거절, LOW 자동 승인 토글 스위치
 - 저장 버튼 → `POST /api/admin/policy`
-- 상단 "정책 문서 다운로드" 버튼 → `GET /api/admin/policy/default.pdf`
+- 상단 "기본 정책 JSON" 버튼 → `GET /api/admin/policy/default.json`
+- 상단 "기본 정책 PDF" 버튼 → `GET /api/admin/policy/default.pdf`
 
 **로드 JS**: `admin/policy.js`
 

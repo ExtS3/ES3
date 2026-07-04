@@ -298,6 +298,19 @@ async def receive_and_save_analysis(
             ext_id=ext_id,
         )
 
+        try:
+            from backend.extension_registry import upsert_registry_entry
+
+            upsert_registry_entry(
+                ext_id=ext_id,
+                ext_name=ext_name,
+                browser=browser,
+                version=version,
+                status=_nexus_status_for_decision(decision),
+            )
+        except Exception as registry_e:
+            print(f"[receive_result] registry update failed: {registry_e}")
+
         # 2. 저장 경로 생성
         # analysis_result/{decision}/{browser}/{extName}/{version}/{extID}
         target_dir = BASE_SAVE_DIR / decision / browser / ext_name / version / ext_id

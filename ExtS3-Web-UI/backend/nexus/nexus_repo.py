@@ -188,10 +188,33 @@ async def fetch_nexus_blobstores_async(client):
     return response.json()
 
 
+def fetch_repository_blobstore_name():
+    nexus_url = f"{NEXUS_BASE_URL}/service/rest/v1/repositories/{NEXUS_REPOSITORY}"
+    response = requests.get(nexus_url, auth=nexus_auth, timeout=10)
+
+    if response.status_code != 200:
+        print(f"Nexus Repository API Error: {response.status_code} - {response.text}")
+        return None
+
+    return (response.json().get("storage") or {}).get("blobStoreName")
+
+
+async def fetch_repository_blobstore_name_async(client):
+    nexus_url = f"{NEXUS_BASE_URL}/service/rest/v1/repositories/{NEXUS_REPOSITORY}"
+    response = await client.get(nexus_url)
+
+    if response.status_code != 200:
+        print(f"Nexus Repository API Error: {response.status_code} - {response.text}")
+        return None
+
+    return (response.json().get("storage") or {}).get("blobStoreName")
+
+
 def get_safe_item_name(item):
+    # 경로 구조: safe/{browser}/{name}/{version}/{id}.zip — parts[2]가 확장 이름
     path = item.get("path") or ""
     parts = path.split("/")
-    return parts[1] if len(parts) > 1 and parts[0] == "safe" else None
+    return parts[2] if len(parts) > 2 and parts[0] == "safe" else None
 
 
 def build_dashboard_summary(assets, blobstores=None):
@@ -204,26 +227,20 @@ def build_dashboard_summary(assets, blobstores=None):
         name for name in (get_safe_item_name(item) for item in safe_assets)
         if name
     }
-    asset_total_storage_bytes = sum(
+    # assets are already scoped to NEXUS_REPOSITORY (see fetch_nexus_assets), so this
+    # is the ES3 repo's own usage. blobstore totals are NOT used here because a
+    # blobstore can be shared with other repositories outside ES3.
+    total_storage_bytes = sum(
         item.get("fileSize") or 0
         for item in assets
         if isinstance(item.get("fileSize") or 0, (int, float))
-    )
-    blobstore_total_storage_bytes = sum(
-        item.get("totalSizeInBytes") or 0
-        for item in blobstores
-        if isinstance(item.get("totalSizeInBytes") or 0, (int, float))
     )
     available_storage_bytes = sum(
         item.get("availableSpaceInBytes") or 0
         for item in blobstores
         if isinstance(item.get("availableSpaceInBytes") or 0, (int, float))
     )
-    has_blobstore_metrics = any(
-        "totalSizeInBytes" in item or "availableSpaceInBytes" in item
-        for item in blobstores
-    )
-    total_storage_bytes = blobstore_total_storage_bytes or asset_total_storage_bytes
+    has_blobstore_metrics = any("availableSpaceInBytes" in item for item in blobstores)
     storage_limit_bytes = (
         total_storage_bytes + available_storage_bytes
         if has_blobstore_metrics
@@ -242,6 +259,12 @@ def build_dashboard_summary(assets, blobstores=None):
     }
 
 
+def _blobstores_for_repository(blobstores, blobstore_name):
+    if not blobstore_name:
+        return []
+    return [item for item in blobstores if item.get("name") == blobstore_name]
+
+
 def fetch_dashboard_payload():
     now = time.monotonic()
     cached_payload = _dashboard_cache["payload"]
@@ -250,9 +273,10 @@ def fetch_dashboard_payload():
 
     assets = fetch_nexus_assets()
     blobstores = fetch_nexus_blobstores()
+    blobstore_name = fetch_repository_blobstore_name()
     payload = {
         "items": assets,
-        "summary": build_dashboard_summary(assets, blobstores),
+        "summary": build_dashboard_summary(assets, _blobstores_for_repository(blobstores, blobstore_name)),
     }
     _dashboard_cache["payload"] = payload
     _dashboard_cache["expires_at"] = now + NEXUS_DASHBOARD_CACHE_TTL_SECONDS
@@ -265,13 +289,14 @@ async def fetch_dashboard_payload_async(client):
     if cached_payload is not None and _dashboard_cache["expires_at"] > now:
         return cached_payload
 
-    assets, blobstores = await asyncio.gather(
+    assets, blobstores, blobstore_name = await asyncio.gather(
         fetch_nexus_assets_async(client),
         fetch_nexus_blobstores_async(client),
+        fetch_repository_blobstore_name_async(client),
     )
     payload = {
         "items": assets,
-        "summary": build_dashboard_summary(assets, blobstores),
+        "summary": build_dashboard_summary(assets, _blobstores_for_repository(blobstores, blobstore_name)),
     }
     _dashboard_cache["payload"] = payload
     _dashboard_cache["expires_at"] = now + NEXUS_DASHBOARD_CACHE_TTL_SECONDS

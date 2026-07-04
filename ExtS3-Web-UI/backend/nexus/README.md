@@ -38,13 +38,15 @@ Nexus REST API 연동 함수와 FastAPI 엔드포인트가 모두 담긴 파일�
 
 **주요 내부 함수**
 
-| 함수                                      | 설명                                                   |
-| ----------------------------------------- | ------------------------------------------------------ |
-| `fetch_nexus_assets()` / `_async`         | 전체 에셋 목록 조회 (페이지네이션 자동 처리)           |
-| `fetch_nexus_assets_by_name()` / `_async` | 확장 ID로 에셋 검색 (`.zip`, `.vsix` 후보명 병렬 조회) |
-| `fetch_nexus_blobstores()` / `_async`     | blobstore 스토리지 사용량 조회                         |
-| `build_dashboard_summary()`               | 에셋·blobstore 데이터로 대시보드 요약 JSON 생성        |
-| `fetch_dashboard_payload()` / `_async`    | 위 두 데이터를 합쳐 캐시와 함께 반환                   |
+| 함수                                                | 설명                                                          |
+| --------------------------------------------------- | ------------------------------------------------------------- |
+| `fetch_nexus_assets()` / `_async`                   | `NEXUS_REPOSITORY` 소속 에셋 목록 조회 (페이지네이션 자동 처리) |
+| `fetch_nexus_assets_by_name()` / `_async`           | 확장 ID로 에셋 검색 (`.zip`, `.vsix` 후보명 병렬 조회)          |
+| `fetch_nexus_blobstores()` / `_async`                | Nexus 인스턴스 전체 blobstore 목록 조회                        |
+| `fetch_repository_blobstore_name()` / `_async`      | `NEXUS_REPOSITORY`가 사용하는 blobstore 이름 조회 (`/service/rest/v1/repositories/{repo}`) |
+| `_blobstores_for_repository()`                      | blobstore 목록을 위에서 조회한 이름으로 필터링 (ES3 레포 소속만 남김) |
+| `build_dashboard_summary()`                          | 에셋(용량 합산) + 필터링된 blobstore(남은 용량)로 대시보드 요약 JSON 생성 |
+| `fetch_dashboard_payload()` / `_async`               | 위 데이터를 합쳐 캐시와 함께 반환                              |
 
 **대시보드 요약 구조**
 
@@ -62,6 +64,8 @@ Nexus REST API 연동 함수와 FastAPI 엔드포인트가 모두 담긴 파일�
 
 `safeAssetCount`는 `safe/` 경로에 있는 에셋(승인 완료 확장) 수,
 `extensionActivityPercent`는 전체 에셋 중 승인 완료 비율입니다.
+
+`totalStorageBytes`는 항상 `NEXUS_REPOSITORY`(ES3 레포) 소속 에셋의 `fileSize` 합계입니다 — Nexus 인스턴스에 다른 레포가 blobstore를 공유해도 섞이지 않습니다. `availableStorageBytes`/`storageLimitBytes`는 ES3 레포가 실제로 쓰는 blobstore 하나만 조회해서 계산하며, Nexus는 레포 단위 잔여 용량 개념이 없어 blobstore 단위 값을 그대로 사용합니다(같은 blobstore를 다른 레포와 공유 중이면 그만큼 남은 용량도 공유됩니다).
 
 ---
 

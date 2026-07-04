@@ -66,6 +66,14 @@ def _clean_text(value):
     return " ".join(str(value or "").split())
 
 
+def _clean_multiline_text(value):
+    """줄 단위 공백만 정리하고 줄바꿈은 보존한다. 3줄 이상 연속 빈 줄은 문단 구분 하나로 축소."""
+    lines = [" ".join(line.split()) for line in str(value or "").splitlines()]
+    text = "\n".join(lines)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+
 def _extract_overview_description(soup):
     selectors = [
         ".mN52G.oB8Rd",
@@ -80,7 +88,7 @@ def _extract_overview_description(soup):
         if not element:
             continue
 
-        text = _clean_text(element.get_text(" "))
+        text = _clean_multiline_text(element.get_text("\n"))
         if len(text) >= 30:
             return text
 
@@ -124,7 +132,7 @@ def _extract_detail_field(soup, labels):
 
 
 def get_extension_info(extension_id):
-    url = f"{DETAIL_BASE_URL}/{extension_id}?hl=en"
+    url = f"{DETAIL_BASE_URL}/{extension_id}?hl=ko"
     headers = {
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -173,8 +181,9 @@ def get_extension_info(extension_id):
             ],
             all_text,
         )
-        updated = _extract_detail_field(soup, ["Updated", "업데이트 날짜"]) or _extract_text_value(
+        updated = _extract_detail_field(soup, ["Updated", "업데이트됨", "업데이트 날짜"]) or _extract_text_value(
             [
+                r"업데이트됨\s*([0-9]{4}년\s*[0-9]{1,2}월\s*[0-9]{1,2}일)",
                 r"업데이트 날짜[:\s]*([0-9. /\-]+)",
                 r"Updated\s+([A-Za-z]+ \d{1,2}, \d{4})",
                 r"Updated[:\s]*([A-Za-z0-9, /\-]+?)(?:\s+Features|\s+Flag concern|\s+Size|$)",
@@ -184,8 +193,8 @@ def get_extension_info(extension_id):
 
         users = _extract_text_value(
             [
+                r"([\d,.]+[KkMm]?)\s*\+?\s*(?:사용자|users)",
                 r"사용자\s*([\d,.]+[KkMm]?)\s*\+?\s*명",
-                r"([\d,.]+[KkMm]?)\s*\+?\s*users",
             ],
             all_text,
             "0",
@@ -194,6 +203,7 @@ def get_extension_info(extension_id):
             str(aggregate_rating.get("ratingValue") or "")
             or _extract_text_value(
                 [
+                    r"([\d.]+)\s*\(\s*평점",
                     r"별표\s*([\d.]+)\s*개",
                     r"([\d.]+)\s+out of 5",
                     r"Rated\s*([\d.]+)",
@@ -233,7 +243,7 @@ def get_extension_info(extension_id):
 
 
 async def get_extension_info_async(client, extension_id):
-    url = f"{DETAIL_BASE_URL}/{extension_id}?hl=en"
+    url = f"{DETAIL_BASE_URL}/{extension_id}?hl=ko"
     headers = {
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -275,16 +285,17 @@ async def get_extension_info_async(client, extension_id):
         description = overview_description or meta_description or "N/A"
 
         all_text = " ".join(soup.get_text(" ").split())
-        version = _extract_detail_field(soup, ["Version", "踰꾩쟾"]) or _extract_text_value(
+        version = _extract_detail_field(soup, ["Version", "버전"]) or _extract_text_value(
             [
-                r"踰꾩쟾\s*([0-9][0-9A-Za-z.\-_]*)",
+                r"버전\s*([0-9][0-9A-Za-z.\-_]*)",
                 r"Version\s*([0-9][0-9A-Za-z.\-_]*)",
             ],
             all_text,
         )
-        updated = _extract_detail_field(soup, ["Updated", "?낅뜲?댄듃 ?좎쭨"]) or _extract_text_value(
+        updated = _extract_detail_field(soup, ["Updated", "업데이트됨", "업데이트 날짜"]) or _extract_text_value(
             [
-                r"?낅뜲?댄듃 ?좎쭨[:\s]*([0-9. /\-]+)",
+                r"업데이트됨\s*([0-9]{4}년\s*[0-9]{1,2}월\s*[0-9]{1,2}일)",
+                r"업데이트 날짜[:\s]*([0-9. /\-]+)",
                 r"Updated\s+([A-Za-z]+ \d{1,2}, \d{4})",
                 r"Updated[:\s]*([A-Za-z0-9, /\-]+?)(?:\s+Features|\s+Flag concern|\s+Size|$)",
             ],
@@ -293,8 +304,8 @@ async def get_extension_info_async(client, extension_id):
 
         users = _extract_text_value(
             [
-                r"?ъ슜??s*([\d,.]+[KkMm]?)\s*\+?\s*紐?",
-                r"([\d,.]+[KkMm]?)\s*\+?\s*users",
+                r"([\d,.]+[KkMm]?)\s*\+?\s*(?:사용자|users)",
+                r"사용자\s*([\d,.]+[KkMm]?)\s*\+?\s*명",
             ],
             all_text,
             "0",
@@ -303,7 +314,8 @@ async def get_extension_info_async(client, extension_id):
             str(aggregate_rating.get("ratingValue") or "")
             or _extract_text_value(
                 [
-                    r"蹂꾪몴\s*([\d.]+)\s*媛?",
+                    r"([\d.]+)\s*\(\s*평점",
+                    r"별표\s*([\d.]+)\s*개",
                     r"([\d.]+)\s+out of 5",
                     r"Rated\s*([\d.]+)",
                     r"Rating\s*([\d.]+)",

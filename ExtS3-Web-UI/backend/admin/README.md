@@ -17,7 +17,7 @@ admin/
 ├── log.py                     # 분석 결과 조회 + PDF 리포트 생성
 ├── pending.py                 # ⚠️ 비활성 라우터 (main.py에서 주석처리됨)
 ├── permissions.py             # 유저·롤·권한 CRUD + 회원가입 승인·거절
-├── policy.py                  # 자동 정책 설정 + policy.md → PDF 변환
+├── policy.py                  # 자동 정책 설정 + JSON/PDF 다운로드
 └── policy_settings.json       # 자동 정책 설정값 (런타임 읽기·쓰기)
 ```
 
@@ -61,11 +61,12 @@ suppressor가 결과를 전송하면 `recevie_result.py`가 `analysis_result/{de
 
 자동 정책 설정 관리. `recevie_result.py`가 분석 결과 수신 시마다 이 설정을 읽어 자동 판정에 적용합니다.
 
-| 메서드 | 경로                            | 설명                            |
-| ------ | ------------------------------- | ------------------------------- |
-| `GET`  | `/api/admin/policy`             | 현재 정책 조회                  |
-| `POST` | `/api/admin/policy`             | 정책 변경                       |
-| `GET`  | `/api/admin/policy/default.pdf` | `policy.md` → PDF 변환 다운로드 |
+| 메서드 | 경로                             | 설명                                  |
+| ------ | -------------------------------- | ------------------------------------- |
+| `GET`  | `/api/admin/policy`              | 현재 정책 조회                        |
+| `POST` | `/api/admin/policy`              | 정책 변경                             |
+| `GET`  | `/api/admin/policy/default.json` | 현재 정책 JSON 파일 다운로드          |
+| `GET`  | `/api/admin/policy/default.pdf`  | 현재 정책 표 형태 PDF 다운로드 (reportlab, Windows 맑은 고딕 사용) |
 
 **정책 설정값** (`policy_settings.json`):
 
@@ -105,7 +106,6 @@ suppressor가 결과를 전송하면 `recevie_result.py`가 `analysis_result/{de
 main.py
   ├── admin/log.py              → analysis_result/ (로컬 파일시스템)
   ├── admin/policy.py           → admin/policy_settings.json
-  │                             → policy.md (루트, PDF 변환 시)
   ├── admin/permissions.py      → DB: admin.users / roles / permissions / signup_requests
   └── admin/decision/
         ├── approve.py          → nexus_file.py → Nexus REST API

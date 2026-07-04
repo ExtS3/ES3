@@ -25,11 +25,15 @@ from dotenv import load_dotenv
 
 import sys
 
-# 스캔이 한 번에 한 번만 되도록 줄 세우기.
-from asyncio import Semaphore
+# 동시 스캔 수 제한. 초과분은 거부되지 않고 FIFO로 대기.
+from asyncio import Semaphore, Lock
 
-# 한 번에 1개의 스캔만 허용하는 세마포어 생성
-scan_semaphore = Semaphore(1)
+# 한 번에 3개의 스캔만 허용하는 세마포어 생성
+scan_semaphore = Semaphore(3)
+
+# ExtAnalysis(core.report 전역 dict + VT/DNS monkeypatch)는 동시 실행 불가 →
+# 정적 분석 단계만 스캔 간 직렬화. RAG/난독화는 temp 디렉터리가 호출별 고유라 락 불필요.
+static_analysis_lock = Lock()
 
 load_dotenv()
 
@@ -511,9 +515,14 @@ async def scan(
     version: str = Form(...),
     extName: str = Form(...)
 ):
+    print(f"📥 [scan:{extID} v{version}] 요청 수신 — 스캔 슬롯 대기", flush=True)
     async with scan_semaphore:
-        file_path = os.path.abspath(os.path.join(UPLOAD_DIR, file.filename))
+        # 동시 스캔 시 같은 파일명 덮어쓰기 방지 — 요청별 고유 하위 디렉터리에 저장
+        request_dir = os.path.join(UPLOAD_DIR, f"{extID}_{version}")
+        os.makedirs(request_dir, exist_ok=True)
+        file_path = os.path.abspath(os.path.join(request_dir, file.filename))
         path_obj = Path(file_path)
+        print(f"🔄 [scan:{extID} v{version}] 스캔 시작", flush=True)
 
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
@@ -806,12 +815,14 @@ async def scan(
 
 
             # --- 2. 정적 분석 ---
-            print(">>>>> 정적분석 실행")
+            print(f">>>>> 정적분석 실행 [scan:{extID}]")
             try:
-                full_result = await run_in_threadpool(
-                    run_extanalysis_and_static_scan,
-                    file_path,
-                )
+                # ExtAnalysis 전역 상태 보호: 동시 스캔 중 정적 분석만 한 번에 하나씩
+                async with static_analysis_lock:
+                    full_result = await run_in_threadpool(
+                        run_extanalysis_and_static_scan,
+                        file_path,
+                    )
                 if isinstance(full_result, dict):
                     full_result.setdefault("status", "success")
                 else:
@@ -1025,6 +1036,41 @@ async def scan(
             if version_diff_payload is not None:
                 web_payload["version_diff"] = version_diff_payload
 
+            # nexus upload — 반드시 web forward보다 먼저 실행.
+            # Web-UI /api/receive가 자동 reject 시 Nexus review/ 자산을 삭제(reconcile)하는데,
+            # 업로드가 나중이면 삭제할 자산이 없어 review/에 잔류한다 (VSCode 경로와 동일 순서).
+            nexus_upload_result = {
+                "status": "skipped",
+                "enabled": os.getenv("ENABLE_NEXUS_UPLOAD", "true").strip().lower() == "true",
+            }
+            if nexus_upload_result["enabled"]:
+                try:
+                    await file.seek(0)
+                    nexus_bucket = _decision_to_nexus_bucket(decision)
+                    upload_result = await upload_plugin(
+                        browser=browser,
+                        extID=extID,
+                        version=version,
+                        file=file,
+                        extName=extName,
+                        judge=decision,
+                        decision=nexus_bucket,
+                    )
+                    nexus_upload_result = {
+                        "status": "success",
+                        "enabled": True,
+                        "result": upload_result,
+                    }
+                    print(f"✅ nexus 업로드 완료: {upload_result}")
+                except Exception as nexus_e:
+                    nexus_detail = str(nexus_e).strip() or repr(nexus_e)
+                    nexus_upload_result = {
+                        "status": "error",
+                        "enabled": True,
+                        "message": nexus_detail,
+                    }
+                    print(f"⚠️ nexus 업로드 실패: {nexus_detail}")
+
             # web forward
             web_forward_result = {
                 "status": "skipped",
@@ -1104,39 +1150,6 @@ async def scan(
                             "message": slack_detail,
                         }
                         print(f"⚠️ [Slack] 전송 실패: {slack_detail}")
-
-            # nexus upload
-            nexus_upload_result = {
-                "status": "skipped",
-                "enabled": os.getenv("ENABLE_NEXUS_UPLOAD", "true").strip().lower() == "true",
-            }
-            if nexus_upload_result["enabled"]:
-                try:
-                    await file.seek(0)
-                    nexus_bucket = _decision_to_nexus_bucket(decision)
-                    upload_result = await upload_plugin(
-                        browser=browser,
-                        extID=extID,
-                        version=version,
-                        file=file,
-                        extName=extName,
-                        judge=decision,
-                        decision=nexus_bucket,
-                    )
-                    nexus_upload_result = {
-                        "status": "success",
-                        "enabled": True,
-                        "result": upload_result,
-                    }
-                    print(f"✅ nexus 업로드 완료: {upload_result}")
-                except Exception as nexus_e:
-                    nexus_detail = str(nexus_e).strip() or repr(nexus_e)
-                    nexus_upload_result = {
-                        "status": "error",
-                        "enabled": True,
-                        "message": nexus_detail,
-                    }
-                    print(f"⚠️ nexus 업로드 실패: {nexus_detail}")
 
             # # --- 5. 판별 ---
             # try:

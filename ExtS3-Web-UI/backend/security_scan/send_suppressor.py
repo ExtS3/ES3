@@ -3,6 +3,7 @@ import os
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
 
 from backend.auth.security import require_permission
+from backend.extension_registry import check_registry_duplicate, upsert_registry_entry
 from backend.security_scan.upload_registry import commit_upload
 
 router = APIRouter()
@@ -27,6 +28,15 @@ async def pending(
     # 내부적으로 plugin_name을 활용해 채워줍니다.
 ):
     try:
+        # id+version 조합이 이미 레포(Nexus)에 존재하면 버전이 같은 재요청이므로 차단.
+        # 버전이 다르면 별개 확장으로 보고 통과시킨다.
+        duplicate = check_registry_duplicate(plugin_name, version)
+        if duplicate:
+            raise HTTPException(
+                status_code=409,
+                detail=f"이미 존재하는 확장입니다 (상태: {duplicate['status']}).",
+            )
+
         # 계정별 확장 소유/버전 레지스트리에 먼저 확정 기록 (이름 중복/소유권 검증 포함)
         commit_upload(
             mode=(mode or "first").strip(),
@@ -35,6 +45,13 @@ async def pending(
             browser=browser,
             version=version,
             uploader_id=_user["id"],
+        )
+        upsert_registry_entry(
+            ext_id=plugin_name,
+            ext_name=plugin_name,
+            browser=browser,
+            version=version,
+            status="review",
         )
 
         file_content = await file.read()

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 from backend.auth.security import require_permission
+from backend.extension_registry import upsert_registry_entry
 
 from backend.admin.decision.nexus_file import (
     build_review_source_path,
@@ -26,6 +27,13 @@ async def approve_extension(
 
     move_nexus_file(source_path, target_path)
     deleted_analysis_path = delete_analysis_result_for_review_path(source_path)
+    upsert_registry_entry(
+        ext_id=payload["id"],
+        ext_name=payload["app_name"],
+        browser=payload["browser"],
+        version=payload["version"],
+        status="safe",
+    )
 
     return JSONResponse({
         "success": True,
