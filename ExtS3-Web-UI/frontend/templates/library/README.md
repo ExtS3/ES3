@@ -20,3 +20,5 @@
 - 헤더 검색창 Enter 또는 아이콘 클릭 시 `/library?extName=...`으로 이동
 
 **로드 JS**: `common.js`, `library/library.js`
+
+**변경 이력**: ES3 리빌딩 — 공용 셸(`#es3-header`/`#es3-sidebar`) + `es3-theme.js`/`tokens.css` 적용, 통계 카드 골격 통일(흰 카드+아이콘 타일), 검색 폼 한국어화, 검색 버튼 ghost 강등.

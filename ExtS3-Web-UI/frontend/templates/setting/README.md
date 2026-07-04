@@ -12,3 +12,5 @@
 > 프로필 이미지가 외부 URL(`lh3.googleusercontent.com`)을 직접 참조합니다. 네트워크 차단 환경에서는 이미지가 깨집니다. 실제 운영 시 사용자 프로필 이미지 업로드 기능과 함께 교체 필요합니다.
 
 **로드 JS**: `common.js`, `upload.js`
+
+**변경 이력**: ES3 리빌딩 — 공용 셸(`#es3-header`/`#es3-sidebar`) + `es3-theme.js`/`tokens.css` 적용, title "ES3 · 설정", 헤더의 "Nexus Repository" 문구 제거(셸 대체), 잔여 slate 하드코딩 정리.

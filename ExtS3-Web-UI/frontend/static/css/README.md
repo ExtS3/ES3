@@ -46,3 +46,6 @@ css/
 | `common/nav.css`         | 21곳           | 모든 템플릿        |
 | `auth/login.css`         | 1곳            | `auth/login.html`  |
 | `common/dino-loader.css` | 1곳            | `search/list.html` |
+
+## ES3 디자인 토큰 (2026-07)
+- `common/tokens.css` — 색/그라데이션/버튼·칩·빈상태 공용 클래스. 색 변경은 이 파일과 `/static/js/es3-theme.js` 두 곳만 수정.

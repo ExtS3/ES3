@@ -87,10 +87,16 @@ window.addEventListener('DOMContentLoaded', async () => {
         const pageItems = filteredSafeItems.slice(startIndex, endIndex);
 
         if (pageItems.length === 0) {
+            // 빈 상태: .es3-empty 패턴 (아이콘 + 설명 + CTA) — 표시 마크업만 변경, 로직/셀렉터 불변
             const message = extNameQuery
-                ? `"${escapeHtml(extNameQuery)}" search results were not found in the safe library.`
-                : 'No safe library items were found.';
-            listContainer.innerHTML = `<p class="text-center py-10 text-on-surface-variant">${message}</p>`;
+                ? `"${escapeHtml(extNameQuery)}" 검색 결과가 없습니다`
+                : '라이브러리가 비어 있습니다';
+            listContainer.innerHTML = `
+                <div class="es3-empty">
+                    <span class="material-symbols-outlined">inventory_2</span>
+                    <p>${message}</p>
+                    <a href="/search" class="es3-btn">앱 탐색하기</a>
+                </div>`;
             if (paginationContainer) paginationContainer.innerHTML = '';
             return;
         }

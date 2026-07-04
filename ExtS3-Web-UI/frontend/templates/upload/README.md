@@ -18,3 +18,5 @@ ZIP/VSIX 파일을 직접 업로드해 보안 분석을 요청하는 페이지�
 - 완료 시 `/`로 이동
 
 **로드 JS**: `common.js`, `upload.js`, `upload/build.js`
+
+**변경 이력**: ES3 리빌딩 — 공용 셸(`#es3-header`/`#es3-sidebar`) + `es3-theme.js`/`tokens.css` 적용, title "ES3 · 업로드", 프라이머리는 "검사 실행" 1개("파일 선택"은 ghost 강등). 모든 element id/폼 구조 불변.

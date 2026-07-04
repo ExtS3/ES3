@@ -351,7 +351,7 @@ async function fetchRejectedApps() {
 
     const items = Array.isArray(result.items) ? result.items : [];
     if (items.length === 0) {
-      rejectList.innerHTML = '<p class="text-sm text-on-surface-variant">거부된 프로그램이 없습니다.</p>';
+      rejectList.innerHTML = '<div class="es3-empty" style="padding:24px"><span class="material-symbols-outlined">block</span><p>거부된 프로그램이 없습니다.</p></div>';
       return;
     }
 

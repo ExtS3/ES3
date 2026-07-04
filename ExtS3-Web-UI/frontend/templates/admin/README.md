@@ -3,6 +3,8 @@
 관리자 전용 페이지 템플릿 모음입니다.
 모든 라우트는 `main.py`의 `require_admin_page()`를 통해 admin 롤 보유 여부를 쿠키로 검증합니다. 미인증 시 `/login`으로 리다이렉트됩니다.
 
+> 2026-07-02: 전 템플릿 ES3 리브랜딩 — 인라인 tailwind config → `/static/js/es3-theme.js`, `tokens.css` 추가, 헤더/사이드바를 `#es3-header`/`#es3-sidebar` 플레이스홀더(common.js 주입)로 교체, 버튼 위계(ghost 통일)·라벨 한국어화. element id/JS 셀렉터는 변경 없음.
+
 ---
 
 ## 파일 구성

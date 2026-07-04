@@ -109,7 +109,7 @@ function renderTable(scenarios) {
     <tr class="hover:bg-surface-container-low transition-colors cursor-pointer" onclick="openDetail('${s.id}')">
       <td class="px-6 py-4">
         <div class="flex items-center gap-2">
-          <span class="font-mono text-sm font-medium text-on-surface">${s.id}</span>
+          <span class="font-mono text-sm font-medium text-on-surface" title="${s.id}">${s.id}</span>
           ${
             s.builtin
               ? `<span class="text-[10px] px-1.5 py-0.5 bg-primary-container text-on-primary-container rounded-full font-bold">기본</span>`
@@ -125,15 +125,15 @@ function renderTable(scenarios) {
       <td class="px-6 py-4">
         <div class="flex flex-wrap gap-1">
           ${(s.behavior_tags || [])
-            .slice(0, 3)
+            .slice(0, 2)
             .map(
               (tag) =>
                 `<span class="text-xs px-2 py-0.5 bg-primary-container text-on-primary-container rounded-full">${tag}</span>`,
             )
             .join('')}
           ${
-            (s.behavior_tags || []).length > 3
-              ? `<span class="text-xs px-2 py-0.5 bg-surface-container text-on-surface-variant rounded-full">+${s.behavior_tags.length - 3}</span>`
+            (s.behavior_tags || []).length > 2
+              ? `<span class="text-xs px-2 py-0.5 bg-surface-container text-on-surface-variant rounded-full">+${s.behavior_tags.length - 2}</span>`
               : ''
           }
         </div>

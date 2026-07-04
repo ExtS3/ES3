@@ -124,6 +124,12 @@ templates/
 | 경로                 | 내용                      |
 | -------------------- | ------------------------- |
 | `admin/README.md`    | 관리자 페이지 6개 상세    |
+
+---
+
+## 변경 이력
+
+- `index.html`: ES3 리브랜딩 — 헤더/사이드바를 `#es3-header`/`#es3-sidebar` 플레이스홀더로 교체(common.js 주입), 인라인 tailwind-config → `es3-theme.js`, `tokens.css` 추가, 통계 카드 3장 골격 통일(아이콘 타일 + 라벨 + 빅넘버), STORAGE OVERVIEW → 저장소 현황. `#repo-list` 빈 상태는 index.js가 전 경로에서 innerHTML을 덮어써 템플릿 측 `.es3-empty` 추가는 생략.
 | `auth/README.md`     | 인증 페이지 3개 상세      |
 | `library/README.md`  | 라이브러리 페이지         |
 | `scenario/README.md` | 시나리오 관리 페이지 2개  |

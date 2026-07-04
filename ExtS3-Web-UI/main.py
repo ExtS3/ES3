@@ -30,6 +30,15 @@ async def startup_auth_system():
 
 
 @app.middleware("http")
+async def static_no_cache(request: Request, call_next):
+    # 정적 자산은 ETag 재검증 강제 — 리빌드 직후 브라우저가 구버전 JS/CSS를 쓰는 문제 방지
+    response = await call_next(request)
+    if request.url.path.startswith("/static"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
+@app.middleware("http")
 async def enforce_initial_credential_change(request: Request, call_next):
     allowed_paths = {
         "/api/auth/login",

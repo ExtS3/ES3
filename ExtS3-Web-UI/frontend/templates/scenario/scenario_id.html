@@ -3,62 +3,17 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>시나리오 ID 관리 - Suppressor</title>
+    <title>ES3 · 시나리오 관리</title>
     <script src="/static/vendor/tailwindcss-forms-container-queries.js"></script>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
-      rel="stylesheet"
-    />
+    <script src="/static/js/es3-theme.js"></script>
     <link
       href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
       rel="stylesheet"
     />
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            colors: {
-              'surface-container': '#e8eff4',
-              'inverse-primary': '#929bfa',
-              'on-background': '#29343a',
-              background: '#f7f9fc',
-              'on-surface-variant': '#566168',
-              'on-surface': '#29343a',
-              'surface-variant': '#d9e4ec',
-              'on-primary-container': '#3f48a1',
-              'on-primary': '#f9f6ff',
-              'surface-container-highest': '#d9e4ec',
-              outline: '#717c84',
-              'outline-variant': '#a8b3bb',
-              'surface-container-low': '#f0f4f8',
-              'surface-bright': '#f7f9fc',
-              'on-secondary': '#faf8ff',
-              'surface-container-high': '#e1e9f0',
-              'primary-container': '#e0e0ff',
-              'on-primary-fixed': '#2c358e',
-              'surface-container-lowest': '#ffffff',
-              'primary-fixed-dim': '#ced1ff',
-              'primary-dim': '#4049a2',
-              primary: '#4c56af',
-              'surface-tint': '#4c56af',
-              surface: '#f7f9fc',
-            },
-            fontFamily: {
-              headline: ['Inter'],
-              body: ['Inter'],
-              label: ['Inter'],
-            },
-            borderRadius: {
-              DEFAULT: '0.125rem',
-              lg: '0.25rem',
-              xl: '0.5rem',
-              full: '0.75rem',
-            },
-          },
-        },
-      }
-    </script>
+    <link
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css"
+      rel="stylesheet"
+    />
     <style>
       .material-symbols-outlined {
         font-variation-settings:
@@ -69,7 +24,7 @@
         vertical-align: middle;
       }
       body {
-        font-family: 'Inter', sans-serif;
+        font-family: 'Pretendard', 'Inter', sans-serif;
       }
       @keyframes spin {
         to {
@@ -80,99 +35,50 @@
         animation: spin 1s linear infinite;
         display: inline-block;
       }
+      /* scenario_id.js가 렌더링하는 칩 재도색 (JS 수정 금지 → CSS 오버라이드)
+         - 행동 태그: 전부 neutral 칩 (라벤더 일색으로 신호가 없던 문제 해결)
+         - 문서 "있음": ok 칩 / "없음": warn 칩 */
+      #scenario-tbody .flex-wrap > span {
+        background: #f1f3f9;
+        color: var(--es3-muted);
+      }
+      #scenario-tbody span.bg-green-50 {
+        background: var(--es3-ok-soft);
+        color: var(--es3-ok);
+      }
+      #scenario-tbody span.bg-amber-50 {
+        background: var(--es3-warn-soft);
+        color: var(--es3-warn);
+      }
+      /* 표 셀 2줄 래핑 방지: 한 줄 고정 + ID 말줄임 + 패딩 축소 */
+      #scenario-tbody td, thead th { white-space: nowrap; }
+      #scenario-tbody td, thead th { padding-left: 1rem; padding-right: 1rem; }
+      #scenario-tbody .flex-wrap { flex-wrap: nowrap; }
+      #scenario-tbody td:first-child .font-mono {
+        display: inline-block;
+        max-width: 14ch;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        vertical-align: bottom;
+      }
+      /* 태그 칩도 말줄임 — 전체 태그는 상세에서 확인 */
+      #scenario-tbody .flex-wrap > span {
+        max-width: 15ch;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: inline-block;
+      }
     </style>
+    <link rel="stylesheet" href="/static/css/common/tokens.css" />
     <link rel="stylesheet" href="/static/css/common/nav.css" />
   </head>
   <body class="bg-surface text-on-surface antialiased">
-    <!-- TopNavBar -->
-    <header class="fixed top-0 w-full z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm dark:shadow-none font-sans antialiased headline-sm font-semibold tracking-tight">
-      <div class="flex justify-between items-center w-full px-6 h-16">
-        <div class="flex items-center gap-8">
-          <span class="text-2xl font-bold tracking-tighter text-indigo-700 dark:text-indigo-400">
-            <img src="/static/img/logo.png" alt="Suppressor Logo" class="h-16 ml-4">
-          </span>
-          <nav class="hidden md:flex items-center gap-6 h-full">
-            <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/">대시보드</a>
-            <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/search">앱 탐색</a>
-            <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/library">라이브러리</a>
-            <a id="adminScenarioHeaderLink" class="text-indigo-700 dark:text-indigo-400 border-b-2 border-indigo-700 dark:border-indigo-400 pb-1 flex items-center h-full" href="/scenario">시나리오 관리</a>
-          </nav>
-        </div>
-        <div class="flex items-center gap-4">
-          <div class="relative hidden sm:block">
-            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
-            <input class="pl-10 pr-4 py-2 bg-slate-100/50 dark:bg-slate-800/50 border-none rounded-xl text-sm w-64 focus:ring-2 focus:ring-primary/20" placeholder="검색어를 입력하세요..." type="text"/>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <!-- SideNavBar -->
-    <aside
-      class="h-screen w-64 fixed left-0 top-0 border-r-0 bg-slate-50 dark:bg-slate-950 z-30 hidden md:block"
-    >
-      <div class="flex flex-col h-full py-6 gap-2 pt-20">
-        <div class="px-6 py-4 mb-4 flex items-center gap-3">
-          <div
-            class="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center text-primary"
-          >
-            <span
-              class="material-symbols-outlined"
-              style="font-variation-settings: 'FILL' 1"
-              >hub</span
-            >
-          </div>
-          <div>
-            <h2 class="text-lg font-black text-slate-900 leading-tight">
-              Suppressor
-            </h2>
-            <p class="text-xs text-slate-500">Enterprise Edition</p>
-          </div>
-        </div>
-        <nav class="flex flex-col space-y-1">
-          <a
-            class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 rounded-lg mx-2 text-sm font-medium transition-all hover:scale-[1.02]"
-            href="/"
-          >
-            <span class="material-symbols-outlined">home</span><span>홈</span>
-          </a>
-          <a
-            class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 rounded-lg mx-2 text-sm font-medium transition-all hover:scale-[1.02]"
-            href="/search"
-          >
-            <span class="material-symbols-outlined">explore</span
-            ><span>앱 탐색</span>
-          </a>
-          <a
-            class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 rounded-lg mx-2 text-sm font-medium transition-all hover:scale-[1.02]"
-            href="/library"
-          >
-            <span class="material-symbols-outlined">inventory_2</span
-            ><span>라이브러리</span>
-          </a>
-          <a
-            class="flex items-center gap-3 bg-indigo-50 text-indigo-700 rounded-lg mx-2 px-4 py-3 transition-all hover:scale-[1.02]"
-            href="/scenario"
-          >
-            <span class="material-symbols-outlined">dataset</span
-            ><span>시나리오 관리</span>
-          </a>
-          <a
-            class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 rounded-lg mx-2 text-sm font-medium transition-all hover:scale-[1.02]"
-            href="/admin"
-          >
-            <span class="material-symbols-outlined">dashboard_customize</span
-            ><span>관리자 대시보드</span>
-          </a>
-        </nav>
-        <div id="side-bottom" class="mt-auto px-4 flex flex-col gap-4">
-          <script src="/static/js/common.js?v=session-fix-1"></script>
-        </div>
-      </div>
-    </aside>
+    <header id="es3-header" class="fixed"></header>
+    <aside id="es3-sidebar" class="fixed"></aside>
 
     <!-- Main Content -->
-    <main class="ml-64 pt-20 p-8 min-h-screen">
+    <main class="md:pl-60 pt-20">
+      <div class="max-w-7xl mx-auto px-8 pb-12 min-h-screen">
       <!-- 페이지 헤더 -->
       <header class="mb-8 flex justify-between items-end">
         <div>
@@ -194,7 +100,7 @@
           </span>
           <button
             id="reload-btn"
-            class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold shadow-sm hover:opacity-90 transition-opacity"
+            class="es3-btn es3-btn-ghost text-sm disabled:opacity-50"
           >
             <span class="material-symbols-outlined text-sm">refresh</span>
             vectorDB 재적재
@@ -233,19 +139,19 @@
           >
             <table class="w-full text-left border-collapse">
               <colgroup>
-                <col style="width: 35%" />
-                <col style="width: 35%" />
-                <col style="width: 15%" />
-                <col style="width: 15%" />
+                <col style="width: 30%" />
+                <col style="width: 40%" />
+                <col style="width: 12%" />
+                <col style="width: 18%" />
               </colgroup>
               <thead
                 class="bg-surface-container-low text-on-surface-variant text-xs uppercase tracking-wider font-bold sticky top-0"
               >
                 <tr>
                   <th class="px-6 py-4">시나리오 ID</th>
-                  <th class="px-6 py-4">Behavior Tags</th>
+                  <th class="px-6 py-4">행동 태그</th>
                   <th class="px-6 py-4">문서</th>
-                  <th class="px-6 py-4 text-right">Actions</th>
+                  <th class="px-6 py-4 text-right">작업</th>
                 </tr>
               </thead>
               <tbody
@@ -283,7 +189,7 @@
               <!-- JSON 파일 -->
               <div>
                 <label class="block text-sm font-semibold text-on-surface mb-2">
-                  시나리오 JSON <span class="text-red-500">*</span>
+                  시나리오 JSON <span class="text-error">*</span>
                 </label>
                 <label
                   class="flex items-center gap-3 px-4 py-3 bg-surface-container-low border border-outline-variant/30 rounded-xl cursor-pointer hover:bg-surface-container transition-colors"
@@ -311,7 +217,7 @@
               <!-- MD 파일 -->
               <div>
                 <label class="block text-sm font-semibold text-on-surface mb-2">
-                  시나리오 문서 MD <span class="text-red-500">*</span>
+                  시나리오 문서 MD <span class="text-error">*</span>
                 </label>
                 <label
                   class="flex items-center gap-3 px-4 py-3 bg-surface-container-low border border-outline-variant/30 rounded-xl cursor-pointer hover:bg-surface-container transition-colors"
@@ -344,7 +250,7 @@
               <button
                 id="upload-btn"
                 type="submit"
-                class="w-full py-2.5 bg-primary text-white rounded-xl text-sm font-semibold shadow-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+                class="w-full py-2.5 bg-primary text-on-primary rounded-xl text-sm font-semibold shadow-sm hover:bg-primary-dim transition-colors disabled:opacity-50"
               >
                 업로드
               </button>
@@ -353,27 +259,28 @@
 
           <!-- 안내 카드 -->
           <div
-            class="bg-indigo-50 rounded-2xl border border-indigo-100 p-5 space-y-3"
+            class="bg-primary-container rounded-2xl border border-primary/10 p-5 space-y-3"
           >
             <div
-              class="flex items-center gap-2 text-indigo-700 font-bold text-sm"
+              class="flex items-center gap-2 text-on-primary-container font-bold text-sm"
             >
               <span class="material-symbols-outlined text-base">info</span>
               업로드 후 작업 순서
             </div>
             <ol
-              class="text-xs text-indigo-600 space-y-2 list-decimal list-inside"
+              class="text-xs text-on-primary-container space-y-2 list-decimal list-inside"
             >
               <li>JSON + MD 파일 업로드</li>
               <li>업로드 완료 확인</li>
               <li><strong>vectorDB 재적재</strong> 버튼 클릭</li>
               <li>적재된 벡터 수 확인</li>
             </ol>
-            <p class="text-xs text-indigo-500">
+            <p class="text-xs text-on-surface-variant">
               삭제 후에도 재적재가 필요합니다.
             </p>
           </div>
         </div>
+      </div>
       </div>
     </main>
 
@@ -510,6 +417,7 @@
       </div>
     </div>
 
-    <script src="/static/js/admin/scenario_id.js?v=20260612-hashid-1"></script>
+    <script src="/static/js/common.js?v=es3-5"></script>
+    <script src="/static/js/admin/scenario_id.js?v=es3-1"></script>
   </body>
 </html>

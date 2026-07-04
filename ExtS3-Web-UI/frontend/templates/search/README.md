@@ -79,3 +79,9 @@ search.html  →  list.html  →  detail/detail.html
 **로드 JS**: `common.js`, `upload.js`, `search/detail.js`
 
 > `detail/` 폴더 안에 파일이 1개뿐인 구조가 어색하지만, `main.py`의 라우팅 경로가 `search/detail/detail.html`로 하드코딩되어 있어 현재는 이동하지 않는 것을 권장합니다.
+
+---
+
+## 변경 이력
+
+- `search.html` / `list.html` / `no_result.html` / `detail/detail.html`: ES3 리브랜딩 — 셸을 `#es3-header`/`#es3-sidebar` 플레이스홀더로 교체(common.js 주입, upload.js보다 먼저 로드), 인라인 tailwind-config → `es3-theme.js`, `tokens.css` 추가, Suppressor/Nexus/Enterprise 문구 제거, indigo/slate 하드코딩 → primary/on-surface 계열. search.html은 가짜 배지 3개 삭제·제목 "앱 탐색"으로 축소, no_result.html은 `.es3-empty` 패턴(→ /search CTA)으로 재작성. JS 셀렉터(`#searchInput`, `#exploreBtn`, `.browser-btn`, `#search-id`/`#search-name`의 토글 클래스, `h1.text-3xl`, `#results-container`, `#extName` 등)는 전부 보존.
