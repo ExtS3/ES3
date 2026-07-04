@@ -34,9 +34,9 @@
 
 </section>
 <!-- Storage & Stats Bento Grid -->
-<section class="grid grid-cols-1 md:grid-cols-4 gap-4">
-<!-- Main Storage Usage (Large) -->
-<div class="md:col-span-2 bg-surface-container-lowest p-6 rounded-xl relative overflow-hidden flex flex-col min-h-[220px]">
+<section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<!-- Main Storage Usage -->
+<div class="bg-surface-container-lowest p-6 rounded-xl relative overflow-hidden flex flex-col min-h-[180px]">
 <div class="w-10 h-10 bg-primary-container text-primary rounded-lg flex items-center justify-center mb-4">
 <span class="material-symbols-outlined" data-icon="database" style="font-variation-settings: 'FILL' 1;">database</span>
 </div>
@@ -51,7 +51,7 @@
 <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-primary/5 rounded-full blur-3xl"></div>
 </div>
 <!-- Active Repositories Count -->
-<div class="bg-surface-container-lowest p-6 rounded-xl flex flex-col">
+<div class="bg-surface-container-lowest p-6 rounded-xl relative overflow-hidden flex flex-col min-h-[180px]">
 <div class="w-10 h-10 bg-primary-container text-primary rounded-lg flex items-center justify-center mb-4">
 <span class="material-symbols-outlined" data-icon="inventory_2" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
 </div>
@@ -59,16 +59,7 @@
 <span class="text-sm text-on-surface-variant block">사용 가능한 확장 프로그램 수</span>
 <span id="active-repo-count" class="text-3xl font-black text-on-surface">-</span>
 </div>
-</div>
-<!-- Verified Items Count -->
-<div class="bg-surface-container-lowest p-6 rounded-xl flex flex-col">
-<div class="w-10 h-10 bg-primary-container text-primary rounded-lg flex items-center justify-center mb-4">
-<span class="material-symbols-outlined" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
-</div>
-<div class="mt-auto">
-<span class="text-sm text-on-surface-variant block">검증 완료 항목</span>
-<span id="verified-item-count" class="text-3xl font-black text-on-surface">-</span>
-</div>
+<div class="absolute -right-10 -bottom-10 w-48 h-48 bg-primary/5 rounded-full blur-3xl"></div>
 </div>
 </section>
 

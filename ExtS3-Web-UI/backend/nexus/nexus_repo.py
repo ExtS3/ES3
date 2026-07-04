@@ -211,9 +211,10 @@ async def fetch_repository_blobstore_name_async(client):
 
 
 def get_safe_item_name(item):
+    # 경로 구조: safe/{browser}/{name}/{version}/{id}.zip — parts[2]가 확장 이름
     path = item.get("path") or ""
     parts = path.split("/")
-    return parts[1] if len(parts) > 1 and parts[0] == "safe" else None
+    return parts[2] if len(parts) > 2 and parts[0] == "safe" else None
 
 
 def build_dashboard_summary(assets, blobstores=None):

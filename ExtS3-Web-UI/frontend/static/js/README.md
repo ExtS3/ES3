@@ -68,7 +68,7 @@ js/
 메인 대시보드의 Nexus 현황 통계와 최근 승인 확장 카드를 렌더링합니다.
 
 - `GET /api/nexus/dashboard`로 전체 에셋 + 스토리지 요약 조회
-- 스토리지 사용량, 에셋 수, 승인 비율 업데이트 (진행바 없음)
+- 스토리지 사용량(브라우저별 개수 포함), 사용 가능한 확장 수(safe/ 고유 이름) 카드 2장 업데이트 (진행바 없음)
 - Nexus blobstore 데이터가 없을 때 클라이언트 사이드에서 합산 (`buildClientSummary`)
 - `safe/` 경로 에셋 최대 3개를 카드로 렌더링, 카드마다 브라우저 배지 표시
 - `window.exts3SessionPromise`(common.js)로 세션을 조회해 "상세 정보"는 로그인 여부, "다운로드"는 `install_extension` 권한 보유 여부에 따라 버튼을 비활성화

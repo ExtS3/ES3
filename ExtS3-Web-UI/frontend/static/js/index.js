@@ -83,14 +83,12 @@ function updateDashboardStats(items, safeItems, summary = null) {
     const storageLimitBytes = stats.storageLimitBytes === null ? null : toNumber(stats.storageLimitBytes);
     const hasStorageLimit = storageLimitBytes > 0;
     const activeRepoCount = toNumber(stats.activeRepositoryCount);
-    const safeAssetCount = toNumber(stats.safeAssetCount);
 
     document.getElementById('storage-used-value').textContent = formatBytes(totalBytes);
     document.getElementById('storage-total-value').textContent = hasStorageLimit
         ? `/ ${formatBytes(storageLimitBytes)}`
         : '사용 중';
     document.getElementById('active-repo-count').textContent = activeRepoCount.toLocaleString();
-    document.getElementById('verified-item-count').textContent = safeAssetCount.toLocaleString();
     document.getElementById('storage-browser-breakdown').textContent = formatBrowserBreakdown(items);
 }
 

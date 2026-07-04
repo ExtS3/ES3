@@ -515,6 +515,7 @@ async def scan(
     version: str = Form(...),
     extName: str = Form(...)
 ):
+    print(f"📥 [scan:{extID} v{version}] 요청 수신 — 스캔 슬롯 대기", flush=True)
     async with scan_semaphore:
         # 동시 스캔 시 같은 파일명 덮어쓰기 방지 — 요청별 고유 하위 디렉터리에 저장
         request_dir = os.path.join(UPLOAD_DIR, f"{extID}_{version}")
