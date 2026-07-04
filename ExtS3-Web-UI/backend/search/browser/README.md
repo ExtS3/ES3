@@ -12,7 +12,10 @@ Chrome 웹스토어와 Open VSX Registry에서 확장 프로그램 정보를 가
 
 Chrome 웹스토어 상세 페이지를 크롤링해서 확장 정보를 반환합니다.
 
-**대상 URL**: `https://chromewebstore.google.com/detail/{extension_id}?hl=en`
+**대상 URL**: `https://chromewebstore.google.com/detail/{extension_id}?hl=ko`
+
+> `hl=ko`로 요청해 이름·설명·업데이트 날짜를 한국어로 받아옵니다. 개발자가 한국어 리스팅을 등록하지 않은
+> 확장은 스토어가 원문(대부분 영어)을 그대로 내려줍니다. 정규식 폴백은 한국어·영어 라벨을 모두 지원합니다.
 
 **함수**
 
