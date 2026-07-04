@@ -1,0 +1,110 @@
+﻿<!DOCTYPE html>
+<html class="light" lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>검사 현황 - Suppressor</title>
+<script src="/static/vendor/tailwindcss-forms-container-queries.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        primary: "#4c56af",
+        surface: "#f7f9fc",
+        "surface-container-low": "#f0f4f8",
+        "surface-container-high": "#e1e9f0",
+        "surface-container-lowest": "#ffffff",
+        "on-surface": "#29343a",
+        "on-surface-variant": "#566168"
+      }
+    }
+  }
+}
+</script>
+<link rel="stylesheet" href="/static/css/common/nav.css">
+</head>
+<body class="bg-surface text-on-surface" style="font-family: Inter, sans-serif;">
+<header class="fixed top-0 w-full z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md shadow-sm dark:shadow-none font-sans antialiased font-semibold tracking-tight">
+  <div class="flex justify-between items-center w-full px-6 h-16">
+    <div class="flex items-center gap-8">
+      <span class="text-2xl font-bold tracking-tighter text-indigo-700 dark:text-indigo-400">
+        <img src="/static/img/logo.png" alt="Suppressor Logo" class="h-16 ml-4">
+      </span>
+      <nav class="hidden md:flex items-center gap-6 h-full">
+        <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/">대시보드</a>
+        <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/search">앱 탐색</a>
+        <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-200 flex items-center h-full" href="/library">라이브러리</a>
+      </nav>
+    </div>
+    <div class="flex items-center gap-4">
+      <div class="relative hidden sm:block">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+        <input class="pl-10 pr-4 py-2 bg-slate-100/50 dark:bg-slate-800/50 border-none rounded-xl text-sm w-64 focus:ring-2 focus:ring-primary/20" placeholder="검색어를 입력하세요..." type="text"/>
+      </div>
+    </div>
+  </div>
+</header>
+<aside class="h-screen w-64 fixed left-0 top-0 bg-slate-50 z-30 hidden md:block">
+  <div class="flex flex-col h-full py-6 gap-2 pt-20">
+    <div class="px-6 py-4 mb-4 flex items-center gap-3">
+      <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-700">
+        <span class="material-symbols-outlined">hub</span>
+      </div>
+      <div>
+        <h2 class="text-lg font-black text-slate-900 leading-tight">Suppressor</h2>
+        <p class="text-xs text-slate-500">Enterprise Edition</p>
+      </div>
+    </div>
+    <nav class="flex flex-col space-y-1">
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 rounded-lg mx-2 text-sm font-medium" href="/">
+        <span class="material-symbols-outlined">home</span><span>홈</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 rounded-lg mx-2 text-sm font-medium" href="/search">
+        <span class="material-symbols-outlined">explore</span><span>앱 탐색</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-slate-600 hover:bg-slate-200/50 rounded-lg mx-2 text-sm font-medium" href="/library">
+        <span class="material-symbols-outlined">inventory_2</span><span>라이브러리</span>
+      </a>
+      <a class="flex items-center gap-3 px-4 py-3 text-indigo-600 rounded-lg mx-2 text-sm font-semibold transition-all" href="/admin">
+        <span class="material-symbols-outlined">dashboard_customize</span><span>관리자 대시보드</span>
+      </a>
+      <div id="admin-submenu" class="ml-6 border-l-2 border-indigo-100 pl-2 flex flex-col space-y-0.5 mt-0.5">
+        <a class="flex items-center gap-2 px-3 py-1.5 text-slate-500 hover:text-indigo-700 hover:bg-indigo-50/70 rounded-lg text-xs font-medium transition-all" href="/admin/permissions">
+          <span class="material-symbols-outlined" style="font-size:16px">manage_accounts</span><span>유저 권한</span>
+        </a>
+        <a class="flex items-center gap-2 px-3 py-1.5 text-slate-500 hover:text-indigo-700 hover:bg-indigo-50/70 rounded-lg text-xs font-medium transition-all" href="/admin/policy">
+          <span class="material-symbols-outlined" style="font-size:16px">rule_settings</span><span>정책 설정</span>
+        </a>
+        <a class="flex items-center gap-2 px-3 py-1.5 text-slate-500 hover:text-indigo-700 hover:bg-indigo-50/70 rounded-lg text-xs font-medium transition-all" href="/admin/policy-catalog">
+          <span class="material-symbols-outlined" style="font-size:16px">policy</span><span>Chrome 정책 카탈로그</span>
+        </a>
+        <a class="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-semibold transition-all" href="/admin/scan-status">
+          <span class="material-symbols-outlined" style="font-size:16px">manage_search</span><span>검사 현황</span>
+        </a>
+        <a class="flex items-center gap-2 px-3 py-1.5 text-slate-500 hover:text-indigo-700 hover:bg-indigo-50/70 rounded-lg text-xs font-medium transition-all" href="/scenario">
+          <span class="material-symbols-outlined" style="font-size:16px">dataset</span><span>시나리오 관리</span>
+        </a>
+      </div>
+    </nav>
+    <!-- Side Bottom Common -->
+    <div id="side-bottom" class="mt-auto px-4 flex flex-col gap-4">
+    <script src="/static/js/common.js?v=session-fix-1"></script>
+    </div>
+  </div>
+</aside>
+<main class="md:ml-64 pt-20 p-8">
+  <div class="mb-8">
+    <h1 class="text-3xl font-black text-on-surface mb-2">검사 현황</h1>
+    <p class="text-on-surface-variant text-sm">현재 진행 중인 보안 검사 항목을 확인합니다.</p>
+  </div>
+  <div class="flex flex-col items-center justify-center py-24 text-on-surface-variant gap-4">
+    <span class="material-symbols-outlined text-5xl text-slate-300">manage_search</span>
+    <p class="text-sm font-medium">검사 현황 기능이 준비 중입니다.</p>
+  </div>
+</main>
+<script src="/static/js/admin/scan_status.js" defer></script>
+</body>
+</html>

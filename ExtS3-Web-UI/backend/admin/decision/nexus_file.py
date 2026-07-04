@@ -1,7 +1,7 @@
 import os
 import json
 import shutil
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from pathlib import Path
 from urllib.parse import quote
@@ -9,8 +9,18 @@ from urllib.parse import quote
 import requests
 from dotenv import load_dotenv
 from fastapi import HTTPException
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_LEFT
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import mm
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 load_dotenv()
+
+pdfmetrics.registerFont(UnicodeCIDFont("HYGothic-Medium"))
 
 NEXUS_BASE_URL = os.getenv("NEXUS_BASE_URL")
 NEXUS_REPOSITORY = os.getenv("NEXUS_REPOSITORY")
@@ -304,97 +314,79 @@ def read_reject_records():
     )
 
 
-def _pdf_utf16_hex(value):
-    return str(value or "").encode("utf-16-be").hex().upper()
+_STYLES = getSampleStyleSheet()
+_TITLE_STYLE = ParagraphStyle(
+    "KTitle", parent=_STYLES["Title"], fontName="HYGothic-Medium",
+)
+_META_STYLE = ParagraphStyle(
+    "KMeta", parent=_STYLES["Normal"], fontName="HYGothic-Medium",
+    fontSize=9, textColor=colors.HexColor("#4a5568"),
+)
+_CELL_STYLE = ParagraphStyle(
+    "KCell", parent=_STYLES["Normal"], fontName="HYGothic-Medium",
+    fontSize=8, leading=11, alignment=TA_LEFT,
+)
+_HEADER_STYLE = ParagraphStyle(
+    "KHeader", parent=_CELL_STYLE, textColor=colors.white,
+)
 
 
 def build_reject_report_pdf(records):
-    lines = [
-        "Rejected Extension Report",
-        f"Generated at: {datetime.now(timezone.utc).isoformat()}",
-        f"Total rejected: {len(records)}",
-        "",
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        topMargin=18 * mm,
+        bottomMargin=15 * mm,
+        leftMargin=15 * mm,
+        rightMargin=15 * mm,
+        title="Rejected Extension Report",
+    )
+
+    elements = [
+        Paragraph("거절된 확장 프로그램 보고서", _TITLE_STYLE),
+        Spacer(1, 4 * mm),
+        Paragraph(
+            f"생성 시각: {datetime.now(timezone(timedelta(hours=9))).strftime('%Y-%m-%d %H:%M:%S')} KST",
+            _META_STYLE,
+        ),
+        Paragraph(f"총 거절 건수: {len(records)}건", _META_STYLE),
+        Spacer(1, 6 * mm),
     ]
 
     if not records:
-        lines.append("No rejected extensions.")
+        elements.append(Paragraph("거절된 확장 프로그램이 없습니다.", _META_STYLE))
     else:
+        header = ["#", "앱 이름", "ID", "브라우저", "버전", "거절 시각", "경로"]
+        data = [[Paragraph(text, _HEADER_STYLE) for text in header]]
         for index, item in enumerate(records, start=1):
-            lines.extend([
-                f"{index}. App: {item.get('app_name') or item.get('id') or 'Unknown'}",
-                f"   ID: {item.get('id') or 'Unknown'}",
-                f"   Browser: {item.get('browser') or 'Unknown'}",
-                f"   Version: {item.get('version') or 'Unknown'}",
-                f"   Rejected At: {item.get('rejected_at') or 'Unknown'}",
-                f"   Source: {item.get('source_path') or ''}",
-                "",
-            ])
+            row = [
+                str(index),
+                item.get("app_name") or item.get("id") or "Unknown",
+                item.get("id") or "Unknown",
+                item.get("browser") or "Unknown",
+                item.get("version") or "Unknown",
+                item.get("rejected_at") or "Unknown",
+                item.get("source_path") or "",
+            ]
+            data.append([Paragraph(str(value), _CELL_STYLE) for value in row])
 
-    pages = []
-    lines_per_page = 42
-    for start in range(0, len(lines), lines_per_page):
-        pages.append(lines[start:start + lines_per_page])
-
-    objects = []
-
-    def add_object(content):
-        objects.append(content)
-        return len(objects)
-
-    catalog_id = add_object("<< /Type /Catalog /Pages 2 0 R >>")
-    pages_id = add_object("")
-    cid_font_id = add_object(
-        "<< /Type /Font /Subtype /CIDFontType0 /BaseFont /HYGoThic-Medium "
-        "/CIDSystemInfo << /Registry (Adobe) /Ordering (Korea1) /Supplement 2 >> "
-        "/DW 1000 >>"
-    )
-    font_id = add_object(
-        "<< /Type /Font /Subtype /Type0 /BaseFont /HYGoThic-Medium "
-        f"/Encoding /UniKS-UCS2-H /DescendantFonts [{cid_font_id} 0 R] >>"
-    )
-    page_ids = []
-
-    for page_lines in pages:
-        text_parts = ["BT", "/F1 10 Tf", "50 790 Td", "14 TL"]
-        for line in page_lines:
-            text_parts.append(f"<{_pdf_utf16_hex(line)}> Tj")
-            text_parts.append("T*")
-        text_parts.append("ET")
-        stream = "\n".join(text_parts)
-        content_id = add_object(
-            f"<< /Length {len(stream.encode('latin-1'))} >>\n"
-            f"stream\n{stream}\nendstream"
+        table = Table(
+            data,
+            colWidths=[8 * mm, 28 * mm, 24 * mm, 20 * mm, 16 * mm, 42 * mm, 42 * mm],
+            repeatRows=1,
         )
-        page_id = add_object(
-            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] "
-            f"/Resources << /Font << /F1 {font_id} 0 R >> >> /Contents {content_id} 0 R >>"
-        )
-        page_ids.append(page_id)
+        table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2d3748")),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#cbd5e0")),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f7fafc")]),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 4),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+            ("TOPPADDING", (0, 0), (-1, -1), 3),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+        ]))
+        elements.append(table)
 
-    objects[pages_id - 1] = (
-        f"<< /Type /Pages /Kids [{' '.join(f'{page_id} 0 R' for page_id in page_ids)}] "
-        f"/Count {len(page_ids)} >>"
-    )
-
-    output = BytesIO()
-    output.write(b"%PDF-1.4\n")
-    offsets = [0]
-    for object_id, content in enumerate(objects, start=1):
-        offsets.append(output.tell())
-        output.write(f"{object_id} 0 obj\n{content}\nendobj\n".encode("latin-1"))
-
-    xref_offset = output.tell()
-    output.write(f"xref\n0 {len(objects) + 1}\n".encode("latin-1"))
-    output.write(b"0000000000 65535 f \n")
-    for offset in offsets[1:]:
-        output.write(f"{offset:010d} 00000 n \n".encode("latin-1"))
-    output.write(
-        (
-            "trailer\n"
-            f"<< /Size {len(objects) + 1} /Root {catalog_id} 0 R >>\n"
-            "startxref\n"
-            f"{xref_offset}\n"
-            "%%EOF\n"
-        ).encode("latin-1")
-    )
-    return output.getvalue()
+    doc.build(elements)
+    return buffer.getvalue()

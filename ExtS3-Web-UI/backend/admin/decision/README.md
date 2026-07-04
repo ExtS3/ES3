@@ -58,7 +58,7 @@ analysis_result/review/{browser}/{name}/{version}/{id}/ → 삭제
 | `delete_nexus_file(path)`                              | Nexus 파일 삭제 (404도 성공 처리)                          |
 | `delete_analysis_result_for_review_path(path)`         | `analysis_result/` 내 해당 폴더 삭제                       |
 | `append_reject_record(record)`                         | `reject_list.json`에 거절 이력 추가                        |
-| `build_reject_report_pdf(records)`                     | 거절 이력 PDF 바이트 생성 (외부 라이브러리 없이 직접 구현) |
+| `build_reject_report_pdf(records)`                     | 거절 이력 PDF 바이트 생성 (reportlab 표 레이아웃)         |
 
 ---
 
