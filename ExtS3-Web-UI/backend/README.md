@@ -12,6 +12,7 @@ ExtS3-Web-UI의 서버 사이드 전체를 담당하는 패키지입니다.
 backend/
 ├── recevie_result.py          # suppressor 분석 결과 수신 · 자동 정책 적용 · 저장
 ├── database.py                # PostgreSQL 연결 풀 관리
+├── extension_registry.py      # Nexus 레포 현황 미러링 DB + id+version 중복 확인
 │
 ├── admin/                     # 관리자 기능 전체
 │   ├── decision/              # 확장 승인·거절 → Nexus 파일 이동·삭제
@@ -94,6 +95,33 @@ suppressor → POST /api/receive
 ```
 
 > 이 파일이 `backend/` 루트에 있는 이유: `POLICY_PATH`가 `Path(__file__).parent / "admin" / "policy_settings.json"`으로 하드코딩돼 있어 현재 위치에서만 경로가 맞습니다.
+
+---
+
+## extension_registry.py — Nexus 레포 미러링 DB
+
+`extension_registry` 테이블(`db/migrations/002_extension_registry.sql`)에 현재 Nexus 레포에 있는 확장의
+`ext_id`, `ext_name`, `browser`, `version`, `status`(`review`/`safe`/`reject`), `decided_at`(검사결과일)을 기록합니다.
+업로드/웹스토어 다운로드 출처를 구분하지 않고 동일한 테이블을 공유하며, **PK가 `(ext_id, version)`이라 같은 id라도
+버전이 다르면 별개 행 = 별개 확장으로 취급**합니다.
+
+| 함수                         | 설명                                                                    |
+| ---------------------------- | ------------------------------------------------------------------------ |
+| `check_registry_duplicate()` | id+version이 이미 있으면 그 행 반환(있으면 중복), 버전이 다르면 `None`    |
+| `upsert_registry_entry()`    | 행 upsert. `status`가 `safe`/`reject`일 때만 `decided_at`을 새로 기록(진행 중인 `review`로 되돌아가도 기존 `decided_at`은 유지) |
+
+**호출 지점** (Nexus 레포와의 정합성을 유지하기 위해 상태가 바뀌는 모든 지점에서 호출):
+
+| 지점                                      | 호출 시점                                  | status    |
+| ------------------------------------------ | ------------------------------------------- | --------- |
+| `security_scan/send_suppressor.py`         | 직접 업로드 접수 시 (중복 확인 후 upsert)   | `review`  |
+| `download/download_zip.py`                 | 웹스토어 다운로드 접수 시 (중복 확인 후 upsert) | `review`  |
+| `recevie_result.py` (`/api/receive`)       | suppressor 자동 정책 판정 직후              | 판정값    |
+| `admin/decision/approve.py`                | 관리자 승인                                 | `safe`    |
+| `admin/decision/reject.py`                 | 관리자 거절                                 | `reject`  |
+
+업로드/다운로드 접수 시점에 `check_registry_duplicate(ext_id, version)`이 걸리면 409로 즉시 차단해
+suppressor 스캔(최대 300초)을 낭비하지 않습니다.
 
 ---
 

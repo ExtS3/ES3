@@ -28,16 +28,24 @@
 ```
 사용자 요청
   │
+  ├── extension_registry에서 (extID, version) 중복 확인
+  │     └── 이미 존재하면 409 반환, 다운로드 진행 안 함
+  │
   ├── Chrome → chrome_download(extID)
   │     └── Google CRX API에서 .zip 다운로드 → downloads/ 저장
   │
   └── VSCode → vscode_download(extID, version)
         └── Open VSX API에서 .vsix 다운로드 → downloads/ 저장
   │
+  ├── 다운로드 성공 시 extension_registry에 status="review"로 upsert
+  │
   ├── bypass_holding=false → suppressor /api/holding (홀딩 큐 등록)
   └── bypass_holding=true  → suppressor /file_scan  (즉시 스캔)
         ↑ BackgroundTask로 비동기 전송, 사용자에게는 즉시 success 응답
 ```
+
+> id+version 중복 확인은 `extVersion`이 전달된 경우에만 수행됩니다(`backend/extension_registry.py`,
+> 상세는 `backend/README.md`의 "extension_registry.py" 섹션 참고). 버전이 다르면 별개 확장으로 취급해 통과시킵니다.
 
 **주요 환경변수**
 

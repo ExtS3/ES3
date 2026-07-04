@@ -22,6 +22,7 @@
 | 파일                       | 내용                                                                        |
 | -------------------------- | --------------------------------------------------------------------------- |
 | `001_auth_permissions.sql` | `admin` 스키마 및 인증·권한 관련 전체 테이블 생성, 기본 권한·롤 데이터 삽입 |
+| `002_extension_registry.sql` | `extension_registry` 테이블 생성 (Nexus 레포 현황 미러링, id+version 중복 확인용) |
 
 ### 001_auth_permissions.sql 상세
 
@@ -44,6 +45,23 @@
 - 롤 5개: `admin`, `user`, `department_security`, `department_it`, `department_ops`
 - `admin` 롤 → 전체 권한 부여
 - `user`, `department_*` 롤 → `request_extension`, `upload`, `install_extension` 3개 부여
+
+---
+
+### 002_extension_registry.sql 상세
+
+`search_path=admin`(`database.py`)이 적용된 연결로 실행되므로 실제로는 `admin.extension_registry`에 생성됩니다.
+
+| 테이블                | 설명                                                                                     |
+| ---------------------- | ---------------------------------------------------------------------------------------- |
+| `extension_registry`  | Nexus 레포 현황 미러링. PK `(ext_id, version)` — 같은 id라도 버전이 다르면 별개 행       |
+
+컬럼: `ext_name`, `browser`, `status`(`review`/`safe`/`reject`), `decided_at`(승인·거절 확정 시각), `created_at`, `updated_at`.
+사용하는 코드는 `backend/extension_registry.py` (`backend/README.md`의 "extension_registry.py" 섹션 참고).
+
+> `extension_uploads` 테이블(직접 업로드 소유권·버전 관리용, `security_scan/upload_registry.py`)과는 별개입니다.
+> 이 테이블은 이 폴더의 마이그레이션 패턴 대신 `auth/bootstrap.py`의 `ensure_extension_uploads_schema()`에서 인라인으로 생성되는
+> 기존 코드라 그대로 두었습니다.
 
 ---
 

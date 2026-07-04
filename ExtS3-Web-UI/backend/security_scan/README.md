@@ -57,12 +57,20 @@ security_scan/
 ```
 POST /api/send_suppressor
   │
+  ├── extension_registry.check_registry_duplicate(plugin_name, version)
+  │     └── 이미 존재하면 409 반환 (버전이 다르면 별개 확장으로 통과)
+  │
   ├── upload_registry.commit_upload()   ← 소유권 검증 + DB 기록 (동기, 즉시 실패 가능)
+  ├── extension_registry.upsert_registry_entry(status="review")
   │
   └── BackgroundTasks.add_task()
         └── send_to_suppressor_task()   ← suppressor /file_scan으로 POST 전송
               └── timeout 300초
 ```
+
+`extension_registry`는 `upload_registry`(계정별 소유권·버전 제안용)와 별개로, 업로드/웹스토어 다운로드
+출처를 구분하지 않고 Nexus 레포 현황을 미러링하는 공용 테이블입니다. 상세는 `backend/README.md`의
+"extension_registry.py" 섹션 참고.
 
 실제 전송은 백그라운드로 처리되므로 사용자에게는 즉시 `"processing"` 응답이 반환됩니다.
 

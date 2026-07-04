@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from backend.download.chrome import chrome_download
 from backend.download.vscode import vscode_download
 from backend.auth.security import require_permission
+from backend.extension_registry import check_registry_duplicate, upsert_registry_entry
 
 
 
@@ -69,6 +70,16 @@ async def download_extension(
         if bypass_holding and "bypass_holding" not in _user["permissions"]:
             raise HTTPException(status_code=403, detail="[Bypass holding] 권한이 없습니다")
 
+        # id+version 조합이 이미 레포(Nexus)에 존재하면 버전이 같은 재요청이므로 차단.
+        # 버전이 다르면 별개 확장으로 보고 통과시킨다.
+        if extVersion:
+            duplicate = check_registry_duplicate(extID, extVersion)
+            if duplicate:
+                return JSONResponse(
+                    status_code=409,
+                    content={"status": "fail", "message": f"이미 존재하는 확장입니다 (상태: {duplicate['status']})."},
+                )
+
         if browser == "Chrome" or browser == "VSCode":
             # 1. 스토어에서 파일 다운로드 (경로 리턴받음)
             if browser == "Chrome":
@@ -77,6 +88,15 @@ async def download_extension(
                 file_path = vscode_download(extID, extVersion)
 
             if file_path:
+                if extVersion:
+                    upsert_registry_entry(
+                        ext_id=extID,
+                        ext_name=extName or extID,
+                        browser=browser,
+                        version=extVersion,
+                        status="review",
+                    )
+
                 suppressor_url = SUPPRESSOR_FILE_SCAN_URL if bypass_holding else SUPPRESSOR_HOLDING_URL
                 # 2. 다운로드 성공 시, 백그라운드 작업으로 Suppressor 전송 예약
                 background_tasks.add_task(
