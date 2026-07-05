@@ -89,6 +89,7 @@ ExtS3-Web-UI/
 | 확장 검색 API (Chrome/VSCode) | `backend/search/` + `backend/search/browser/` | `backend/search/README.md`, `backend/search/browser/README.md` |
 | 관리자 승인·거절 처리 | `backend/admin/decision/` | `backend/admin/decision/README.md` |
 | 관리자 로그·정책·권한 | `backend/admin/` | `backend/admin/README.md` |
+| 관리자 앱 설정 (Slack 웹훅) | `backend/admin/settings.py` | `backend/admin/README.md` |
 | 인증·인가·세션 | `backend/auth/` | `backend/auth/README.md` |
 | AI 2차 판단 (LLM/Slack) | `backend/ai_judgment/` | `backend/ai_judgment/README.md` |
 | Nexus 파일 저장소 연동 | `backend/nexus/nexus_repo.py` | `backend/nexus/README.md` |

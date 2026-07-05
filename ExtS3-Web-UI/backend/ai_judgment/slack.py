@@ -12,6 +12,14 @@ from typing import Any, Dict, List, Optional
 
 
 def _webhook_url() -> Optional[str]:
+    # 관리자가 UI에서 등록한 DB 값 우선, 없으면 env 폴백
+    try:
+        from backend.admin.settings import get_slack_webhook_url
+        url = get_slack_webhook_url()
+        if url:
+            return url
+    except Exception as e:
+        print(f"[AI Slack] ⚠️ DB 웹훅 조회 실패, env 폴백: {e}")
     return os.getenv("SLACK_WEBHOOK_URL")
 
 

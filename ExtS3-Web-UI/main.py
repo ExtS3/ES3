@@ -299,6 +299,8 @@ from backend.install_helper.policy_catalog_router import router as policy_catalo
 app.include_router(policy_catalog_router)
 from backend.admin.permissions import router as admin_permissions_router
 app.include_router(admin_permissions_router)
+from backend.admin.settings import router as admin_settings_router
+app.include_router(admin_settings_router)
 from backend.scenario.scenario_id import router as scenario_id_router
 app.include_router(scenario_id_router)
 

@@ -32,7 +32,8 @@ js/
 
 **사이드바 하단 버튼 동적 생성**
 
-`side-bottom` div에 Upload 버튼(`moveBuild`)과 Login/Logout 링크를 innerHTML로 주입합니다.
+`side-bottom` div에 Slack 연동 버튼(`slackConnect`, 관리자에게만 표시), Upload 버튼(`moveBuild`), Login/Logout 링크를 innerHTML로 주입합니다.
+Slack 연동 버튼은 `prompt()`로 Incoming Webhook URL을 입력받아 `POST /api/admin/settings/slack-webhook`에 저장합니다.
 `upload.js`의 클릭 이벤트는 이 버튼이 생성된 이후에 등록됩니다.
 
 **세션 조회 및 전역 공유**
