@@ -18,6 +18,7 @@ admin/
 ├── pending.py                 # ⚠️ 비활성 라우터 (main.py에서 주석처리됨)
 ├── permissions.py             # 유저·롤·권한 CRUD + 회원가입 승인·거절
 ├── policy.py                  # 자동 정책 설정 + JSON/PDF 다운로드
+├── settings.py                # 앱 설정 (Slack 웹훅 URL 저장·조회)
 └── policy_settings.json       # 자동 정책 설정값 (런타임 읽기·쓰기)
 ```
 
@@ -78,6 +79,19 @@ suppressor가 결과를 전송하면 `recevie_result.py`가 `analysis_result/{de
 
 ---
 
+### settings.py
+
+관리자 앱 설정. 현재는 Slack Incoming Webhook URL 저장·조회만 담당합니다.
+사이드바의 "Slack 연동" 버튼(관리자 전용, `common.js`)에서 호출하며, 값은 DB `admin.app_settings` 테이블(키: `slack_webhook_url`)에 저장됩니다.
+`backend/ai_judgment/slack.py`가 알림 전송 시 이 값을 우선 사용하고, 없으면 `SLACK_WEBHOOK_URL` 환경변수로 폴백합니다.
+
+| 메서드 | 경로                               | 설명                                  |
+| ------ | ---------------------------------- | ------------------------------------- |
+| `GET`  | `/api/admin/settings/slack-webhook` | 연동 여부 + 마스킹된 URL 반환         |
+| `POST` | `/api/admin/settings/slack-webhook` | 웹훅 URL 저장 (hooks.slack.com 검증) |
+
+---
+
 ### decision/
 
 확장 프로그램 승인·거절 처리. 자세한 내용은 `decision/README.md` 참고.
@@ -107,6 +121,7 @@ main.py
   ├── admin/log.py              → analysis_result/ (로컬 파일시스템)
   ├── admin/policy.py           → admin/policy_settings.json
   ├── admin/permissions.py      → DB: admin.users / roles / permissions / signup_requests
+  ├── admin/settings.py         → DB: admin.app_settings (Slack 웹훅 URL)
   └── admin/decision/
         ├── approve.py          → nexus_file.py → Nexus REST API
         └── reject.py           → nexus_file.py → Nexus REST API
