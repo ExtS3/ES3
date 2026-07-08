@@ -28,6 +28,12 @@ def _extract_zip_or_dir(target: Path) -> Tuple[Path, Optional[Path]]:
     if zipfile.is_zipfile(target):
         temp_dir = Path(tempfile.mkdtemp(prefix="practical_obf_"))
         with zipfile.ZipFile(target, "r") as zf:
+            # zip-slip 방지: 멤버가 temp_dir 밖으로 나가지 않는지 검증 후 추출
+            base = temp_dir.resolve()
+            for member in zf.namelist():
+                resolved = (base / member).resolve()
+                if resolved != base and base not in resolved.parents:
+                    raise ValueError(f"아카이브에 안전하지 않은 경로가 있습니다 (zip-slip): {member}")
             zf.extractall(temp_dir)
         return temp_dir, temp_dir
     raise ValueError("입력은 ZIP 파일 또는 디렉터리여야 합니다.")
