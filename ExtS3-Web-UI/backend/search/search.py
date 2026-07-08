@@ -6,9 +6,10 @@ import time
 from datetime import datetime
 
 import httpx
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 
+from backend.auth.security import get_current_user
 from backend.search.browser.chrome_id import get_extension_info_async
 from backend.search.browser.chrome_name import search_by_name_async
 from backend.search.browser.vscode_id import vscode_search_by_id_async
@@ -151,7 +152,7 @@ async def _gather_extension_info(ids, get_info):
 
 
 @router.post("/api/search_name")
-async def search_name_api(request: Request):
+async def search_name_api(request: Request, _user: dict = Depends(get_current_user)):
     data = await request.json()
     extension_name = data.get("extension_name")
     browser = data.get("browser")
@@ -197,7 +198,7 @@ async def search_name_api(request: Request):
 
 
 @router.post("/api/search_id")
-async def search_id_api(request: Request):
+async def search_id_api(request: Request, _user: dict = Depends(get_current_user)):
     data = await request.json()
     extension_id = data.get("extension_id")
     browser = data.get("browser")

@@ -47,6 +47,11 @@ def safe_path_part(value: Any, default: str) -> str:
     # 슬래시, 역슬래시, 제어문자 제거
     text = re.sub(r"[\\/:\*\?\"<>\|\x00-\x1f]", "_", text)
 
+    # 경로 조작 차단: 슬래시가 제거돼도 세그먼트 자체가 "." / ".." 이면
+    # Path 결합 시 상위 디렉터리로 탈출한다. 점(.)으로만 이루어진 세그먼트는 거부.
+    if text.strip(".") == "":
+        return default
+
     # 너무 긴 이름 방지
     return text[:120] if text else default
 

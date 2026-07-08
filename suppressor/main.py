@@ -118,6 +118,19 @@ app.include_router(scenario_router)
 UPLOAD_DIR = "./storage"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+
+def _safe_segment(value: object, default: str) -> str:
+    """경로 세그먼트로 안전한 값만 남긴다.
+
+    업로드 파일명·extID·version 은 신뢰할 수 없는 입력이라 '../' 나 절대경로가
+    들어오면 저장 위치를 벗어난다. 디렉터리 구분자를 제거(basename)하고 점(.)으로만
+    이루어진 세그먼트('.', '..')는 기본값으로 치환한다.
+    """
+    text = os.path.basename(str(value or "").replace("\\", "/").rstrip("/"))
+    if text.strip(".") == "" or "\x00" in text:
+        return default
+    return text
+
 SEVERITY_KEYS = ("critical", "high", "medium", "low")
 
 
@@ -518,9 +531,13 @@ async def scan(
     print(f"📥 [scan:{extID} v{version}] 요청 수신 — 스캔 슬롯 대기", flush=True)
     async with scan_semaphore:
         # 동시 스캔 시 같은 파일명 덮어쓰기 방지 — 요청별 고유 하위 디렉터리에 저장
-        request_dir = os.path.join(UPLOAD_DIR, f"{extID}_{version}")
+        # extID/version/파일명은 신뢰 불가 입력이므로 경로 세그먼트로 정규화해 traversal 차단
+        safe_ext_id = _safe_segment(extID, "extension")
+        safe_version = _safe_segment(version, "unknown")
+        safe_upload_name = _safe_segment(file.filename, "upload.bin")
+        request_dir = os.path.join(UPLOAD_DIR, f"{safe_ext_id}_{safe_version}")
         os.makedirs(request_dir, exist_ok=True)
-        file_path = os.path.abspath(os.path.join(request_dir, file.filename))
+        file_path = os.path.abspath(os.path.join(request_dir, safe_upload_name))
         path_obj = Path(file_path)
         print(f"🔄 [scan:{extID} v{version}] 스캔 시작", flush=True)
 
@@ -1286,6 +1303,15 @@ async def upload_plugin(browser: str, extID: str, version: str, file: UploadFile
 def download_plugin(plugin_name: str, version: str, filename: str):
     try:
         safe_filename = unquote(filename)
+        # '../' 등 경로 탈출 문자가 Nexus URL에 그대로 반영되지 않도록 거부
+        for seg_name, seg_value in (
+            ("plugin_name", plugin_name),
+            ("version", version),
+            ("filename", safe_filename),
+        ):
+            parts = str(seg_value or "").replace("\\", "/").split("/")
+            if any(part == ".." for part in parts) or "\x00" in str(seg_value or ""):
+                raise HTTPException(status_code=400, detail=f"Invalid path segment: {seg_name}")
         nexus_path = f"{plugin_name}/{version}/{safe_filename}"
         encoded_path = quote(nexus_path, safe='/')
         download_url = f"{NEXUS_BASE_URL}/repository/{NEXUS_REPOSITORY}/{encoded_path}"

@@ -45,15 +45,41 @@ def _is_archive(path: str) -> bool:
     return lowered.endswith((".zip", ".crx", ".xpi", ".tar", ".gzip", ".tgz", ".tar.gz"))
 
 
+def _is_within_directory(directory: str, target: str) -> bool:
+    abs_directory = os.path.abspath(directory)
+    abs_target = os.path.abspath(target)
+    return os.path.commonpath([abs_directory, abs_target]) == abs_directory
+
+
+def _safe_extract_zip(archive: "zipfile.ZipFile", destination: str) -> None:
+    # zip-slip 방지: 각 멤버가 destination 밖으로 나가지 않는지 사전 검증 후 추출
+    for member in archive.namelist():
+        target = os.path.join(destination, member)
+        if not _is_within_directory(destination, target):
+            raise ValueError(f"Unsafe path in archive (zip-slip): {member}")
+    archive.extractall(destination)
+
+
+def _safe_extract_tar(archive: "tarfile.TarFile", destination: str) -> None:
+    # tar-slip 방지: 절대경로/'..'/심볼릭·하드 링크 멤버를 거부한 뒤 추출
+    for member in archive.getmembers():
+        target = os.path.join(destination, member.name)
+        if not _is_within_directory(destination, target):
+            raise ValueError(f"Unsafe path in archive (tar-slip): {member.name}")
+        if member.issym() or member.islnk():
+            raise ValueError(f"Unsafe link in archive: {member.name}")
+    archive.extractall(destination)
+
+
 def _extract_archive(archive_path: str, destination: str) -> None:
     lowered = archive_path.lower()
     if lowered.endswith((".zip", ".crx", ".xpi")):
         with zipfile.ZipFile(archive_path, "r") as archive:
-            archive.extractall(destination)
+            _safe_extract_zip(archive, destination)
         return
     if lowered.endswith((".tar", ".gzip", ".tgz", ".tar.gz")):
         with tarfile.open(archive_path) as archive:
-            archive.extractall(destination)
+            _safe_extract_tar(archive, destination)
         return
     raise ValueError(f"Unsupported archive format: {archive_path}")
 
