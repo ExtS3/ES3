@@ -396,7 +396,7 @@ async def nexus_download(path: str, _user: dict = Depends(require_permission("in
 
 
 @router.get("/api/nexus/dashboard")
-async def nexus_dashboard():
+async def nexus_dashboard(_user: dict = Depends(require_permission("install_extension"))):
     try:
         async with httpx.AsyncClient(auth=httpx_nexus_auth, timeout=10) as client:
             return await fetch_dashboard_payload_async(client)

@@ -1,8 +1,10 @@
 import os
+from html import escape
+from urllib.parse import quote
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, Request
 from fastapi.responses import JSONResponse,HTMLResponse
 
-from backend.auth.security import require_permission
+from backend.auth.security import require_admin, require_permission
 
 
 router = APIRouter()
@@ -48,13 +50,15 @@ async def file_save(
 # 반드시 후에 삭제할 것 - 파일을 웹에서 보고, 다운받을 수 있게 하는 용도
 @router.get("/scan_pending", response_class=HTMLResponse)
 @router.get("/scan_pending/", response_class=HTMLResponse)
-async def list_files(request: Request):
+async def list_files(request: Request, _user: dict = Depends(require_admin)):
     # 1. 폴더 내 파일 목록 가져오기
     files = os.listdir(SAVE_DIR)
     
     # 2. 간단한 HTML 리스트 생성
+    # 파일명은 사용자 업로드에서 유래하므로 HTML 컨텍스트에 넣기 전 반드시 이스케이프한다.
+    # (href는 URL 인코딩, 표시 텍스트는 HTML 엔티티 이스케이프)
     file_list_html = "".join([
-        f'<li><a href="/scan_pending/{f}" style="text-decoration:none; color:#007bff;">📄 {f}</a></li>' 
+        f'<li><a href="/scan_pending/{quote(f)}" style="text-decoration:none; color:#007bff;">📄 {escape(f)}</a></li>'
         for f in files
     ])
     

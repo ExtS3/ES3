@@ -69,6 +69,14 @@ async def enforce_initial_credential_change(request: Request, call_next):
                 pass
 
     response = await call_next(request)
+    # 심층 방어용 기본 보안 헤더 (누락 시에만 설정)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    if os.getenv("AUTH_COOKIE_SECURE", "false").lower() == "true":
+        response.headers.setdefault(
+            "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+        )
     if request.url.path.startswith("/static/"):
         static_cache_seconds = os.getenv("STATIC_CACHE_SECONDS", "3600")
         response.headers.setdefault("Cache-Control", f"public, max-age={static_cache_seconds}")
@@ -123,9 +131,19 @@ def require_authenticated_page(request: Request):
     return None
 
 
+# CORS 허용 오리진은 환경 변수 CORS_ALLOW_ORIGINS(콤마 구분)로 지정한다.
+# 자격 증명(쿠키/Authorization)을 허용하면서 오리진을 "*"로 두면 Starlette가
+# 요청 Origin을 그대로 반사(reflect)해 어떤 사이트든 인증된 교차 출처 요청을
+# 보낼 수 있으므로 금지한다. 웹 UI는 API와 동일 출처라 기본값(빈 목록)이면
+# 동일 출처 요청은 그대로 동작하고 교차 출처만 차단된다.
+_cors_allow_origins = [
+    origin.strip()
+    for origin in os.getenv("CORS_ALLOW_ORIGINS", "").split(",")
+    if origin.strip()
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_cors_allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -354,6 +372,21 @@ app.include_router(reject_router)
 # Backend API Routes
 from urllib.parse import quote, unquote
 
+
+def _reject_path_traversal(**segments: str) -> None:
+    """Nexus 경로 세그먼트에 경로 탈출 문자가 없는지 검증한다.
+
+    quote(..., safe='/') 는 '.' 과 '/' 를 인코딩하지 않으므로 '../' 나 절대경로가
+    그대로 살아 Nexus 저장소 네임스페이스를 벗어날 수 있다. 화이트리스트가 아닌
+    최소 거부 검증으로 '..' 세그먼트와 슬래시/역슬래시를 차단한다.
+    """
+    for name, value in segments.items():
+        text = str(value or "")
+        parts = text.replace("\\", "/").split("/")
+        if any(part == ".." for part in parts) or "\x00" in text:
+            raise HTTPException(status_code=400, detail=f"Invalid path segment: {name}")
+
+
 # 1. 업로드 부분 수정
 @app.post("/api/plugins/upload")
 async def upload_plugin(
@@ -369,7 +402,9 @@ async def upload_plugin(
 
         # 한글 파일명 처리: unquote로 혹시 모를 인코딩을 풀고 다시 정리
         filename = unquote(file.filename)
-        
+
+        _reject_path_traversal(plugin_name=plugin_name, version=version, filename=filename)
+
         # Nexus에 저장될 논리적 경로 조립 (한글 포함 가능)
         nexus_path = f"{plugin_name}/{version}/{filename}"
         
@@ -411,8 +446,11 @@ def download_plugin(
     try:
         # 파일명 인코딩 정리
         safe_filename = unquote(filename)
+
+        _reject_path_traversal(plugin_name=plugin_name, version=version, filename=safe_filename)
+
         nexus_path = f"{plugin_name}/{version}/{safe_filename}"
-        
+
         # Nexus 요청용 인코딩 (safe='/')
         encoded_path = quote(nexus_path, safe='/')
         download_url = f"{NEXUS_BASE_URL}/repository/{NEXUS_REPOSITORY}/{encoded_path}"

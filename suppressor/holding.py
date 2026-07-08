@@ -16,6 +16,13 @@ async def holding(
     extName: str = Form(...),
     file: UploadFile = File(...),
 ):
+    # extID 는 신뢰 불가 입력이므로 경로 세그먼트로 정규화해 traversal 차단
+    # (아래 request_holding 의 pending/{id}.json 저장에도 정규화된 값을 넘긴다)
+    safe_ext_id = os.path.basename(str(extID or "").replace("\\", "/").rstrip("/"))
+    if safe_ext_id.strip(".") == "" or "\x00" in safe_ext_id:
+        raise HTTPException(status_code=400, detail="Invalid extID")
+    extID = safe_ext_id
+
     # 로컬 임시 저장 (optional — 필요 없으면 제거 가능)
     UPLOAD_DIR = "./pending_files"
     os.makedirs(UPLOAD_DIR, exist_ok=True)
