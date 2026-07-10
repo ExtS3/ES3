@@ -123,7 +123,8 @@ ExtS3-Web-UI/
 
 | 작업 | 진입 위치 | README |
 |------|-----------|--------|
-| Docker Compose 전체 구성 | `docker-compose.yml` | `docker/README.md` |
+| Docker Compose 전체 구성 | `../docker-compose.yml` (레포 루트) | `docker/README.md` |
+| 외부(사내) Nexus 모드 | `../docker-compose.external-nexus.yml` (레포 루트) | `docker/README.md` |
 | DB 초기화 SQL | `docker/db/init.sql` | `docker/db/README.md` |
 | Nexus 저장소 초기화 | `docker/nexus/init-repository.sh` | `docker/nexus/README.md` |
 | 자동 PR 파이프라인 | `scripts/check_rules.py`, `scripts/create_pr.py` | `scripts/README.md` |

@@ -32,4 +32,4 @@ jobs:
         run: docker compose config
 
       - name: Build web image
-        run: docker compose build exts3-demo
+        run: docker compose build exts3-web
