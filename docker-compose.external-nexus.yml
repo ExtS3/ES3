@@ -1,0 +1,36 @@
+# 외부(사내) Nexus 사용 모드
+#
+# 내장 nexus/nexus-init을 띄우지 않고, 이미 운영 중인 외부 Nexus에 연결합니다.
+#
+# 사용법:
+#   1. .env에 외부 Nexus 정보를 설정
+#        NEXUS_BASE_URL=http://nexus.company.com:8081   (호스트 PC의 Nexus면 http://host.docker.internal:8081)
+#        NEXUS_USERNAME=<쓰기 권한 있는 계정>
+#        NEXUS_PASSWORD=<비밀번호>
+#        NEXUS_REPOSITORY=<이미 만들어 둔 raw hosted 레포지토리 이름>
+#   2. 실행:
+#        docker compose -f docker-compose.yml -f docker-compose.external-nexus.yml up -d
+#
+# 주의: 내장 모드의 nexus-init이 해주던 레포지토리 자동 생성이 없으므로,
+#       외부 Nexus에 raw hosted 레포지토리가 미리 존재해야 합니다.
+
+services:
+  nexus:
+    profiles: ["disabled"]
+
+  nexus-init:
+    profiles: ["disabled"]
+
+  exts3-web:
+    depends_on: !override
+      db:
+        condition: service_healthy
+      suppressor:
+        condition: service_healthy
+
+  suppressor:
+    depends_on: !override
+      vector-db:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy

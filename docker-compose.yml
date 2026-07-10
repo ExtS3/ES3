@@ -1,8 +1,10 @@
+name: es3
+
 services:
-  exts3-demo:
+  exts3-web:
     build:
-      context: .
-    image: exts3-demo:local
+      context: ./ExtS3-Web-UI
+    image: exts3-web:local
     depends_on:
       db:
         condition: service_healthy
@@ -10,6 +12,7 @@ services:
         condition: service_healthy
       suppressor:
         condition: service_healthy
+    # 단일 진입점: 외부에 공개되는 유일한 포트
     ports:
       - "${APP_PORT:-8000}:8000"
     environment:
@@ -20,23 +23,22 @@ services:
       DB_NAME: "${DB_NAME:-example_db_name}"
       NEXUS_BASE_URL: "${NEXUS_BASE_URL:-http://nexus:8081}"
       NEXUS_REPOSITORY: "${NEXUS_REPOSITORY:-extension-demo}"
-      NEXUS_USERNAME: "${NEXUS_USERNAME:-example_nexus_user}"
-      NEXUS_PASSWORD: "${NEXUS_PASSWORD:-example_nexus_password}"
+      NEXUS_USERNAME: "${NEXUS_USERNAME:-admin}"
+      NEXUS_PASSWORD: "${NEXUS_PASSWORD:-admin123}"
       NEXUS_STORAGE_LIMIT_BYTES: "${NEXUS_STORAGE_LIMIT_BYTES:-}"
       SUPPRESSOR_PRIVATE_IP: "${SUPPRESSOR_PRIVATE_IP:-suppressor}"
       PORT: "${SUPPRESSOR_PORT:-8001}"
-      ENABLE_LOCAL_LIBRARY_FALLBACK: "${ENABLE_LOCAL_LIBRARY_FALLBACK:-true}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - ./downloads:/app/downloads
-      - ./analysis_result:/app/analysis_result
-      - ./backend/security_scan/scan_pending:/app/backend/security_scan/scan_pending
+      - ./ExtS3-Web-UI/downloads:/app/downloads
+      - ./ExtS3-Web-UI/analysis_result:/app/analysis_result
+      - ./ExtS3-Web-UI/backend/security_scan/scan_pending:/app/backend/security_scan/scan_pending
 
   suppressor:
     build:
-      context: ../suppressor
-    image: suppressor:local
+      context: ./suppressor
+    image: exts3-suppressor:local
     depends_on:
       vector-db:
         condition: service_healthy
@@ -44,14 +46,15 @@ services:
         condition: service_healthy
       nexus-init:
         condition: service_completed_successfully
-    ports:
-      - "${SUPPRESSOR_PUBLISHED_PORT:-8001}:8001"
+      ollama:
+        condition: service_healthy
+    # 내부 전용: exts3-web가 내부망(suppressor:8001)으로만 호출
     environment:
-      WEB_SERVER_URL: "http://exts3-demo:8000"
+      WEB_SERVER_URL: "http://exts3-web:8000"
       NEXUS_BASE_URL: "${NEXUS_BASE_URL:-http://nexus:8081}"
       NEXUS_REPOSITORY: "${NEXUS_REPOSITORY:-extension-demo}"
-      NEXUS_USERNAME: "${NEXUS_USERNAME:-example_nexus_user}"
-      NEXUS_PASSWORD: "${NEXUS_PASSWORD:-example_nexus_password}"
+      NEXUS_USERNAME: "${NEXUS_USERNAME:-admin}"
+      NEXUS_PASSWORD: "${NEXUS_PASSWORD:-admin123}"
       PGVECTOR_DB_HOST: "${PGVECTOR_DB_HOST:-vector-db}"
       PGVECTOR_DB_PORT: "${PGVECTOR_DB_PORT:-5432}"
       PGVECTOR_DB_USER: "${PGVECTOR_DB_USER:-vector_db_user}"
@@ -63,6 +66,11 @@ services:
       PGVECTOR_MATCH_COUNT: "${PGVECTOR_MATCH_COUNT:-10}"
       EXTERNAL_RUNNER_MODE: "${EXTERNAL_RUNNER_MODE:-file}"
       FILE_SCAN_URL: "http://127.0.0.1:8001/file_scan"
+      OLLAMA_EMBED_URL: "http://ollama:11434/api/embed"
+      OLLAMA_EMBED_LEGACY_URL: "http://ollama:11434/api/embeddings"
+      EMBEDDING_MODEL: "${EMBEDDING_MODEL:-bge-m3}"
+      ENABLE_WEB_FORWARD: "true"
+      WEB_RECEIVE_URL: "http://exts3-web:8000/api/receive"
     volumes:
       - suppressor_storage:/app/storage
       - suppressor_pending_files:/app/pending_files
@@ -74,11 +82,10 @@ services:
       POSTGRES_USER: "${DB_USER:-example_db_user}"
       POSTGRES_PASSWORD: "${DB_PASSWORD:-example_db_password}"
       POSTGRES_DB: "${DB_NAME:-example_db_name}"
-    ports:
-      - "${DB_PUBLISHED_PORT:-5432}:5432"
+    # 내부 전용: 호스트에서 접속하려면 docker compose exec db psql ... (README 참고)
     volumes:
       - db_data:/var/lib/postgresql/data
-      - ./docker/db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./ExtS3-Web-UI/docker/db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-example_db_user} -d ${DB_NAME:-example_db_name}"]
       interval: 10s
@@ -91,8 +98,7 @@ services:
       POSTGRES_USER: "${PGVECTOR_DB_USER:-vector_db_user}"
       POSTGRES_PASSWORD: "${PGVECTOR_DB_PASSWORD:-vector_db_password}"
       POSTGRES_DB: "${PGVECTOR_DB_NAME:-vector_db}"
-    ports:
-      - "${PGVECTOR_DB_PUBLISHED_PORT:-5433}:5432"
+    # 내부 전용
     volumes:
       - vector_db_data:/var/lib/postgresql/data
     healthcheck:
@@ -105,8 +111,9 @@ services:
     image: sonatype/nexus3:3.75.1
     environment:
       INSTALL4J_ADD_VM_PARAMS: "-Xms512m -Xmx1024m -XX:MaxDirectMemorySize=1024m -Dnexus.security.randompassword=false"
+    # 관리용 UI: 이 PC에서만 접속 가능 (127.0.0.1 바인딩, 외부 노출 안 됨)
     ports:
-      - "${NEXUS_PUBLISHED_PORT:-8081}:8081"
+      - "127.0.0.1:${NEXUS_PUBLISHED_PORT:-8081}:8081"
     volumes:
       - nexus_data:/nexus-data
     healthcheck:
@@ -116,6 +123,18 @@ services:
       retries: 20
       start_period: 60s
 
+  ollama:
+    image: ollama/ollama:latest
+    # suppressor 임베딩용. 최초 1회: docker compose exec ollama ollama pull bge-m3
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
   nexus-init:
     image: curlimages/curl:8.11.1
     depends_on:
@@ -124,10 +143,10 @@ services:
     environment:
       NEXUS_BASE_URL: "http://nexus:8081"
       NEXUS_REPOSITORY: "${NEXUS_REPOSITORY:-extension-demo}"
-      NEXUS_USERNAME: "${NEXUS_USERNAME:-example_nexus_user}"
-      NEXUS_PASSWORD: "${NEXUS_PASSWORD:-example_nexus_password}"
+      NEXUS_USERNAME: "${NEXUS_USERNAME:-admin}"
+      NEXUS_PASSWORD: "${NEXUS_PASSWORD:-admin123}"
     volumes:
-      - ./docker/nexus/init-repository.sh:/init-repository.sh:ro
+      - ./ExtS3-Web-UI/docker/nexus/init-repository.sh:/init-repository.sh:ro
     entrypoint: ["/bin/sh", "/init-repository.sh"]
     restart: "no"
 
@@ -138,3 +157,4 @@ volumes:
   suppressor_storage:
   suppressor_pending_files:
   suppressor_results:
+  ollama_data:
