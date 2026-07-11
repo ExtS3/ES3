@@ -129,7 +129,7 @@ docker compose ps
 db           Up ... healthy
 nexus        Up ... healthy
 suppressor   Up ... healthy
-exts3-demo   Up ... healthy
+exts3-web   Up ... healthy
 ```
 
 간단한 접속 확인:
