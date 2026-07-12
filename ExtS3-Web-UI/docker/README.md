@@ -1,7 +1,7 @@
 # docker
 
 `docker-compose.yml`이 참조하는 컨테이너 초기화 스크립트 모음입니다.
-앱 서비스(`exts3-demo`, `suppressor`)가 의존하는 인프라(PostgreSQL, Nexus)를 처음 기동할 때 자동으로 실행됩니다.
+앱 서비스(`exts3-web`, `suppressor`)가 의존하는 인프라(PostgreSQL, Nexus)를 처음 기동할 때 자동으로 실행됩니다.
 
 ---
 
@@ -41,17 +41,17 @@ Nexus 컨테이너가 완전히 기동된 뒤 `nexus-init` 서비스가 실행�
 
 ## docker-compose.yml과의 관계
 
-이 폴더의 파일들은 `docker-compose.yml`에 경로가 **직접 하드코딩**돼 있습니다.
+이 폴더의 파일들은 **레포 루트의 `docker-compose.yml`**에 경로가 **직접 하드코딩**돼 있습니다.
 파일 위치를 변경하면 컨테이너 마운트가 깨지므로 반드시 `docker-compose.yml`도 함께 수정해야 합니다.
 
 ```yaml
 # db 서비스
 volumes:
-  - ./docker/db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+  - ./ExtS3-Web-UI/docker/db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
 
 # nexus-init 서비스
 volumes:
-  - ./docker/nexus/init-repository.sh:/init-repository.sh:ro
+  - ./ExtS3-Web-UI/docker/nexus/init-repository.sh:/init-repository.sh:ro
 ```
 
 ---
@@ -73,6 +73,12 @@ docker compose up
   │     └── nexus-init 실행
   │           init-repository.sh → Raw Hosted 레포지토리 생성
   │
-  └── exts3-demo + suppressor
-        (db, nexus, nexus-init, vector-db 모두 준비된 후 시작)
+  ├── ollama (임베딩)
+  │     healthcheck 통과 대기
+  │
+  └── exts3-web + suppressor
+        (db, nexus, nexus-init, vector-db, ollama 모두 준비된 후 시작)
 ```
+
+> 외부(사내) Nexus를 사용할 때는 `docker-compose.external-nexus.yml`을 겹쳐 실행하며,
+> 이 경우 nexus/nexus-init은 기동하지 않습니다. 루트 README의 "외부(사내) Nexus 사용" 참고.

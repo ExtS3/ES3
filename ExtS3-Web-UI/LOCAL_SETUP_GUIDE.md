@@ -11,7 +11,7 @@
 
 | 서비스                      | 역할                         | 기본 포트 |
 | --------------------------- | ---------------------------- | --------- |
-| `exts3-demo` (ExtS3-Web-UI) | 웹 UI + 백엔드 API           | 8000      |
+| `exts3-web` (ExtS3-Web-UI) | 웹 UI + 백엔드 API           | 8000      |
 | `suppressor`                | 확장 프로그램 보안 분석 서버 | 8001      |
 | `db` (PostgreSQL 16)        | 사용자·확장 메타데이터 DB    | 5432      |
 | `nexus` (Sonatype Nexus 3)  | 확장 ZIP/CRX 파일 저장소     | 8081      |
@@ -23,11 +23,11 @@
 
 `docker-compose.yml`의 `depends_on` 기준:
 
-- `exts3-demo`는 `db`, `nexus`, `suppressor` 세 서비스가 모두 **healthy** 상태가 된 뒤에 기동됩니다.
+- `exts3-web`는 `db`, `nexus`, `suppressor` 세 서비스가 모두 **healthy** 상태가 된 뒤에 기동됩니다.
 - `suppressor`는 `nexus`가 **healthy** 상태이고 `nexus-init`(저장소 초기화 작업)이 **완료**된 뒤에 기동됩니다.
 - `nexus-init`은 Nexus가 healthy가 되자마자 저장소를 한 번 생성하고 종료되는 일회성 컨테이너입니다.
 
-따라서 전체 기동 순서는 `db` · `nexus` → `nexus-init` → `suppressor` → `exts3-demo` 입니다.
+따라서 전체 기동 순서는 `db` · `nexus` → `nexus-init` → `suppressor` → `exts3-web` 입니다.
 
 ---
 
@@ -125,23 +125,21 @@ copy .env.example .env
 | `APP_PORT`                      | `8000`                   | 웹 UI 외부 접속 포트                                             | 선택                 |
 | `DB_HOST`                       | `db`                     | DB 호스트. Docker 내부에서는 `db`, 로컬 직접 실행 시 `localhost` | 필수                 |
 | `DB_PORT`                       | `5432`                   | DB 내부 포트 (컨테이너 내부)                                     | 선택                 |
-| `DB_PUBLISHED_PORT`             | `5432`                   | DB 외부 노출 포트 (호스트에서 접속 시)                           | 선택                 |
 | `DB_USER`                       | `example_db_user`        | PostgreSQL 사용자명                                              | **필수 (직접 설정)** |
 | `DB_PASSWORD`                   | `example_db_password`    | PostgreSQL 비밀번호                                              | **필수 (직접 설정)** |
 | `DB_NAME`                       | `example_db_name`        | PostgreSQL 데이터베이스 이름                                     | **필수 (직접 설정)** |
 | `NEXUS_BASE_URL`                | `http://nexus:8081`      | Nexus 내부 URL. Docker 내부에서는 `http://nexus:8081`            | 필수                 |
-| `NEXUS_PUBLISHED_PORT`          | `8081`                   | Nexus 외부 노출 포트                                             | 선택                 |
-| `NEXUS_REPOSITORY`              | `extension-demo`         | Nexus 저장소 이름                                                | **필수 (직접 설정)** |
-| `NEXUS_USERNAME`                | `example_nexus_user`     | Nexus 접속 계정                                                  | **필수 (직접 설정)** |
-| `NEXUS_PASSWORD`                | `example_nexus_password` | Nexus 접속 비밀번호                                              | **필수 (직접 설정)** |
+| `NEXUS_PUBLISHED_PORT`          | `8081`                   | Nexus UI 포트 (이 PC 한정, `127.0.0.1` 바인딩)                   | 선택                 |
+| `NEXUS_REPOSITORY`              | `extension-demo`         | Nexus 저장소 이름 (nexus-init이 자동 생성)                       | 선택                 |
+| `NEXUS_USERNAME`                | `admin`                  | Nexus 접속 계정 (내장 Nexus 기본값)                              | 선택                 |
+| `NEXUS_PASSWORD`                | `admin123`               | Nexus 접속 비밀번호 (내장 Nexus 고정값)                          | 선택                 |
 | `NEXUS_STORAGE_LIMIT_BYTES`     | (비어있음)               | Nexus 저장 용량 제한. 비워두면 무제한                            | 선택                 |
 | `SUPPRESSOR_PRIVATE_IP`         | `suppressor`             | Docker 내부 suppressor 호스트명                                  | 필수                 |
 | `SUPPRESSOR_PORT`               | `8001`                   | suppressor 내부 포트                                             | 선택                 |
-| `SUPPRESSOR_PUBLISHED_PORT`     | `8001`                   | suppressor 외부 노출 포트                                        | 선택                 |
 | `EXTERNAL_RUNNER_MODE`          | `file`                   | suppressor 실행 모드                                             | 선택                 |
-| `ENABLE_LOCAL_LIBRARY_FALLBACK` | `true`                   | 로컬 라이브러리 폴백 활성화 여부                                 | 선택                 |
 
-> `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `NEXUS_USERNAME`, `NEXUS_PASSWORD`, `NEXUS_REPOSITORY`는 예시값이 들어있지만 **실제 환경에 맞게 변경해야 합니다**. 특히 운영 환경에서는 반드시 교체하세요.
+> `DB_USER`, `DB_PASSWORD`, `DB_NAME`은 로컬 개발 기본값입니다. **운영 환경에서는 반드시 교체하세요.**
+> Nexus 값은 내장 Nexus 기준 실제 동작값(`admin`/`admin123`)이며, 외부 Nexus에 연결할 때만 바꿉니다 (`docker-compose.external-nexus.yml` 참고).
 
 #### AI 판단(ai_judgment) 관련 변수
 
@@ -161,7 +159,7 @@ copy .env.example .env
 > **Docker Compose 환경에서의 `LOCAL_LLM_URL` 주의사항**
 >
 > Ollama는 호스트(PC)에서 직접 실행됩니다. 컨테이너 안에서 호스트 Ollama에 접근하려면 `localhost`가 아니라 `host.docker.internal`을 사용해야 합니다.
-> `docker-compose.yml`의 `exts3-demo` 서비스에 `extra_hosts: - "host.docker.internal:host-gateway"` 설정이 있어 이 주소로 호스트에 접근할 수 있습니다.
+> `docker-compose.yml`의 `exts3-web` 서비스에 `extra_hosts: - "host.docker.internal:host-gateway"` 설정이 있어 이 주소로 호스트에 접근할 수 있습니다.
 >
 > ```env
 > LOCAL_LLM_URL=http://host.docker.internal:11434/api/chat
@@ -256,7 +254,7 @@ docker compose up -d --build
 >
 > Nexus는 JVM 기반 서비스로 최초 기동에 **최대 2~3분** 이상 소요될 수 있습니다.
 > `docker-compose.yml`에 `start_period: 60s` · `retries: 20` · `interval: 15s`로 헬스체크가 설정되어 있으며,
-> Nexus가 healthy 상태가 될 때까지 suppressor와 exts3-demo는 기다립니다.
+> Nexus가 healthy 상태가 될 때까지 suppressor와 exts3-web는 기다립니다.
 > 로그에 `nexus  | Started Sonatype Nexus` 메시지가 보이면 정상 기동된 것입니다.
 
 ### 4-2. 정상 실행 확인
@@ -274,7 +272,7 @@ NAME           STATUS
 db             Up ... (healthy)
 nexus          Up ... (healthy)
 suppressor     Up ... (healthy)
-exts3-demo     Up ... (healthy)
+exts3-web     Up ... (healthy)
 ```
 
 `nexus-init`은 저장소 생성 후 종료(`Exited (0)`)되는 정상 동작입니다.
@@ -482,7 +480,7 @@ port is already allocated
 `.env` 파일에서 아래 포트 변수를 변경하면 외부 노출 포트를 바꿀 수 있습니다.
 
 ```env
-APP_PORT=8000                  # 웹 UI (exts3-demo)
+APP_PORT=8000                  # 웹 UI (exts3-web)
 SUPPRESSOR_PUBLISHED_PORT=8001 # suppressor
 NEXUS_PUBLISHED_PORT=8081      # Nexus
 DB_PUBLISHED_PORT=5432         # PostgreSQL

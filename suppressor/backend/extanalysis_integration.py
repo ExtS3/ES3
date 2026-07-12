@@ -225,6 +225,12 @@ def run_extanalysis_and_static_scan(package_path: str) -> Dict[str, Any]:
 
     os.makedirs(EXTANALYSIS_LAB, exist_ok=True)
     os.makedirs(os.path.join(PROJECT_ROOT, "backend", ".tmp"), exist_ok=True)
+    # reports.json은 gitignore된 리포트 목록 장부라 새로 클론한 환경에는 없다.
+    # 없으면 core.initreport()가 열기에서 죽으므로 빈 장부를 만들어 둔다.
+    reports_index = os.path.join(EXTANALYSIS_ROOT, "reports.json")
+    if not os.path.exists(reports_index):
+        with open(reports_index, "w", encoding="utf-8") as reports_file:
+            json.dump({"reports": []}, reports_file)
     with _prepare_analysis_target(package_path) as analysis_target:
         clamav_result = run_clamav_bundle_scan(package_path, analysis_target)
         with _disable_extanalysis_reputation_lookups():
