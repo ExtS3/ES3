@@ -20,6 +20,7 @@ def request_holding(
     version: str,
     ext_name: str,
     file_data: bytes,
+    progress: Dict[str, str] | None = None,
 ) -> Dict[str, Any]:
     # 이미 홀딩 중인지 확인 (pending 파일 존재 여부)
     pending_path = os.path.join(PENDING_DIR, f"{extension_id}.json")
@@ -44,6 +45,8 @@ def request_holding(
         "version": version,
         "ext_name": ext_name,
         "release_at": datetime.fromtimestamp(release_at, tz=timezone.utc).isoformat(),
+        # 릴리즈 시 /file_scan에 그대로 전달할 검사 내역 콜백 정보 (없으면 빈 값)
+        "progress": progress or {},
     }
     with open(pending_path, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False)

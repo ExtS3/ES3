@@ -12,6 +12,8 @@ security_scan/
 ├── file_save.py          # 업로드 파일 임시 저장
 ├── send_suppressor.py    # suppressor로 파일 전송 + 업로드 이력 기록
 ├── upload_registry.py    # 계정별 업로드 이력 DB 관리
+├── scan_status.py        # 검사 내역(잡) 상태 저장소 + 조회/SSE/내부 콜백 API
+├── scan_jobs/            # 잡 상태 JSON 저장 폴더 (런타임, .gitignore)
 └── scan_pending/
     └── .gitkeep          # 임시 저장 폴더 유지용 (내용 없음, 정상)
 ```
@@ -80,6 +82,31 @@ POST /api/send_suppressor
 | ----------------------- | -------------------- |
 | `SUPPRESSOR_PRIVATE_IP` | suppressor 서버 IP   |
 | `PORT`                  | suppressor 서버 포트 |
+
+---
+
+### scan_status.py
+
+`/admin/scan-status` 검사 내역 페이지의 상태 저장소이자 API입니다. 잡 상태는 `scan_jobs/scan_jobs.json` 파일에 저장됩니다.
+
+| 메서드   | 경로                                | 권한             | 설명                                          |
+| -------- | ----------------------------------- | ---------------- | --------------------------------------------- |
+| `GET`    | `/api/scan-status`                  | 로그인 사용자    | 전체 잡 목록 + 상태별 카운트                  |
+| `GET`    | `/api/scan-status/stream`           | 로그인 사용자    | SSE 실시간 스트림 (1초 주기, 변경 시만 push)  |
+| `POST`   | `/api/internal/scan-status/{job_id}`| 콜백 토큰        | suppressor가 단계별 진행률을 보고하는 내부 콜백 |
+| `DELETE` | `/api/admin/scan-status/{job_id}`   | 관리자           | 잡 내역 삭제                                  |
+
+**상태 라이프사이클**: `holding`(홀딩 대기) → `queued`(대기) → `running`(검사 진행 중) → `review`(검토 대기) / `safe`(승인) / `reject`(거부), 실패 시 `error`.
+
+**잡 생성/갱신 경로** (모든 검사 시작 경로가 여기로 모입니다):
+
+- 직접 업로드 `/api/send_suppressor` → 잡 생성 후 job_id·progress_url·progress_token을 suppressor로 전달
+- 웹스토어 다운로드 `/api/download_zip` → 잡 생성 (홀딩 경로면 `holding` 상태). progress 정보는 suppressor holding pending json에 저장돼 릴리즈 시 `/file_scan`으로 전달
+- suppressor `/file_scan` → 단계별로 `/api/internal/scan-status/{job_id}` 콜백 (started→file_saved→…→complete)
+- 결과 수신 `/api/receive` → `update_job_by_ext(ext_id, version)`으로 최종 판정(review/safe/reject) 반영
+- 관리자 승인/거부 `/api/decision/approve|reject` → 잡 상태 safe/reject 갱신
+
+**환경변수**: `SCAN_STATUS_CALLBACK_BASE_URL` (suppressor가 콜백할 웹 서버 주소), `SCAN_STATUS_CALLBACK_TOKEN` (콜백 검증 토큰, 빈 값이면 검증 생략).
 
 ---
 

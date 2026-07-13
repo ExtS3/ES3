@@ -289,6 +289,8 @@ async def receive_and_save_analysis(
         )
 
         raw_ext_name = str(ext_name or "").strip()
+        raw_ext_id = str(ext_id or "").strip()
+        raw_version = str(version or "").strip()
         decision = safe_path_part(decision, "undecided")
         browser = safe_path_part(browser, "unknown_browser")
         ext_name = safe_path_part(ext_name, "unknown_extension")
@@ -315,6 +317,26 @@ async def receive_and_save_analysis(
             )
         except Exception as registry_e:
             print(f"[receive_result] registry update failed: {registry_e}")
+
+        # 검사 내역 페이지 잡 상태 갱신 — 최종 판정(review/safe/reject)을 라이프사이클 상태로 반영
+        try:
+            from backend.security_scan.scan_status import update_job_by_ext
+
+            job_status = decision if decision in {"safe", "reject", "review"} else "review"
+            job_updates = {
+                "status": job_status,
+                "current_stage": "complete",
+                "current_stage_label": "complete",
+                "progress": 100,
+                "risk_level": overall.get("risk_level"),
+                "decision": decision,
+                "message": "Analysis result received.",
+            }
+            update_job_by_ext(raw_ext_id, raw_version, job_updates)
+            if (raw_ext_id, raw_version) != (ext_id, version):
+                update_job_by_ext(ext_id, version, job_updates)
+        except Exception as job_e:
+            print(f"[receive_result] scan job update failed: {job_e}")
 
         # 2. 저장 경로 생성
         # analysis_result/{decision}/{browser}/{extName}/{version}/{extID}

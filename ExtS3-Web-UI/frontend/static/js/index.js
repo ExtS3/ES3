@@ -223,6 +223,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
         console.error('데이터 로딩 실패:', error);
         updateDashboardStats([], []);
-        repoContainer.innerHTML = '<p class="text-error text-center py-10">데이터를 불러오는 중 에러가 발생했습니다.</p>';
+        repoContainer.innerHTML = '<p class="text-error text-center py-10">로그인 이후 이용 가능한 서비스입니다.</p>';
     }
 });
