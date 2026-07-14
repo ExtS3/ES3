@@ -32,6 +32,15 @@ services:
       SCAN_STATUS_CALLBACK_TOKEN: "${SCAN_STATUS_CALLBACK_TOKEN:-local-dev-scan-status}"
       # AI 2차 판단(LLM) — 컨테이너 안에서 localhost는 자기 자신이므로 ollama 서비스로 지정
       LOCAL_LLM_URL: "${LOCAL_LLM_URL:-http://ollama:11434/api/chat}"
+      LOCAL_LLM_MODEL: "${LOCAL_LLM_MODEL:-qwen2.5:1.5b-instruct-q4_K_M}"
+      ENABLE_AI_JUDGMENT: "${ENABLE_AI_JUDGMENT:-true}"
+      AI_JUDGMENT_MAX_TOKENS: "${AI_JUDGMENT_MAX_TOKENS:-1024}"
+      LLM_TIMEOUT: "${LLM_TIMEOUT:-300}"
+      LLM_TEMPERATURE: "${LLM_TEMPERATURE:-0.1}"
+      OLLAMA_KEEP_ALIVE: "${OLLAMA_KEEP_ALIVE:-5m}"
+      # Slack 폴백(관리자 설정 페이지 값이 항상 우선) · 알림 내 대시보드 링크
+      SLACK_WEBHOOK_URL: "${SLACK_WEBHOOK_URL:-}"
+      DASHBOARD_BASE_URL: "${DASHBOARD_BASE_URL:-http://localhost:8000}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
@@ -79,6 +88,29 @@ services:
       EMBEDDING_MODEL: "${EMBEDDING_MODEL:-bge-m3}"
       ENABLE_WEB_FORWARD: "true"
       WEB_RECEIVE_URL: "http://exts3-web:8000/api/receive"
+      # 예전에는 이미지에 구워진 suppressor/.env가 담당하던 값들 (지금은 루트 .env가 유일한 입력)
+      ENABLE_SLACK_FORWARD: "${ENABLE_SLACK_FORWARD:-true}"
+      SLACK_WEBHOOK_URL: "${SLACK_WEBHOOK_URL:-}"
+      DASHBOARD_BASE_URL: "${DASHBOARD_BASE_URL:-http://localhost:8000}"
+      NEXUS_VERIFY_SSL: "${NEXUS_VERIFY_SSL:-false}"
+      HOLDING_SECONDS: "${HOLDING_SECONDS:-30}"
+      # 동적 시나리오 LLM — 컨테이너 안에서 localhost는 자기 자신이므로 ollama 서비스로 지정
+      LOCAL_LLM_URL: "${LOCAL_LLM_URL:-http://ollama:11434/api/chat}"
+      LOCAL_LLM_MODEL: "${LOCAL_LLM_MODEL:-qwen2.5:1.5b-instruct-q4_K_M}"
+      LLM_CONTEXT: "${LLM_CONTEXT:-4096}"
+      LLM_MAX_TOKENS: "${LLM_MAX_TOKENS:-256}"
+      LLM_TEMPERATURE: "${LLM_TEMPERATURE:-0.1}"
+      LLM_TIMEOUT: "${LLM_TIMEOUT:-300}"
+      OLLAMA_KEEP_ALIVE: "${OLLAMA_KEEP_ALIVE:-5m}"
+      DYNAMIC_MOCK_AUTOSTART: "${DYNAMIC_MOCK_AUTOSTART:-true}"
+      # retro 재점검 모니터 · 로깅
+      LOG_LEVEL: "${LOG_LEVEL:-INFO}"
+      REQUEST_TIMEOUT: "${REQUEST_TIMEOUT:-30}"
+      USER_AGENT: "${USER_AGENT:-retro-monitor/1.0}"
+      RETRO_INTERVAL_HOURS: "${RETRO_INTERVAL_HOURS:-24}"
+      RETRO_QUEUE_PATH: "${RETRO_QUEUE_PATH:-./retro_queue.jsonl}"
+      RETRO_STATE_PATH: "${RETRO_STATE_PATH:-./retro_state.json}"
+      YARA_RULE_PATH: "${YARA_RULE_PATH:-}"
     volumes:
       - suppressor_storage:/app/storage
       - suppressor_pending_files:/app/pending_files
