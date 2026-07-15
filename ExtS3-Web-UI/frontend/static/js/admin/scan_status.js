@@ -21,7 +21,7 @@ const STAGE_LABELS = {
 };
 
 const STATUS_LABELS = {
-    holding: '홀딩 / 대기 중',
+    holding: '홀딩',
     queued: '대기 중',
     running: '검사 진행 중',
     success: '완료',
