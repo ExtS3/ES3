@@ -28,7 +28,7 @@ cd ES3
 ### 2. 환경 파일 복사 후 실행
 
 ```powershell
-copy ExtS3-Web-UI\.env.example .env    # Windows (macOS/Linux: cp ExtS3-Web-UI/.env.example .env)
+copy .env.example .env    # Windows (macOS/Linux: cp .env.example .env)
 docker compose up --build -d
 ```
 
