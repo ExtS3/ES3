@@ -95,6 +95,7 @@ ExtS3-Web-UI/
 | Nexus 파일 저장소 연동 | `backend/nexus/nexus_repo.py` | `backend/nexus/README.md` |
 | 확장 다운로드 (Chrome/VSCode) | `backend/download/` | `backend/download/README.md` |
 | 파일 업로드·suppressor 전송 | `backend/security_scan/` | `backend/security_scan/README.md` |
+| 검사 내역(진행 상태) 저장·조회·SSE | `backend/security_scan/scan_status.py` | `backend/security_scan/README.md` |
 | Windows 정책 배치 파일 생성 | `backend/install_helper/` | `backend/install_helper/README.md` |
 | RAG 시나리오 관리 | `backend/scenario/scenario_id.py` | `backend/scenario/README.md` |
 | suppressor 결과 수신 | `backend/recevie_result.py` | `backend/README.md` |

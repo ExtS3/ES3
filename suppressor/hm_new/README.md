@@ -91,8 +91,15 @@ python -m hm_new hold <id>   # 특정 확장 홀딩 등록
   "browser": "chrome",
   "version": "1.0.0",
   "ext_name": "My Extension",
-  "release_at": "2025-01-01T00:00:00+00:00"
+  "release_at": "2025-01-01T00:00:00+00:00",
+  "progress": {
+    "job_id": "…",
+    "progress_url": "http://exts3-web:8000/api/internal/scan-status/…",
+    "progress_token": "…"
+  }
 }
 ```
+
+`progress`는 웹 UI 검사 내역 페이지의 진행률 콜백 정보로, `/api/holding` 요청에 담겨 오면 저장했다가 릴리즈 시 `/file_scan`에 그대로 전달됩니다. 없으면 빈 객체입니다.
 
 런타임 생성 파일이므로 `.gitkeep`으로 폴더 구조만 git에 유지합니다.

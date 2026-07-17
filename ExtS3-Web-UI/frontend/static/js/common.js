@@ -8,12 +8,14 @@
         { href: '/', icon: 'home', label: '홈' },
         { href: '/search', icon: 'explore', label: '앱 탐색' },
         { href: '/library', icon: 'inventory_2', label: '라이브러리' },
+        { href: '/admin/scan-status', icon: 'manage_search', label: '검사 내역' },
         { href: '/scenario', icon: 'dataset', label: '시나리오 관리' },
         { href: '/admin', icon: 'dashboard_customize', label: '관리자 대시보드' },
     ];
 
     function activeHref() {
         const p = window.location.pathname;
+        if (p.startsWith('/admin/scan-status')) return '/admin/scan-status';
         if (p.startsWith('/admin')) return '/admin';
         if (p.startsWith('/scenario')) return '/scenario';
         if (p.startsWith('/library')) return '/library';
@@ -159,7 +161,7 @@ window.exts3SessionPromise = window.exts3SessionPromise || (async () => {
         }
     });
 
-    const protectedLinks = ['/search', '/library', '/build', '/user_set'];
+    const protectedLinks = ['/search', '/library', '/build', '/user_set', '/admin/scan-status'];
     document.querySelectorAll('a').forEach(link => {
         const href = link.getAttribute('href') || '#';
         const path = new URL(href, window.location.origin).pathname;

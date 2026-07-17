@@ -21,8 +21,9 @@ _scheduler: Optional[BackgroundScheduler] = None
 
 
 # 홀딩 만료 시 실행 — 넥서스에서 zip 꺼내서 /file_scan으로 POST, 이후 삭제
-def _release_job(extension_id: str, browser: str, version: str, ext_name: str):
+def _release_job(extension_id: str, browser: str, version: str, ext_name: str, progress: dict | None = None):
     log.info("홀딩 만료 → 릴리즈: ext=%s", extension_id)
+    progress = progress or {}
     try:
         # 1. 넥서스에서 zip 바이너리 다운로드
         file_data = nexus.download(extension_id, browser, version, ext_name)
@@ -37,6 +38,9 @@ def _release_job(extension_id: str, browser: str, version: str, ext_name: str):
                     "browser": browser,
                     "version": version,
                     "extName": ext_name,
+                    "job_id": progress.get("job_id", ""),
+                    "progress_url": progress.get("progress_url", ""),
+                    "progress_token": progress.get("progress_token", ""),
                 },
                 timeout=300,
             )
@@ -68,19 +72,20 @@ def _register_from_pending(filepath: str):
         browser  = meta["browser"]
         version  = meta["version"]
         ext_name = meta["ext_name"]
+        progress = meta.get("progress") or {}
         release_at = datetime.fromisoformat(meta["release_at"]).timestamp()
         remaining  = release_at - time.time()
 
         if remaining <= 0:
             log.info("pending 감지: ext=%s 이미 만료 → 즉시 릴리즈", ext_id)
-            _release_job(ext_id, browser, version, ext_name)
+            _release_job(ext_id, browser, version, ext_name, progress)
         else:
             run_date = datetime.fromtimestamp(release_at, tz=timezone.utc)
             _scheduler.add_job(
                 _release_job,
                 trigger="date",
                 run_date=run_date,
-                args=[ext_id, browser, version, ext_name],
+                args=[ext_id, browser, version, ext_name, progress],
                 id=f"release_{ext_id}",
                 replace_existing=True,
                 misfire_grace_time=None,  # 실행이 늦어도 무조건 릴리즈 (기본 1초 grace로 인한 드롭 방지)

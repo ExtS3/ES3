@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import Response, JSONResponse
 from backend.auth.security import require_permission
 from backend.extension_registry import upsert_registry_entry
+from backend.security_scan.scan_status import update_job_by_ext
 
 from backend.admin.decision.nexus_file import (
     append_reject_record,
@@ -39,6 +40,7 @@ async def reject_extension(
         version=payload["version"],
         status="reject",
     )
+    update_job_by_ext(payload["id"], payload["version"], {"status": "reject", "decision": "reject"})
 
     return JSONResponse({
         "success": True,

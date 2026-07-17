@@ -15,6 +15,9 @@ async def holding(
     version: str = Form(...),
     extName: str = Form(...),
     file: UploadFile = File(...),
+    job_id: str = Form(""),
+    progress_url: str = Form(""),
+    progress_token: str = Form(""),
 ):
     # extID 는 신뢰 불가 입력이므로 경로 세그먼트로 정규화해 traversal 차단
     # (아래 request_holding 의 pending/{id}.json 저장에도 정규화된 값을 넘긴다)
@@ -35,7 +38,14 @@ async def holding(
     await file.seek(0)
     file_data = await file.read()
 
-    result = request_holding(extID, browser, version, extName, file_data)
+    result = request_holding(
+        extID,
+        browser,
+        version,
+        extName,
+        file_data,
+        progress={"job_id": job_id, "progress_url": progress_url, "progress_token": progress_token},
+    )
 
     if not result.get("registered"):
         if os.path.exists(file_path):
