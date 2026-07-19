@@ -521,8 +521,8 @@ function riskFromCounts(counts = {}) {
 function fieldRow(label, value) {
     return `
         <div class="flex justify-between gap-4 border-b border-slate-100 py-2">
-            <span class="font-bold text-on-surface">${escapeHtml(label)}</span>
-            <span class="text-right break-words">${escapeHtml(value ?? '-')}</span>
+            <span class="font-bold text-on-surface shrink-0 whitespace-nowrap">${escapeHtml(label)}</span>
+            <span class="text-right break-words min-w-0">${escapeHtml(value ?? '-')}</span>
         </div>
     `;
 }
