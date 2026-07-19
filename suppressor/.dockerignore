@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+__pycache__/
+*.pyc
+.git/
+.pytest_cache/
+results_json/
+pending_files/
+storage/

@@ -253,6 +253,12 @@ async def admin_policy_catalog(request: Request):
     if blocked is not None:
         return blocked
     return templates.TemplateResponse(request, "admin/policy_catalog.html", {"request": request})
+@app.get("/admin/scan-status", response_class=HTMLResponse)
+async def scan_status(request: Request):
+    blocked = require_authenticated_page(request)
+    if blocked is not None:
+        return blocked
+    return templates.TemplateResponse(request, "admin/scan_status.html", {"request": request})
 @app.get("/scenario", response_class=HTMLResponse)
 async def admin_scenario_id(request: Request):
     blocked = require_admin_page(request)
@@ -334,6 +340,8 @@ app.mount("/scan_pending", StaticFiles(directory=SAVE_DIR), name="scan_pending")
 # ----------------------------------------
 
 # suppressor 전송 라우팅
+from backend.security_scan.scan_status import router as scan_status_router
+app.include_router(scan_status_router)
 from backend.security_scan.send_suppressor import router as send_suppressor_router
 app.include_router(send_suppressor_router)
 

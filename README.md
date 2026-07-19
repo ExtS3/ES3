@@ -28,20 +28,15 @@ cd ES3
 ### 2. 환경 파일 복사 후 실행
 
 ```powershell
-copy ExtS3-Web-UI\.env.example .env    # Windows (macOS/Linux: cp ExtS3-Web-UI/.env.example .env)
+copy .env.example .env    # Windows (macOS/Linux: cp .env.example .env)
 docker compose up --build -d
 ```
 
 `.env`는 수정 없이 그대로 동작합니다. 첫 실행은 이미지 다운로드(약 10GB) 때문에 10~20분 걸릴 수 있습니다.
 
-### 3. 임베딩 모델 다운로드 (최초 1회)
+### 3. 모델 다운로드 확인 (자동)
 
-suppressor의 RAG 검색에 필요한 모델을 ollama 컨테이너에 받습니다.
-
-```powershell
-docker compose exec ollama ollama pull bge-m3
-docker compose restart suppressor
-```
+RAG 임베딩 모델(bge-m3)과 AI 2차 판단 LLM(qwen2.5)은 첫 기동 때 `ollama-init` 컨테이너가 자동으로 받습니다. 별도 명령은 필요 없고, 다운로드(약 2GB) 동안 suppressor가 대기하므로 첫 실행이 몇 분 더 걸릴 수 있습니다.
 
 suppressor 로그에 `seed complete: success=26 fail=0`이 뜨면 성공입니다.
 

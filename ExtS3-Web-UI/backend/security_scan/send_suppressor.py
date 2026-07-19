@@ -1,9 +1,12 @@
-import requests
 import os
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
+import uuid
+
+import requests
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Request, UploadFile
 
 from backend.auth.security import require_permission
 from backend.extension_registry import check_registry_duplicate, upsert_registry_entry
+from backend.security_scan.scan_status import create_scan_job, mark_scan_job_error
 from backend.security_scan.upload_registry import commit_upload
 
 router = APIRouter()
@@ -12,32 +15,26 @@ SUPPRESSOR_PRIVATE_IP = os.getenv("SUPPRESSOR_PRIVATE_IP")
 PORT = os.getenv("PORT")
 URL = f"http://{SUPPRESSOR_PRIVATE_IP}:{PORT}/file_scan"
 
-# 실제 전송을 담당하는 별도의 함수
-# send_suppressor.py 수정본
 
 @router.post("/api/send_suppressor")
 async def pending(
-    background_tasks: BackgroundTasks, 
+    request: Request,
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
-    plugin_name: str = Form(...),  # JS의 'plugin_name'을 받음 (확장 이름 = ext_id)
+    plugin_name: str = Form(...),
     browser: str = Form(...),
     version: str = Form(...),
-    mode: str = Form("first"),  # 'first' (첫 업로드) | 'update' (추가 업로드)
+    mode: str = Form("first"),
     _user: dict = Depends(require_permission("request_extension")),
-    # 필수는 아니지만 프론트에서 보낼 수도 있으므로 유연하게 대처하거나
-    # 내부적으로 plugin_name을 활용해 채워줍니다.
 ):
     try:
-        # id+version 조합이 이미 레포(Nexus)에 존재하면 버전이 같은 재요청이므로 차단.
-        # 버전이 다르면 별개 확장으로 보고 통과시킨다.
         duplicate = check_registry_duplicate(plugin_name, version)
         if duplicate:
             raise HTTPException(
                 status_code=409,
-                detail=f"이미 존재하는 확장입니다 (상태: {duplicate['status']}).",
+                detail=f"Already registered extension/version. status={duplicate['status']}",
             )
 
-        # 계정별 확장 소유/버전 레지스트리에 먼저 확정 기록 (이름 중복/소유권 검증 포함)
         commit_upload(
             mode=(mode or "first").strip(),
             ext_id=plugin_name,
@@ -55,46 +52,79 @@ async def pending(
         )
 
         file_content = await file.read()
-        print("전송 URL;qwqw", URL)
-        # 백그라운드 작업 예약
+        job_id = uuid.uuid4().hex
+        create_scan_job(
+            job_id=job_id,
+            ext_id=plugin_name,
+            ext_name=plugin_name,
+            browser=browser,
+            version=version,
+            filename=file.filename or "",
+            requested_by=_user["id"],
+        )
+
+        callback_base_url = (
+            os.getenv("SCAN_STATUS_CALLBACK_BASE_URL")
+            or os.getenv("WEB_SERVER_URL")
+            or os.getenv("DASHBOARD_BASE_URL")
+            or str(request.base_url).rstrip("/")
+        )
+        progress_url = f"{callback_base_url.rstrip('/')}/api/internal/scan-status/{job_id}"
+        progress_token = os.getenv("SCAN_STATUS_CALLBACK_TOKEN", "")
+
         background_tasks.add_task(
-            send_to_suppressor_task, 
-            file_content, 
-            file.filename, 
+            send_to_suppressor_task,
+            file_content,
+            file.filename,
             file.content_type,
-            plugin_name, # 이걸 extID로 쓸 것임
-            browser, 
+            plugin_name,
+            browser,
             version,
-            plugin_name  # 이걸 extName으로 쓸 것임
+            plugin_name,
+            job_id,
+            progress_url,
+            progress_token,
         )
 
         return {
             "status": "processing",
-            "message": "파일 수신 완료. 보안 스캔을 시작합니다."
+            "job_id": job_id,
+            "message": "File received. Security scan has started.",
         }
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
     finally:
         await file.close()
 
-# 전송 함수도 인자 개수를 맞춥니다.
-def send_to_suppressor_task(file_content, filename, content_type, extID, browser, version, extName):
+
+def send_to_suppressor_task(
+    file_content,
+    filename,
+    content_type,
+    extID,
+    browser,
+    version,
+    extName,
+    job_id,
+    progress_url,
+    progress_token,
+):
     try:
-        files = {'file': (filename, file_content, content_type)}
-        
-        # filescan/main.py 의 scan 함수가 요구하는 5개 인자를 정확히 매칭
+        files = {"file": (filename, file_content, content_type)}
         data = {
             "extID": str(extID),
             "browser": browser,
             "version": version,
-            "extName": extName
+            "extName": extName,
+            "job_id": job_id,
+            "progress_url": progress_url,
+            "progress_token": progress_token,
         }
-        print("전송 URL;", URL)
-        
+
         response = requests.post(URL, files=files, data=data, timeout=300)
         response.raise_for_status()
-        print(f"✅ Suppressor 전송 성공: {extName}")
-    except Exception as e:
-        print(f"❌ 전송 실패: {e}")
+    except Exception as exc:
+        mark_scan_job_error(job_id, str(exc))
+        print(f"Suppressor transfer failed: {exc}")

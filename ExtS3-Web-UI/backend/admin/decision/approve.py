@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 from backend.auth.security import require_permission
 from backend.extension_registry import upsert_registry_entry
+from backend.security_scan.scan_status import update_job_by_ext
 
 from backend.admin.decision.nexus_file import (
     build_review_source_path,
@@ -34,6 +35,7 @@ async def approve_extension(
         version=payload["version"],
         status="safe",
     )
+    update_job_by_ext(payload["id"], payload["version"], {"status": "safe", "decision": "safe"})
 
     return JSONResponse({
         "success": True,

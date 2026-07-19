@@ -286,6 +286,46 @@ def _build_embedding_failed_result(message: str) -> dict:
     }
 
 
+async def _notify_scan_progress(
+    progress_url: str | None,
+    progress_token: str | None,
+    *,
+    status: str = "running",
+    current_stage: str,
+    current_stage_label: str,
+    progress: int,
+    message: str | None = None,
+    error: str | None = None,
+    risk_level: str | None = None,
+    decision: str | None = None,
+) -> None:
+    if not progress_url:
+        return
+
+    payload = {
+        "status": status,
+        "current_stage": current_stage,
+        "current_stage_label": current_stage_label,
+        "progress": progress,
+        "message": message,
+        "error": error,
+        "risk_level": risk_level,
+        "decision": decision,
+    }
+    headers = {}
+    if progress_token:
+        headers["X-Scan-Status-Token"] = progress_token
+
+    def _post_progress():
+        response = requests.post(progress_url, json=payload, headers=headers, timeout=5)
+        response.raise_for_status()
+
+    try:
+        await run_in_threadpool(_post_progress)
+    except Exception as progress_e:
+        print(f"[scan-progress] update failed: {progress_e}", flush=True)
+
+
 def _merge_cleanup_observation(dynamic_payload: dict, cleanup_observation: dict | None) -> None:
     if not isinstance(dynamic_payload, dict) or not isinstance(cleanup_observation, dict):
         return
@@ -526,10 +566,21 @@ async def scan(
     extID: str = Form(...),
     browser: str = Form(...),
     version: str = Form(...),
-    extName: str = Form(...)
+    extName: str = Form(...),
+    job_id: str = Form(""),
+    progress_url: str = Form(""),
+    progress_token: str = Form(""),
 ):
     print(f"📥 [scan:{extID} v{version}] 요청 수신 — 스캔 슬롯 대기", flush=True)
     async with scan_semaphore:
+        await _notify_scan_progress(
+            progress_url,
+            progress_token,
+            current_stage="started",
+            current_stage_label="started",
+            progress=5,
+            message="Suppressor worker started the scan.",
+        )
         # 동시 스캔 시 같은 파일명 덮어쓰기 방지 — 요청별 고유 하위 디렉터리에 저장
         # extID/version/파일명은 신뢰 불가 입력이므로 경로 세그먼트로 정규화해 traversal 차단
         safe_ext_id = _safe_segment(extID, "extension")
@@ -543,12 +594,28 @@ async def scan(
 
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
+        await _notify_scan_progress(
+            progress_url,
+            progress_token,
+            current_stage="file_saved",
+            current_stage_label="file_saved",
+            progress=10,
+            message="Uploaded package was stored for analysis.",
+        )
 
         # VSCode(VSIX)는 동적분석 불가 → 전용 정적 흐름으로 early-branch.
         # Chrome/기타 브라우저는 아래 기존 경로를 그대로 탄다 (불변).
         if (browser or "").strip().lower() == "vscode":
             try:
-                return await _run_vscode_scan(
+                await _notify_scan_progress(
+                    progress_url,
+                    progress_token,
+                    current_stage="vscode_static_analysis",
+                    current_stage_label="vscode_static_analysis",
+                    progress=50,
+                    message="Running VSCode static analysis.",
+                )
+                vscode_scan_result = await _run_vscode_scan(
                     file=file,
                     file_path=file_path,
                     extID=extID,
@@ -556,11 +623,34 @@ async def scan(
                     version=version,
                     extName=extName,
                 )
+                final_summary = vscode_scan_result.get("final_risk_summary", {}) if isinstance(vscode_scan_result, dict) else {}
+                await _notify_scan_progress(
+                    progress_url,
+                    progress_token,
+                    status="success" if vscode_scan_result.get("status") == "success" else "error",
+                    current_stage="complete",
+                    current_stage_label="complete",
+                    progress=100,
+                    message="VSCode scan completed.",
+                    risk_level=final_summary.get("risk_level"),
+                    decision=final_summary.get("recommended_decision"),
+                )
+                return vscode_scan_result
             except Exception as vscode_e:
                 print("\n" + "=" * 50)
                 print("❌ VSCode 정적 분석 파이프라인 에러:")
                 traceback.print_exc()
                 print("=" * 50 + "\n")
+                await _notify_scan_progress(
+                    progress_url,
+                    progress_token,
+                    status="error",
+                    current_stage="error",
+                    current_stage_label="error",
+                    progress=100,
+                    message="VSCode scan failed.",
+                    error=str(vscode_e),
+                )
                 return {"status": "error", "message": str(vscode_e)}
 
         dynamic_result = {"status": "skipped"}
@@ -592,6 +682,14 @@ async def scan(
                 # 1. 확장 프로그램 코드 기반 vector_fingerprint 생성
                 from Dynamic_RAG.rag_fingerprint.analyzer import analyze_extension_static
 
+                await _notify_scan_progress(
+                    progress_url,
+                    progress_token,
+                    current_stage="rag_fingerprint",
+                    current_stage_label="rag_fingerprint",
+                    progress=15,
+                    message="Extracting RAG fingerprint.",
+                )
                 rag_raw = await run_in_threadpool(
                     analyze_extension_static,
                     file_path,   # 업로드된 확장 zip 또는 디렉터리 절대 경로
@@ -609,6 +707,14 @@ async def scan(
                 # 2. vector_fingerprint 임베딩
                 from embedding.embed import embed_fingerprint
 
+                await _notify_scan_progress(
+                    progress_url,
+                    progress_token,
+                    current_stage="embedding",
+                    current_stage_label="embedding",
+                    progress=25,
+                    message="Embedding RAG fingerprint.",
+                )
                 embedding_vector = embed_fingerprint(rag_fingerprint_result)
                 if not _is_valid_embedding_vector(embedding_vector):
                     raise RuntimeError("embedding_failed: empty embedding vector")
@@ -620,6 +726,14 @@ async def scan(
                 if not _is_valid_embedding_vector(embedding_vector):
                     print("❌ Vector DB 검색 스킵: empty embedding vector", flush=True)
                     raise RuntimeError("embedding_vector_empty")
+                await _notify_scan_progress(
+                    progress_url,
+                    progress_token,
+                    current_stage="vector_search",
+                    current_stage_label="vector_search",
+                    progress=35,
+                    message="Searching vector database.",
+                )
                 compare_result = compareDB(embedding_vector)
 
                 if compare_result is None:
@@ -630,6 +744,14 @@ async def scan(
                 # 4. Vector DB 후보 rerank
                 from embedding.rerank import rerank_compare_result
 
+                await _notify_scan_progress(
+                    progress_url,
+                    progress_token,
+                    current_stage="rerank",
+                    current_stage_label="rerank",
+                    progress=45,
+                    message="Reranking scenario candidates.",
+                )
                 rag_rerank_result = rerank_compare_result(
                     query_fingerprint=rag_fingerprint_result,
                     compare_result=compare_result,
@@ -745,6 +867,14 @@ async def scan(
 
                 adapter = DynamicActionAdapter(dynamic_harness)
 
+                await _notify_scan_progress(
+                    progress_url,
+                    progress_token,
+                    current_stage="dynamic_rag",
+                    current_stage_label="dynamic_rag",
+                    progress=55,
+                    message="Running dynamic RAG analysis.",
+                )
                 dynamic_rag_result = await run_in_threadpool(
                     run_multi_scenario_dynamic_rag_analysis,
                     vector_fingerprint=rag_fingerprint_result,
@@ -788,6 +918,15 @@ async def scan(
                 )
 
                 dynamic_result = dynamic_rag_result
+                await _notify_scan_progress(
+                    progress_url,
+                    progress_token,
+                    current_stage="dynamic_complete",
+                    current_stage_label="dynamic_complete",
+                    progress=65,
+                    message="Dynamic RAG analysis completed.",
+                    risk_level=str(final_risk),
+                )
 
                 print("✅ Dynamic RAG 완료")
                 print(compact_result_json_line(dynamic_rag_result))
@@ -858,6 +997,14 @@ async def scan(
             print(f">>>>> 정적분석 실행 [scan:{extID}]")
             try:
                 # ExtAnalysis 전역 상태 보호: 동시 스캔 중 정적 분석만 한 번에 하나씩
+                await _notify_scan_progress(
+                    progress_url,
+                    progress_token,
+                    current_stage="static_analysis",
+                    current_stage_label="static_analysis",
+                    progress=70,
+                    message="Running static analysis.",
+                )
                 async with static_analysis_lock:
                     full_result = await run_in_threadpool(
                         run_extanalysis_and_static_scan,
@@ -887,6 +1034,14 @@ async def scan(
             # --- 3. 난독화 분석 ---
             print(">>>>>>> 난독화 분석 실행")
             try:
+                await _notify_scan_progress(
+                    progress_url,
+                    progress_token,
+                    current_stage="obfuscation_analysis",
+                    current_stage_label="obfuscation_analysis",
+                    progress=80,
+                    message="Running obfuscation analysis.",
+                )
                 obfuscation_analysis = await run_in_threadpool(
                     obf_runner.run,
                     path_obj,
@@ -950,6 +1105,14 @@ async def scan(
                 dynamic_result=dynamic_result,
                 obfuscation_result=obfuscation_analysis,
             )
+            await _notify_scan_progress(
+                progress_url,
+                progress_token,
+                current_stage="risk_scoring",
+                current_stage_label="risk_scoring",
+                progress=88,
+                message="Calculating final risk score.",
+            )
             weighted_risk_result = calculate_weighted_final_risk(
                 static_result=full_result,
                 obfuscation_result=obfuscation_analysis,
@@ -968,6 +1131,16 @@ async def scan(
             final_risk_summary["recommended_decision"] = weighted_risk_result.get("recommended_decision", "review")
             final_risk_summary["decision_reason"] = weighted_risk_result.get("decision_reason", "")
             decision = weighted_risk_result.get("recommended_decision", "review")
+            await _notify_scan_progress(
+                progress_url,
+                progress_token,
+                current_stage="risk_complete",
+                current_stage_label="risk_complete",
+                progress=90,
+                message="Final risk score calculated.",
+                risk_level=final_risk_summary.get("risk_level"),
+                decision=decision,
+            )
 
             # extension profile (버전별 객관적 변경 이력 — 로컬 파일 저장)
             # build_web_payload 이전에 실행하여 version_diff 를 web_payload 에 실어 보낸다.
@@ -1085,6 +1258,16 @@ async def scan(
             }
             if nexus_upload_result["enabled"]:
                 try:
+                    await _notify_scan_progress(
+                        progress_url,
+                        progress_token,
+                        current_stage="nexus_upload",
+                        current_stage_label="nexus_upload",
+                        progress=94,
+                        message="Uploading reviewed package to Nexus.",
+                        risk_level=final_risk_summary.get("risk_level"),
+                        decision=decision,
+                    )
                     await file.seek(0)
                     nexus_bucket = _decision_to_nexus_bucket(decision)
                     upload_result = await upload_plugin(
@@ -1118,6 +1301,16 @@ async def scan(
             }
             if web_forward_result["enabled"]:
                 try:
+                    await _notify_scan_progress(
+                        progress_url,
+                        progress_token,
+                        current_stage="web_forward",
+                        current_stage_label="web_forward",
+                        progress=98,
+                        message="Forwarding final result to Web UI.",
+                        risk_level=final_risk_summary.get("risk_level"),
+                        decision=decision,
+                    )
                     web_response = await send_web(web_payload)
                     web_forward_result = {
                         "status": "success",
@@ -1232,6 +1425,18 @@ async def scan(
             # )
             # print("nexus 업로드 완료")
 #
+            await _notify_scan_progress(
+                progress_url,
+                progress_token,
+                status="success",
+                current_stage="complete",
+                current_stage_label="complete",
+                progress=100,
+                message="Scan completed.",
+                risk_level=final_risk_summary.get("risk_level"),
+                decision=decision,
+            )
+
             return {
                 "status": "success",
                 "analysis_id": full_result.get("analysis_id"),
@@ -1259,6 +1464,16 @@ async def scan(
             print("❌ 전체 분석 파이프라인 에러:")
             traceback.print_exc()
             print("=" * 50 + "\n")
+            await _notify_scan_progress(
+                progress_url,
+                progress_token,
+                status="error",
+                current_stage="error",
+                current_stage_label="error",
+                progress=100,
+                message="Scan failed.",
+                error=str(e),
+            )
             return {
                 "status": "error",
                 "message": str(e),

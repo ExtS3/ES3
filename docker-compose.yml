@@ -28,12 +28,26 @@ services:
       NEXUS_STORAGE_LIMIT_BYTES: "${NEXUS_STORAGE_LIMIT_BYTES:-}"
       SUPPRESSOR_PRIVATE_IP: "${SUPPRESSOR_PRIVATE_IP:-suppressor}"
       PORT: "${SUPPRESSOR_PORT:-8001}"
+      SCAN_STATUS_CALLBACK_BASE_URL: "${SCAN_STATUS_CALLBACK_BASE_URL:-http://exts3-web:8000}"
+      SCAN_STATUS_CALLBACK_TOKEN: "${SCAN_STATUS_CALLBACK_TOKEN:-local-dev-scan-status}"
+      # AI 2차 판단(LLM) — 컨테이너 안에서 localhost는 자기 자신이므로 ollama 서비스로 지정
+      LOCAL_LLM_URL: "${LOCAL_LLM_URL:-http://ollama:11434/api/chat}"
+      LOCAL_LLM_MODEL: "${LOCAL_LLM_MODEL:-qwen2.5:1.5b-instruct-q4_K_M}"
+      ENABLE_AI_JUDGMENT: "${ENABLE_AI_JUDGMENT:-true}"
+      AI_JUDGMENT_MAX_TOKENS: "${AI_JUDGMENT_MAX_TOKENS:-1024}"
+      LLM_TIMEOUT: "${LLM_TIMEOUT:-300}"
+      LLM_TEMPERATURE: "${LLM_TEMPERATURE:-0.1}"
+      OLLAMA_KEEP_ALIVE: "${OLLAMA_KEEP_ALIVE:-5m}"
+      # Slack 폴백(관리자 설정 페이지 값이 항상 우선) · 알림 내 대시보드 링크
+      SLACK_WEBHOOK_URL: "${SLACK_WEBHOOK_URL:-}"
+      DASHBOARD_BASE_URL: "${DASHBOARD_BASE_URL:-http://localhost:8000}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./ExtS3-Web-UI/downloads:/app/downloads
       - ./ExtS3-Web-UI/analysis_result:/app/analysis_result
       - ./ExtS3-Web-UI/backend/security_scan/scan_pending:/app/backend/security_scan/scan_pending
+      - ./ExtS3-Web-UI/backend/security_scan/scan_jobs:/app/backend/security_scan/scan_jobs
 
   suppressor:
     build:
@@ -48,6 +62,9 @@ services:
         condition: service_completed_successfully
       ollama:
         condition: service_healthy
+      # 시작 시 벡터 DB seed 임베딩에 bge-m3가 필요하므로 모델 다운로드 완료를 기다린다
+      ollama-init:
+        condition: service_completed_successfully
     # 내부 전용: exts3-web가 내부망(suppressor:8001)으로만 호출
     environment:
       WEB_SERVER_URL: "http://exts3-web:8000"
@@ -71,6 +88,29 @@ services:
       EMBEDDING_MODEL: "${EMBEDDING_MODEL:-bge-m3}"
       ENABLE_WEB_FORWARD: "true"
       WEB_RECEIVE_URL: "http://exts3-web:8000/api/receive"
+      # 예전에는 이미지에 구워진 suppressor/.env가 담당하던 값들 (지금은 루트 .env가 유일한 입력)
+      ENABLE_SLACK_FORWARD: "${ENABLE_SLACK_FORWARD:-true}"
+      SLACK_WEBHOOK_URL: "${SLACK_WEBHOOK_URL:-}"
+      DASHBOARD_BASE_URL: "${DASHBOARD_BASE_URL:-http://localhost:8000}"
+      NEXUS_VERIFY_SSL: "${NEXUS_VERIFY_SSL:-false}"
+      HOLDING_SECONDS: "${HOLDING_SECONDS:-30}"
+      # 동적 시나리오 LLM — 컨테이너 안에서 localhost는 자기 자신이므로 ollama 서비스로 지정
+      LOCAL_LLM_URL: "${LOCAL_LLM_URL:-http://ollama:11434/api/chat}"
+      LOCAL_LLM_MODEL: "${LOCAL_LLM_MODEL:-qwen2.5:1.5b-instruct-q4_K_M}"
+      LLM_CONTEXT: "${LLM_CONTEXT:-4096}"
+      LLM_MAX_TOKENS: "${LLM_MAX_TOKENS:-256}"
+      LLM_TEMPERATURE: "${LLM_TEMPERATURE:-0.1}"
+      LLM_TIMEOUT: "${LLM_TIMEOUT:-300}"
+      OLLAMA_KEEP_ALIVE: "${OLLAMA_KEEP_ALIVE:-5m}"
+      DYNAMIC_MOCK_AUTOSTART: "${DYNAMIC_MOCK_AUTOSTART:-true}"
+      # retro 재점검 모니터 · 로깅
+      LOG_LEVEL: "${LOG_LEVEL:-INFO}"
+      REQUEST_TIMEOUT: "${REQUEST_TIMEOUT:-30}"
+      USER_AGENT: "${USER_AGENT:-retro-monitor/1.0}"
+      RETRO_INTERVAL_HOURS: "${RETRO_INTERVAL_HOURS:-24}"
+      RETRO_QUEUE_PATH: "${RETRO_QUEUE_PATH:-./retro_queue.jsonl}"
+      RETRO_STATE_PATH: "${RETRO_STATE_PATH:-./retro_state.json}"
+      YARA_RULE_PATH: "${YARA_RULE_PATH:-}"
     volumes:
       - suppressor_storage:/app/storage
       - suppressor_pending_files:/app/pending_files
@@ -125,7 +165,7 @@ services:
 
   ollama:
     image: ollama/ollama:latest
-    # suppressor 임베딩용. 최초 1회: docker compose exec ollama ollama pull bge-m3
+    # suppressor 임베딩 + AI 2차 판단용. 모델은 ollama-init이 자동으로 받는다.
     volumes:
       - ollama_data:/root/.ollama
     healthcheck:
@@ -134,6 +174,30 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
+
+  ollama-init:
+    image: ollama/ollama:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: "http://ollama:11434"
+      EMBEDDING_MODEL: "${EMBEDDING_MODEL:-bge-m3}"
+      LOCAL_LLM_MODEL: "${LOCAL_LLM_MODEL:-qwen2.5:1.5b-instruct-q4_K_M}"
+    # 이미 받은 모델은 건너뛰므로 (오프라인 재기동 포함) 재실행해도 안전하다
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        for m in "$$EMBEDDING_MODEL" "$$LOCAL_LLM_MODEL"; do
+          if ollama list | grep -q "$$m"; then
+            echo "model already present: $$m"
+          else
+            echo "pulling model: $$m"
+            ollama pull "$$m"
+          fi
+        done
+    restart: "no"
 
   nexus-init:
     image: curlimages/curl:8.11.1
