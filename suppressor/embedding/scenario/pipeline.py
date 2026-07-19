@@ -16,7 +16,7 @@ from .config import (
 )
 from .dynamic_agent import run_llm_dynamic_analysis_agent
 from .evidence_scorer import score_scenario_evidence
-from .loader import load_scenario_doc
+from .loader import load_scenario_doc, parse_expected_api
 from .risk_classifier import CRITICAL_TAGS, HIGH_TAGS, MEDIUM_TAGS, classify_final_risk
 from .selector import select_candidate_matches
 
@@ -426,6 +426,7 @@ def run_multi_scenario_dynamic_rag_analysis(
         try:
             doc_ref = match["doc_ref"]
             scenario_doc = load_scenario_doc(doc_ref, scenario_base_dir)
+            expected_api = parse_expected_api(scenario_doc)
 
             agent_result = run_llm_dynamic_analysis_agent(
                 vector_fingerprint=vector_fingerprint,
@@ -442,6 +443,7 @@ def run_multi_scenario_dynamic_rag_analysis(
                 selected_match=match,
                 llm_agent_result=agent_result,
                 observations=None,
+                expected_api=expected_api,
             )
 
             scenario_results.append(_build_scenario_result(match, agent_result, evidence))

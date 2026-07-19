@@ -1,3 +1,7 @@
+---
+expected_api:
+  - chrome.tabs.captureVisibleTab
+---
 # Scenario: page_screenshot_or_content_capture
 
 ## 1. Purpose

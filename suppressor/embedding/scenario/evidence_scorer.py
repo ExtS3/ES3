@@ -73,6 +73,7 @@ def collect_observations_from_agent_result(agent_result: dict) -> dict:
         "storage_events": [],
         "dom_events": [],
         "timers": [],
+        "sensitive_api_calls": [],
         "execution": {
             "document_start_observed": False,
             "mock_target_used": True,
@@ -91,6 +92,9 @@ def collect_observations_from_agent_result(agent_result: dict) -> dict:
         combined["storage_events"].extend(obs["storage_events"])
         combined["dom_events"].extend(obs["dom_events"])
         combined["timers"].extend(obs["timers"])
+        for c in obs.get("sensitive_api_calls", []) if isinstance(obs.get("sensitive_api_calls", []), list) else []:
+            if c not in combined["sensitive_api_calls"]:
+                combined["sensitive_api_calls"].append(c)
 
         ex = obs["execution"]
         combined["execution"]["document_start_observed"] = combined["execution"]["document_start_observed"] or ex.get("document_start_observed", False)
@@ -143,11 +147,50 @@ def collect_observations_from_agent_result(agent_result: dict) -> dict:
     return combined
 
 
+def _score_expected_api(obs: dict, expected_api: list[str]) -> dict:
+    # Strong, pattern-specific scoring: was this scenario's core privileged API actually
+    # called (observed via the sensitive-API wrapper / network inference)? A direct API
+    # observation is far stronger evidence than generic behavior tags.
+    observed = []
+    for c in obs.get("sensitive_api_calls", []) if isinstance(obs.get("sensitive_api_calls", []), list) else []:
+        if isinstance(c, dict) and c.get("api"):
+            observed.append(str(c.get("api")))
+    observed_set = set(observed)
+    matched = [a for a in expected_api if a in observed_set]
+    missing = [a for a in expected_api if a not in observed_set]
+    if matched:
+        result = {
+            "status": "ok",
+            "scenario_evidence_score": 1.0,
+            "matched_evidence": [f"sensitive_api:{a}" for a in matched],
+            "missing_evidence": [f"sensitive_api_not_observed:{a}" for a in missing],
+            "safety_violation": False,
+            "expected_api_matched": matched,
+            "expected_api_missing": missing,
+            "notes": [f"Expected privileged API observed: {', '.join(matched)}"],
+        }
+    else:
+        # Expected but not observed — honest candidate_only, not a forced match.
+        result = {
+            "status": "ok",
+            "scenario_evidence_score": 0.2,
+            "matched_evidence": [],
+            "missing_evidence": [f"sensitive_api_not_observed:{a}" for a in expected_api],
+            "safety_violation": False,
+            "expected_api_matched": [],
+            "expected_api_missing": list(expected_api),
+            "notes": [f"Expected privileged API not observed: {', '.join(expected_api)}"],
+        }
+    result.update(_external_attempt_summary(obs))
+    return result
+
+
 def score_scenario_evidence(
     vector_fingerprint: dict,
     selected_match: dict,
     llm_agent_result: dict | None,
     observations: dict | None,
+    expected_api: list[str] | None = None,
 ) -> dict:
     obs = normalize_observations(observations) if observations is not None else None
     if obs is None and llm_agent_result is not None:
@@ -200,6 +243,11 @@ def score_scenario_evidence(
         result["safety_violation"] = True
         result["safety_violation_source"] = "unsafe_external_request" if unsafe_req is not None else "execution_safety_signal"
         return result
+
+    # Pattern-specific privileged-API scoring takes precedence when the scenario doc
+    # declares expected_api. An empty/absent list falls through to the generic path.
+    if expected_api:
+        return _score_expected_api(obs, list(expected_api))
 
     pattern_name = (
         str(selected_match.get("pattern_name", "")).lower()

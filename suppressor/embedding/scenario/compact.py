@@ -205,6 +205,28 @@ def compact_agent_result(agent_result: dict) -> dict:
         "playwright_worker_started": False,
         "playwright_worker_running_loop": False,
         "playwright_worker_shutdown_completed": False,
+        # Observation-instrumentation pilot: whether privileged chrome.* API wrappers
+        # were installed in the service worker, and any calls they observed. Split by
+        # source so worker-wrap direct observations and data:image network inferences
+        # are distinguishable. Empty list + instrumented flag lets the response answer
+        # A ("extension did not call it") vs B ("plant failed / raced") on its own.
+        "sensitive_api_instrumented": False,
+        "sensitive_api_wrapped": [],
+        "sensitive_api_instrument_error": "",
+        "sensitive_api_collect_error": "",
+        "sensitive_api_calls_before_instrument": 0,
+        "sensitive_api_calls": [],
+        "sensitive_api_call_count": 0,
+        "sensitive_api_worker_wrap_count": 0,
+        "sensitive_api_network_inference_count": 0,
+        # Deterministic stimulus (popup + injected trigger message).
+        "extension_popup_opened": False,
+        "extension_popup_url": "",
+        "extension_popup_error": "",
+        "sensitive_api_messages_sent": [],
+        "sensitive_api_send_error": "",
+        "stimulus_strategies_run": [],
+        "url_visit_navigations": [],
     }
     recent_actions: list[dict] = []
     if isinstance(actions, list):
@@ -215,6 +237,9 @@ def compact_agent_result(agent_result: dict) -> dict:
         web_telegram_request_count = 0
         runtime_save_session_message_count = 0
         seen_network_requests: set[tuple] = set()
+        # Each action observation carries the cumulative sensitive-API buffer, so dedup
+        # by content rather than summing lengths (mirrors the harness-side dedup).
+        seen_sensitive_calls: set[str] = set()
         for row in actions:
             if not isinstance(row, dict):
                 continue
@@ -223,6 +248,23 @@ def compact_agent_result(agent_result: dict) -> dict:
                 continue
             for k in ("runtime_messages", "storage_events", "dom_events", "timers"):
                 observation_totals[k] += len(obs.get(k, [])) if isinstance(obs.get(k, []), list) else 0
+            for call in obs.get("sensitive_api_calls", []) if isinstance(obs.get("sensitive_api_calls", []), list) else []:
+                if not isinstance(call, dict):
+                    continue
+                try:
+                    fp = json.dumps(call, sort_keys=True)
+                except Exception:
+                    fp = repr(call)
+                if fp in seen_sensitive_calls:
+                    continue
+                seen_sensitive_calls.add(fp)
+                observation_totals["sensitive_api_calls"].append(call)
+                src = str(call.get("source", ""))
+                if src == "worker_wrapper":
+                    observation_totals["sensitive_api_worker_wrap_count"] += 1
+                elif src == "network_inference":
+                    observation_totals["sensitive_api_network_inference_count"] += 1
+            observation_totals["sensitive_api_call_count"] = len(observation_totals["sensitive_api_calls"])
             for msg in obs.get("runtime_messages", []) if isinstance(obs.get("runtime_messages", []), list) else []:
                 if isinstance(msg, dict) and str(msg.get("action", "")).lower() == "save_session":
                     runtime_save_session_message_count += 1
@@ -424,6 +466,37 @@ def compact_agent_result(agent_result: dict) -> dict:
                 observation_totals["playwright_worker_shutdown_completed"] = observation_totals["playwright_worker_shutdown_completed"] or bool(
                     ex.get("playwright_worker_shutdown_completed", False)
                 )
+                observation_totals["sensitive_api_instrumented"] = observation_totals["sensitive_api_instrumented"] or bool(
+                    ex.get("sensitive_api_instrumented", False)
+                )
+                wrapped = ex.get("sensitive_api_wrapped", [])
+                if isinstance(wrapped, list):
+                    merged_wrapped = set(observation_totals.get("sensitive_api_wrapped", []) or [])
+                    merged_wrapped.update(str(x) for x in wrapped)
+                    observation_totals["sensitive_api_wrapped"] = sorted(merged_wrapped)
+                for k in ("sensitive_api_instrument_error", "sensitive_api_collect_error"):
+                    if not observation_totals.get(k):
+                        observation_totals[k] = str(ex.get(k, "") or "")
+                observation_totals["sensitive_api_calls_before_instrument"] = max(
+                    int(observation_totals.get("sensitive_api_calls_before_instrument", 0) or 0),
+                    int(ex.get("sensitive_api_calls_before_instrument", 0) or 0),
+                )
+                observation_totals["extension_popup_opened"] = observation_totals["extension_popup_opened"] or bool(
+                    ex.get("extension_popup_opened", False)
+                )
+                for k in ("extension_popup_url", "extension_popup_error", "sensitive_api_send_error"):
+                    if not observation_totals.get(k):
+                        observation_totals[k] = str(ex.get(k, "") or "")
+                msgs = ex.get("sensitive_api_messages_sent", [])
+                if isinstance(msgs, list) and msgs and not observation_totals.get("sensitive_api_messages_sent"):
+                    observation_totals["sensitive_api_messages_sent"] = msgs
+                strat = ex.get("stimulus_strategies_run", [])
+                if isinstance(strat, list) and strat:
+                    merged_strat = sorted(set(observation_totals.get("stimulus_strategies_run", []) or []) | {str(x) for x in strat})
+                    observation_totals["stimulus_strategies_run"] = merged_strat
+                navs = ex.get("url_visit_navigations", [])
+                if isinstance(navs, list) and navs and not observation_totals.get("url_visit_navigations"):
+                    observation_totals["url_visit_navigations"] = navs
         if observation_totals.get("extension_loaded") and observation_totals.get("service_worker_ready"):
             if observation_totals.get("extension_load_error"):
                 observation_totals["extension_load_warning"] = observation_totals.get("extension_load_warning") or observation_totals.get("extension_load_error")

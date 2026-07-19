@@ -11,6 +11,7 @@ def normalize_observations(observations: dict | None) -> dict:
         "storage_events": src.get("storage_events", []) if isinstance(src.get("storage_events", []), list) else [],
         "dom_events": src.get("dom_events", []) if isinstance(src.get("dom_events", []), list) else [],
         "timers": src.get("timers", []) if isinstance(src.get("timers", []), list) else [],
+        "sensitive_api_calls": src.get("sensitive_api_calls", []) if isinstance(src.get("sensitive_api_calls", []), list) else [],
         "execution": {
             "document_start_observed": bool(execution_src.get("document_start_observed", False)),
             "mock_target_used": bool(execution_src.get("mock_target_used", True)),
@@ -241,6 +242,26 @@ def normalize_observations(observations: dict | None) -> dict:
             "thread_diag_agent_start": execution_src.get("thread_diag_agent_start", {})
             if isinstance(execution_src.get("thread_diag_agent_start", {}), dict)
             else {},
+            "sensitive_api_instrumented": bool(execution_src.get("sensitive_api_instrumented", False)),
+            "sensitive_api_wrapped": execution_src.get("sensitive_api_wrapped", [])
+            if isinstance(execution_src.get("sensitive_api_wrapped", []), list)
+            else [],
+            "sensitive_api_instrument_error": str(execution_src.get("sensitive_api_instrument_error", "")),
+            "sensitive_api_collect_error": str(execution_src.get("sensitive_api_collect_error", "")),
+            "sensitive_api_calls_before_instrument": int(execution_src.get("sensitive_api_calls_before_instrument", 0) or 0),
+            "extension_popup_opened": bool(execution_src.get("extension_popup_opened", False)),
+            "extension_popup_url": str(execution_src.get("extension_popup_url", "")),
+            "extension_popup_error": str(execution_src.get("extension_popup_error", "")),
+            "sensitive_api_messages_sent": execution_src.get("sensitive_api_messages_sent", [])
+            if isinstance(execution_src.get("sensitive_api_messages_sent", []), list)
+            else [],
+            "sensitive_api_send_error": str(execution_src.get("sensitive_api_send_error", "")),
+            "stimulus_strategies_run": execution_src.get("stimulus_strategies_run", [])
+            if isinstance(execution_src.get("stimulus_strategies_run", []), list)
+            else [],
+            "url_visit_navigations": execution_src.get("url_visit_navigations", [])
+            if isinstance(execution_src.get("url_visit_navigations", []), list)
+            else [],
         },
     }
 

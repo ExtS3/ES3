@@ -17,13 +17,13 @@
       ]
     },
     "capability_profile": [
-      "dnr_ruleset",
-      "header_modification",
-      "request_modification"
+      "host_request_control",
+      "request_rule_control",
+      "ruleset_execution"
     ],
     "capability_combinations": [
-      "dnr_ruleset + modifyHeaders",
-      "request_modification + csp_remove"
+      "request_rule_control + ruleset_execution",
+      "host_request_control + request_rule_control"
     ],
     "static_code_signals": {
       "dnr": {

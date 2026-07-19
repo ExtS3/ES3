@@ -12,7 +12,8 @@
     "debugger": ["debugger_access"],
     "downloads": ["download_control"],
     "clipboardRead": ["clipboard_read"],
-    "clipboardWrite": ["clipboard_write"]
+    "clipboardWrite": ["clipboard_write"],
+    "identity": ["identity_access"]
   },
   "host_permission_to_capability": {
     "<all_urls>": ["broad_page_access"],

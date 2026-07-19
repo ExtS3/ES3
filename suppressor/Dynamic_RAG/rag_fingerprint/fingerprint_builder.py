@@ -1,5 +1,7 @@
+import itertools
 from typing import Any
 
+from .code_scanner import build_trigger_chains
 from .utils import dedup_sorted
 
 
@@ -72,6 +74,22 @@ def build_capability_combinations(manifest_profile: dict[str, Any], caps: list[s
         combos.append("script_injection + broad_page_access")
     if "storage_access" in caps and "external_network" in caps:
         combos.append("storage_access + external_network")
+
+    # Generative co-occurrence emission. The hardcoded rules above only cover ~10
+    # hand-picked archetypes and cannot express most seed combos (measured: only
+    # 9/63 seed combos were subset-matchable). The rerank scorer matches a seed
+    # combo when its tokens are a subset of *some* emitted combo, so emitting every
+    # pair of observed capabilities makes "seed combo ⊆ this extension's
+    # capability_profile" expressible for any two-capability observation-vocab tuple.
+    # Only pairs are emitted: all re-authored seed combos are 2-token and no pure-
+    # capability 3-token seed combo exists, so triples would only inflate the
+    # fingerprint (e.g. fpeaba 975→153 combos) with no matching gain. The hardcoded
+    # rules are retained because they also encode non-capability tokens
+    # (content_script, background, document_start, request_redirect) that are not in
+    # capability_profile and thus cannot be produced generatively.
+    unique_caps = sorted({c for c in caps if c})
+    for tuple_caps in itertools.combinations(unique_caps, 2):
+        combos.append(" + ".join(tuple_caps))
     return dedup_sorted(combos)
 
 
@@ -112,7 +130,11 @@ def build_static_code_signals(manifest_profile: dict[str, Any], agg: dict[str, A
         msg_apis.append("runtime.onMessage")
     if "messaging.tabs.sendMessage" in signals:
         msg_apis.append("tabs.sendMessage")
-    if msg_apis:
+    # Trigger chains (message + url_visit) are emitted whenever any exist, even for a
+    # message-less extension (e.g. a purely navigation-gated one), so the stimulus layer
+    # can still see a url_visit trigger.
+    trigger_chains = build_trigger_chains(agg)
+    if msg_apis or trigger_chains:
         patterns = []
         role_flows = [f for f in (agg.get("derived_flows", []) or []) if "runtime_message" in (f.get("path") or [])]
         if any((f.get("path") or [None])[0] == "content_script" for f in role_flows):
@@ -121,7 +143,12 @@ def build_static_code_signals(manifest_profile: dict[str, Any], agg: dict[str, A
             patterns.append("extension_page_to_background")
         if any((f.get("path") or [None])[0] == "unknown_script" for f in role_flows):
             patterns.append("unknown_script_to_background")
-        out["messaging"] = {"apis": sorted(set(msg_apis)), "patterns": patterns, "message_actions": agg.get("keywords", {}).get("message_actions", [])}
+        out["messaging"] = {
+            "apis": sorted(set(msg_apis)),
+            "patterns": patterns,
+            "message_actions": agg.get("keywords", {}).get("message_actions", []),
+            "trigger_chains": trigger_chains,
+        }
 
     net_apis = []
     if "network.fetch" in signals:

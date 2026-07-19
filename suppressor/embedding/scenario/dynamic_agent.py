@@ -31,17 +31,28 @@ def _bootstrap_actions(preferred_target_url: str) -> list[dict]:
         {"action": "load_extension", "target": "mock_or_localhost_only", "input": {}},
         {"action": "verify_extension_loaded", "target": "mock_or_localhost_only", "input": {}},
         {"action": "wait_for_extension_service_worker", "target": "mock_or_localhost_only", "input": {"timeout_ms": 5000}},
+        # Plant API wrappers while the worker is confirmed alive and before page
+        # navigation gives the extension a reason to act, so a call is not missed.
+        {"action": "instrument_sensitive_apis", "target": "mock_or_localhost_only", "input": {}},
         {"action": "prepare_target_routes", "target": "mock_or_localhost_only", "input": {}},
         {"action": "seed_target_local_storage_before_goto", "target": "mock_or_localhost_only", "input": {}},
         {"action": "open_mock_page", "target": preferred_target_url, "input": {"url": preferred_target_url}},
         {"action": "wait_for_page_load", "target": preferred_target_url, "input": {"timeout_ms": 10000}},
         {"action": "probe_content_script_execution", "target": preferred_target_url, "input": {}},
         {"action": "simulate_dom_input_events", "target": preferred_target_url, "input": {}},
+        # Deterministic stimulus: dispatch by the statically-extracted trigger type
+        # (popup_message / url_visit). Comes AFTER instrument_sensitive_apis (the wrapper
+        # is planted earlier and re-verified inside each strategy), so a woken API call is
+        # never missed, and BEFORE the wait+collect below so the call is observed.
+        {"action": "stimulate_extension", "target": "mock_or_localhost_only", "input": {}},
         {"action": "wait", "target": preferred_target_url, "input": {"ms": 3000}},
         {"action": "collect_runtime_messages", "target": preferred_target_url, "input": {}},
         {"action": "collect_storage_events", "target": preferred_target_url, "input": {}},
         {"action": "collect_timer_events", "target": preferred_target_url, "input": {}},
         {"action": "collect_network_requests", "target": preferred_target_url, "input": {}},
+        # Harvest after the extension has had time to act (simulate + wait + collects),
+        # including any data:image network inferences recorded during collection.
+        {"action": "collect_sensitive_api_calls", "target": "mock_or_localhost_only", "input": {}},
         {"action": "cleanup_harness", "target": "mock_or_localhost_only", "input": {}},
     ]
 

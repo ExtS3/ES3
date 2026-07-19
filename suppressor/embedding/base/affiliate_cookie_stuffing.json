@@ -18,13 +18,14 @@
       ]
     },
     "capability_profile": [
-      "affiliate_url_fetch",
-      "tab_open_close",
-      "domain_targeting"
+      "cookie_access",
+      "external_network",
+      "navigation_control",
+      "storage_access",
+      "targeted_page_access"
     ],
     "capability_combinations": [
-      "tabs_create + affiliate_url",
-      "domain_visit + affiliate_cookie_set"
+      "cookie_access + external_network"
     ],
     "static_code_signals": {
       "tabs": {

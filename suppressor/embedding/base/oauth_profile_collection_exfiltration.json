@@ -22,8 +22,7 @@
       "external_network"
     ],
     "capability_combinations": [
-      "identity_access + profile_collection",
-      "storage_access + external_network"
+      "identity_access + external_network"
     ],
     "static_code_signals": {
       "identity": {

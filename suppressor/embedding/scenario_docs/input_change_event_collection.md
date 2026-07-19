@@ -1,3 +1,8 @@
+---
+# DOM input-hooking scenario — no privileged chrome.* API gates it; scored on
+# content-script / DOM / runtime-bridge evidence (generic scorer), not sensitive_api.
+expected_api: []
+---
 # Scenario: input_change_event_collection
 
 ## 1. Purpose

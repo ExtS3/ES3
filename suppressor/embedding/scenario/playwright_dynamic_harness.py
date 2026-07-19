@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import platform
+import re
 import shutil
 import tempfile
 import threading
@@ -30,6 +31,73 @@ _DUMMY_MARKERS = {
 }
 _ENDPOINT_KEYWORDS = ["save_session", "session", "api", "collect", "sync", "token", "auth"]
 DEFAULT_SERVICE_WORKER_TIMEOUT_MS = 10000
+
+# Privileged chrome.* APIs to observe by wrapping them inside the extension's own
+# service worker. The wrapper records a marker on each call and then ALWAYS invokes
+# the original function and returns its result, so the extension behaves exactly as
+# before (it still receives the capture data URL and any downstream exfiltration
+# still happens). Wrapping is idempotent via the __ext_wrapped tag.
+#
+# The API list is NOT hardcoded here: `targets` is passed in from the scenario docs'
+# expected_api union (see _build_wrap_targets), so a new API is observed by adding one
+# line to a scenario doc — no change to this file. Each target is
+# {label, owner_path, method}; owner_path is walked from globalThis (e.g. "chrome.tabs"
+# → g.chrome.tabs). The wrapper body is API-agnostic (callback / Promise / sync all
+# work, since it only records args and passes the original's return through).
+_SENSITIVE_API_WRAP_JS = r"""
+(targets) => {
+    try {
+        const g = globalThis;
+        g.__sensitive_api_calls = g.__sensitive_api_calls || [];
+        const result = { wrapped: [], already: [], unavailable: [] };
+        for (const t of (targets || [])) {
+            const label = t.label, method = t.method;
+            let owner = g;
+            for (const part of String(t.owner_path || '').split('.')) {
+                if (!part) continue;
+                owner = owner && owner[part];
+            }
+            if (!owner || typeof owner[method] !== 'function') { result.unavailable.push(label); continue; }
+            if (owner[method].__ext_wrapped) { result.already.push(label); continue; }
+            const orig = owner[method];
+            const wrapper = function (...args) {
+                try {
+                    g.__sensitive_api_calls.push({
+                        api: label,
+                        ts: Date.now(),
+                        args_summary: args.slice(0, 4).map(function (a) {
+                            try { return (a && typeof a === 'object') ? JSON.stringify(a).slice(0, 120) : String(a); }
+                            catch (e) { return '[unserializable]'; }
+                        })
+                    });
+                } catch (e) {}
+                return orig.apply(this, args);
+            };
+            wrapper.__ext_wrapped = true;
+            wrapper.__ext_orig = orig;
+            try { owner[method] = wrapper; result.wrapped.push(label); }
+            catch (e) { result.unavailable.push(label + ':' + String(e)); }
+        }
+        g.__sensitive_api_wrap_installed_at = g.__sensitive_api_wrap_installed_at || Date.now();
+        result.installed_at = g.__sensitive_api_wrap_installed_at;
+        // Timing hint: markers already present when this (re)install ran. Non-zero on a
+        // first plant would mean the extension called the API before we could wrap it.
+        result.existing_calls_at_install = g.__sensitive_api_calls.length;
+        return result;
+    } catch (e) {
+        return { error: String(e) };
+    }
+}
+"""
+
+# Read back the markers accumulated by the wrapper above.
+_SENSITIVE_API_HARVEST_JS = r"""
+() => {
+    const g = globalThis;
+    const calls = Array.isArray(g.__sensitive_api_calls) ? g.__sensitive_api_calls.slice() : [];
+    return { calls: calls, installed_at: g.__sensitive_api_wrap_installed_at || null };
+}
+"""
 
 
 def parse_bool_env(value: str | None, default: bool = True) -> bool:
@@ -247,11 +315,22 @@ class PlaywrightDynamicHarness:
         intercept_mock_receiver: bool = True,
         serve_mock_page: bool = True,
         preferred_target_url: str | None = None,
+        trigger_chains: list | None = None,
+        sensitive_api_targets: list | None = None,
     ):
         self.extension_target = extension_target
         self.mock_page_url = mock_page_url
         self.receiver_origin = receiver_origin
         self.user_data_dir = user_data_dir
+        # Statically-extracted "message -> sensitive API" chains (RAG fingerprint). The
+        # stimulus actions consume these to build the wake-up message, so no per-extension
+        # hardcoding. Scenario-invariant config — not reset between scenarios.
+        self._trigger_chains = list(trigger_chains or [])
+        # Privileged chrome.* API names to wrap for observation. Single source: the union
+        # of every scenario doc's expected_api (collect_expected_apis_from_docs). Adding an
+        # API to a scenario doc is all that is needed to start observing it. Scenario-
+        # invariant config — not reset between scenarios.
+        self._sensitive_api_targets = list(sensitive_api_targets or [])
         env_headless = os.getenv("DYNAMIC_HARNESS_HEADLESS")
         self.dynamic_harness_headless_env = str(env_headless or "")
         if env_headless is None:
@@ -276,6 +355,12 @@ class PlaywrightDynamicHarness:
         self._storage_events: list[dict] = []
         self._dom_events: list[dict] = []
         self._timers: list[dict] = []
+        # Direct observations of the extension calling privileged chrome.* APIs
+        # (worker-side wrapper markers + data:image network-payload inferences).
+        self._sensitive_api_calls: list[dict] = []
+        self._seen_sensitive_api_calls: set[str] = set()
+        # Extension popup page (a real extension context) opened for message injection.
+        self._popup_page = None
         self._execution = {
             "document_start_observed": False,
             "mock_target_used": True,
@@ -1003,6 +1088,21 @@ class PlaywrightDynamicHarness:
         self._request_index_by_fingerprint[key] = len(self._network_requests)
         self._network_requests.append(ev)
 
+        # (c) Corroborating signal: a captureVisibleTab result is a data:image/... URL.
+        # If one leaves via a request payload, record it as an inferred sensitive-API
+        # call. This is parallel to body_contains_dummy_secret and does not alter it.
+        try:
+            body_text = post_data.decode("utf-8", errors="ignore") if isinstance(post_data, bytes) else str(post_data or "")
+        except Exception:
+            body_text = ""
+        if "data:image/" in body_text or "data:image/" in str(url or ""):
+            self._record_sensitive_api_call({
+                "api": "chrome.tabs.captureVisibleTab",
+                "inferred_from": "data_image_network_payload",
+                "source": "network_inference",
+                "url_host": ev.get("url_host", ""),
+            })
+
         if ev["url_category"] != "localhost" and bool(ev.get("real_network_used")):
             self._execution["non_localhost_sensitive_transmission"] = True
 
@@ -1303,6 +1403,123 @@ class PlaywrightDynamicHarness:
         self._execution["route_registered_save_session_endpoint"] = True
         self._routes_registered = True
 
+    # Volatile _execution telemetry that is produced while a scenario's context is
+    # live (navigation, probing, worker/seed, network). It accumulates across
+    # scenarios because _execution is built once in __init__ and never cleared, so it
+    # must be reset per scenario. Manifest/env/launch/mock-server/cleanup fields are
+    # intentionally absent here: they are static, or re-derived by the manifest/launch
+    # setup that runs right after the reset, or owned by close().
+    _VOLATILE_EXECUTION_DEFAULTS = {
+        "document_start_observed": False,
+        "actual_page_url": "",
+        "content_script_executed": False,
+        "content_script_execution_source": "",
+        "content_script_run_at_observed": False,
+        "target_local_storage_seeded_before_goto": False,
+        "seed_extension_uuid_attempted": False,
+        "seed_extension_uuid_success": False,
+        "seed_extension_uuid_error": "",
+        "service_worker_ready_before_uuid_seed": False,
+        "extension_loaded": False,
+        "extension_id": "",
+        "service_worker_count": 0,
+        "service_worker_url": "",
+        "service_worker_ready": False,
+        "service_worker_urls": [],
+        "content_script_probe_method": "",
+        "extension_context_launched": False,
+        "used_launch_persistent_context": False,
+        "extension_load_error": "",
+        "extension_load_warning": "",
+        "route_registered_web_telegram": False,
+        "route_matched_web_telegram_count": 0,
+        "route_registered_save_session_endpoint": False,
+        "route_matched_save_session_endpoint": 0,
+        "real_service_used": False,
+        "real_secret_observed": False,
+        "non_localhost_sensitive_transmission": False,
+        "mock_target_used": True,
+        "real_network_used": False,
+        "intercepted_by_harness": False,
+        "external_request_attempted": False,
+        "external_request_blocked": False,
+        "external_request_count": 0,
+        "blocked_external_request_count": 0,
+        "blocked_external_requests": [],
+        "external_request_failed": False,
+        "external_request_block_source": "",
+        "external_request_outcome": "",
+        "unsafe_request_url": "",
+        "unsafe_request_host": "",
+        "content_script_not_executed_reason": "",
+        "content_script_probe_warning": "",
+        "content_script_probe_error": "",
+        "content_script_dom_marker_found": False,
+        "content_script_probe_timeout_ms": 0,
+        "content_script_console_logs": [],
+        "content_script_page_errors": [],
+        "content_script_request_seen": False,
+        "content_script_request_url": "",
+        "content_script_request_resource_type": "",
+        "extension_script_requests": [],
+        "isolated_world_context_seen": False,
+        "isolated_world_contexts": [],
+        "content_script_isolated_world_detected": False,
+        "page_load_error": "",
+        "page_load_started": False,
+        "page_load_completed": False,
+        "open_mock_page_attempted": False,
+        "open_mock_page_succeeded": False,
+        "content_script_probe_attempted": False,
+        "page_response_status": None,
+        "page_load_warning": "",
+        "goto_called": False,
+        "goto_completed": False,
+        "wait_for_load_state_called": False,
+        "wait_for_load_state_completed": False,
+        "wait_for_load_state_error": "",
+        "dynamic_analysis_timeout": False,
+        "sensitive_api_instrumented": False,
+        "sensitive_api_wrapped": [],
+        "sensitive_api_instrument_error": "",
+        "sensitive_api_calls_before_instrument": 0,
+        "sensitive_api_collect_error": "",
+        "extension_popup_opened": False,
+        "extension_popup_url": "",
+        "extension_popup_error": "",
+        "sensitive_api_messages_sent": [],
+        "sensitive_api_send_error": "",
+        "stimulus_strategies_run": [],
+        "url_visit_navigations": [],
+    }
+
+    def _reset_scenario_buffers(self) -> None:
+        # Called once per scenario, right before a fresh context is built, so that
+        # each scenario is scored against only its own observations. No-op on the
+        # first scenario (the buffers are already empty from __init__).
+        self._network_requests = []
+        self._runtime_messages = []
+        self._storage_events = []
+        self._dom_events = []
+        self._timers = []
+        self._sensitive_api_calls = []
+        self._seen_sensitive_api_calls = set()
+        self._popup_page = None
+        self._seen_requests = set()
+        self._request_index_by_fingerprint = {}
+        self._post_count_by_endpoint = {}
+        self._console_logs = []
+        self._page_errors = []
+        # Per-context instrumentation guards: close() destroys the context but leaves
+        # these True, so the next scenario's fresh context would otherwise skip route
+        # interception and init-script installation and collect nothing. Clearing them
+        # here lets each new context be re-instrumented.
+        self._routes_registered = False
+        self._init_script_installed = False
+        self._execution.update(
+            {k: (list(v) if isinstance(v, list) else v) for k, v in self._VOLATILE_EXECUTION_DEFAULTS.items()}
+        )
+
     def _ensure_context(self):
         diag = _loop_state()
         self._execution["thread_diag_ensure_context"] = {
@@ -1316,9 +1533,23 @@ class PlaywrightDynamicHarness:
         )
         if self._context is not None:
             return
+        if diag["running_loop"] and self._pw is not None:
+            # A parked event loop from a previous scenario is still resident on this
+            # worker thread (e.g. a leftover Playwright whose stop() never cleared it).
+            # Best-effort reclaim it before rejecting, then re-check running_loop.
+            try:
+                self._pw.stop()
+            except Exception:
+                pass
+            self._pw = None
+            diag = _loop_state()
         if diag["running_loop"]:
             self._execution["extension_load_error"] = "playwright_sync_in_async_loop"
             raise RuntimeError("refusing to start sync_playwright inside running asyncio loop")
+        # A new context is about to be built for this scenario. Clear the previous
+        # scenario's observation buffers and volatile telemetry so evidence is scored
+        # per scenario instead of against a cumulative, never-reset buffer.
+        self._reset_scenario_buffers()
         if self._extension_root is None:
             try:
                 self._extension_root = self._resolve_extension_root()
@@ -1357,13 +1588,11 @@ class PlaywrightDynamicHarness:
         effective_headless = bool(self.headless)
         self._execution["headless"] = bool(effective_headless)
         self._execution["display_env"] = str(os.environ.get("DISPLAY") or "")
+        # Diagnostic only: the xvfb-run binary being installed says nothing about a
+        # display actually being reachable, so it must not gate the guard below.
         self._execution["xvfb_available"] = bool(shutil.which("xvfb-run") is not None)
         desktop_os = platform.system().lower() in {"windows", "darwin"}
-        self._execution["headed_supported"] = (
-            desktop_os
-            or bool(self._execution["display_env"])
-            or bool(self._execution["xvfb_available"])
-        )
+        self._execution["headed_supported"] = desktop_os or bool(self._execution["display_env"])
         if not effective_headless and not self._execution["headed_supported"]:
             self._execution["extension_load_error"] = "headed_mode_requires_display_or_xvfb"
             self._notes.append("Set DYNAMIC_HARNESS_HEADLESS=false and run the service under xvfb-run to test MV3 extensions in headed mode on a headless server.")
@@ -1402,12 +1631,31 @@ class PlaywrightDynamicHarness:
             "used_launch_persistent_context=True",
             flush=True,
         )
-        self._context = self._pw.chromium.launch_persistent_context(
-            user_data_dir=user_dir,
-            headless=effective_headless,
-            args=args,
-            ignore_default_args=ignore_default_args,
-        )
+        try:
+            self._context = self._pw.chromium.launch_persistent_context(
+                user_data_dir=user_dir,
+                headless=effective_headless,
+                args=args,
+                ignore_default_args=ignore_default_args,
+            )
+        except Exception as exc:
+            # Playwright folds the browser's own stderr into this message (missing X
+            # server, missing shared libs, ...); the execution record only keeps a
+            # coarse label, so surface the original text.
+            print(f"[launch_fail] {type(exc).__name__}: {exc}", flush=True)
+            # sync_playwright().start() above already installed a parked event loop on
+            # this worker thread. If launch fails, reclaim it here while it is still
+            # stoppable, so the next scenario re-enters with running_loop=False instead
+            # of being rejected by the parked-loop guard.
+            if self._pw is not None:
+                try:
+                    self._pw.stop()
+                except Exception:
+                    pass
+                self._pw = None
+            if not self._execution.get("extension_load_error"):
+                self._execution["extension_load_error"] = "context_launch_failed"
+            raise
         self._execution["used_launch_persistent_context"] = True
         self._execution["extension_context_launched"] = True
         self._register_intercept_routes()
@@ -1498,6 +1746,7 @@ class PlaywrightDynamicHarness:
                 "storage_events": self._storage_events,
                 "dom_events": self._dom_events,
                 "timers": self._timers,
+                "sensitive_api_calls": self._sensitive_api_calls,
                 "execution": self._execution,
             }
         )
@@ -2060,6 +2309,329 @@ class PlaywrightDynamicHarness:
         self._attempt_seed_extension_uuid()
         return self._current_observation()
 
+    def _build_wrap_targets(self) -> list[dict]:
+        # Turn dotted API names (the scenario-doc expected_api union) into the
+        # {label, owner_path, method} entries the wrap JS consumes. No API is hardcoded.
+        targets: list[dict] = []
+        for api in self._sensitive_api_targets:
+            name = str(api or "").strip()
+            if not name or "." not in name:
+                continue
+            owner_path, _, method = name.rpartition(".")
+            if owner_path and method:
+                targets.append({"label": name, "owner_path": owner_path, "method": method})
+        return targets
+
+    def _ensure_wrappers_on_worker(self):
+        # Idempotently (re)install the API wrappers on the live service worker and reflect
+        # success in the instrumented flag. Called right before a stimulus fires, when the
+        # worker is guaranteed awake, so a woken API call is never missed. Returns the SW.
+        try:
+            w = list(getattr(self._context, "service_workers", []))[0] if self._context else None
+        except Exception:
+            w = None
+        if w is None:
+            return None
+        try:
+            res = w.evaluate(_SENSITIVE_API_WRAP_JS, self._build_wrap_targets())
+            labels = (res.get("wrapped") or []) + (res.get("already") or []) if isinstance(res, dict) else []
+            if labels:
+                self._execution["sensitive_api_instrumented"] = True
+                merged = sorted(set(self._execution.get("sensitive_api_wrapped", []) or []) | {str(x) for x in labels})
+                self._execution["sensitive_api_wrapped"] = merged
+                self._execution["sensitive_api_instrument_error"] = ""
+        except Exception as exc:
+            self._notes.append(f"sensitive_api_rewrap_failed: {str(exc)[:160]}")
+        return w
+
+    # Stimulus strategies keyed on the trigger type extracted statically (trigger_chains).
+    # Each "opens the stage" for a conditional API; the verdict remains the observed call.
+    def stimulate_extension(self, action: dict) -> dict:
+        self._ensure_context()
+        chains = self._trigger_chains if isinstance(self._trigger_chains, list) else []
+        message_chains = [c for c in chains if isinstance(c, dict) and str(c.get("trigger_type", "message")) == "message"]
+        url_chains = [c for c in chains if isinstance(c, dict) and str(c.get("trigger_type", "")) == "url_visit"]
+        strategies: list[str] = []
+        # popup_message strategy = the existing popup-open + runtime-message injection.
+        if message_chains:
+            self.open_extension_popup(action)
+            self.send_extension_message(action)
+            strategies.append("popup_message")
+        # url_visit strategy = navigate to a URL whose host matches the extension's gate.
+        if url_chains:
+            self._strategy_url_visit(url_chains)
+            strategies.append("url_visit")
+        if not strategies:
+            self._notes.append("stimulate_extension: no_trigger_chains")
+        self._execution["stimulus_strategies_run"] = strategies
+        return self._current_observation()
+
+    def _strategy_url_visit(self, chains: list) -> None:
+        # Navigate a tab to a URL whose host contains the extension's target substring.
+        # The context route serves the mock page for that host (document requests), so the
+        # tab reports the target URL and the extension's navigation listener fires.
+        navs: list[dict] = []
+        self._ensure_wrappers_on_worker()
+        for c in chains:
+            sub = str(c.get("target_host_substring") or "").strip().lower()
+            if not sub:
+                navs.append({"host_substring": "", "result": "skipped_no_substring"})
+                self._notes.append("url_visit_skipped: no_target_host_substring")
+                continue
+            safe = re.sub(r"[^a-z0-9\-]", "-", sub)
+            host = sub if ("." in sub and re.fullmatch(r"[a-z0-9.\-]+", sub)) else f"{safe}.test"
+            url = f"https://{host}/index.html"
+            self._emulated_target_host = host
+            try:
+                self._register_intercept_routes()
+            except Exception:
+                pass
+            page = None
+            try:
+                page = self._context.new_page() if self._context is not None else None
+                if page is None:
+                    navs.append({"host_substring": sub, "navigated_url": url, "result": "no_context"})
+                    continue
+                page.goto(url, wait_until="load", timeout=10000)
+                navs.append({"host_substring": sub, "navigated_url": url, "target_api": c.get("target_api"), "result": "navigated"})
+            except Exception as exc:
+                navs.append({"host_substring": sub, "navigated_url": url, "result": f"err:{str(exc)[:120]}"})
+            # Leave the page open; the bootstrap wait after stimulus gives the capture time.
+        self._execution["url_visit_navigations"] = navs
+
+    def instrument_sensitive_apis(self, action: dict) -> dict:
+        # "Plant": wrap privileged chrome.* APIs in the live service worker so a later
+        # harvest can observe whether the extension itself invoked them. The wrapper
+        # always calls the original and returns its result (see _SENSITIVE_API_WRAP_JS),
+        # so the extension's behavior is unchanged. Never raises — records a note on
+        # failure so the scenario still completes.
+        self._ensure_context()
+        # Install status is recorded as execution fields (not just notes) so it survives
+        # the compact projection and the next session can confirm — not infer — the plant.
+        self._execution["sensitive_api_instrumented"] = False
+        self._execution["sensitive_api_wrapped"] = []
+        self._execution["sensitive_api_instrument_error"] = ""
+        try:
+            if self._context is None:
+                self._execution["sensitive_api_instrument_error"] = "context_unavailable"
+                self._notes.append("sensitive_api_instrument_skipped: context_unavailable")
+                return self._current_observation()
+            ready = self._wait_for_service_worker(timeout_ms=5000)
+            workers = []
+            try:
+                workers = list(getattr(self._context, "service_workers", [])) if ready else []
+            except Exception:
+                workers = []
+            if not workers:
+                self._execution["sensitive_api_instrument_error"] = "service_worker_not_ready"
+                self._notes.append("sensitive_api_instrument_skipped: service_worker_not_ready")
+                return self._current_observation()
+            wrap_targets = self._build_wrap_targets()
+            if not wrap_targets:
+                self._execution["sensitive_api_instrument_error"] = "no_sensitive_api_targets"
+                self._notes.append("sensitive_api_instrument_skipped: no_sensitive_api_targets")
+                return self._current_observation()
+            wrapped_labels: list[str] = []
+            for w in workers:
+                try:
+                    res = w.evaluate(_SENSITIVE_API_WRAP_JS, wrap_targets)
+                except Exception as exc:
+                    self._execution["sensitive_api_instrument_error"] = str(exc)[:200]
+                    self._notes.append(f"sensitive_api_instrument_failed: {str(exc)[:160]}")
+                    continue
+                if isinstance(res, dict):
+                    # "wrapped" = newly installed this call; "already" = wrapper present
+                    # from an earlier plant. Either proves the API is instrumented now.
+                    for label in (res.get("wrapped") or []) + (res.get("already") or []):
+                        if str(label) not in wrapped_labels:
+                            wrapped_labels.append(str(label))
+                    if res.get("error"):
+                        self._execution["sensitive_api_instrument_error"] = str(res.get("error"))[:200]
+                        self._notes.append(f"sensitive_api_instrument_error: {str(res.get('error'))[:160]}")
+                    # Non-zero here on the first plant means the API fired before we wrapped it.
+                    try:
+                        pre = int(res.get("existing_calls_at_install", 0) or 0)
+                    except Exception:
+                        pre = 0
+                    if pre:
+                        self._execution["sensitive_api_calls_before_instrument"] = pre
+                    # Distinguish "target API not reachable in this worker scope" from a
+                    # genuine failure, so instrumented=False is diagnosable in the response.
+                    unavailable = res.get("unavailable") or []
+                    if isinstance(unavailable, list) and unavailable and not wrapped_labels:
+                        self._execution["sensitive_api_instrument_error"] = (
+                            "target_api_unavailable: " + ",".join(str(x) for x in unavailable)
+                        )[:200]
+            if wrapped_labels:
+                self._execution["sensitive_api_instrumented"] = True
+                self._execution["sensitive_api_wrapped"] = wrapped_labels
+        except Exception as exc:
+            self._execution["sensitive_api_instrument_error"] = str(exc)[:200]
+            self._notes.append(f"sensitive_api_instrument_failed: {str(exc)[:160]}")
+        return self._current_observation()
+
+    def collect_sensitive_api_calls(self, action: dict) -> dict:
+        # "Harvest": read the wrapper's markers back out of the worker and merge them
+        # into the scenario buffer. Deduplicated so repeated harvests don't double-count.
+        self._ensure_context()
+        self._execution["sensitive_api_collect_error"] = ""
+        try:
+            if self._context is None:
+                self._execution["sensitive_api_collect_error"] = "context_unavailable"
+                self._notes.append("sensitive_api_collect_skipped: context_unavailable")
+                return self._current_observation()
+            workers = []
+            try:
+                workers = list(getattr(self._context, "service_workers", []))
+            except Exception:
+                workers = []
+            if not workers:
+                self._execution["sensitive_api_collect_error"] = "service_worker_not_ready"
+                self._notes.append("sensitive_api_collect_skipped: service_worker_not_ready")
+                return self._current_observation()
+            for w in workers:
+                wurl = str(getattr(w, "url", "") or "")
+                try:
+                    res = w.evaluate(_SENSITIVE_API_HARVEST_JS)
+                except Exception as exc:
+                    self._execution["sensitive_api_collect_error"] = str(exc)[:200]
+                    self._notes.append(f"sensitive_api_collect_failed: {str(exc)[:160]}")
+                    continue
+                calls = res.get("calls", []) if isinstance(res, dict) else []
+                for c in calls if isinstance(calls, list) else []:
+                    if not isinstance(c, dict):
+                        continue
+                    self._record_sensitive_api_call({
+                        "api": str(c.get("api", "")),
+                        "ts": c.get("ts"),
+                        "args_summary": c.get("args_summary", []),
+                        "source": "worker_wrapper",
+                        "worker_url": wurl,
+                    })
+        except Exception as exc:
+            self._notes.append(f"sensitive_api_collect_failed: {str(exc)[:160]}")
+        return self._current_observation()
+
+    def _record_sensitive_api_call(self, call: dict) -> None:
+        # Dedup by (api, ts, source, worker_url, inferred_from) so worker-wrapper markers
+        # and data:image network inferences are each recorded once per scenario.
+        try:
+            fp = json.dumps(
+                {
+                    "api": call.get("api"),
+                    "ts": call.get("ts"),
+                    "source": call.get("source"),
+                    "worker_url": call.get("worker_url"),
+                    "inferred_from": call.get("inferred_from"),
+                },
+                sort_keys=True,
+            )
+        except Exception:
+            fp = repr(call)
+        if fp in self._seen_sensitive_api_calls:
+            return
+        self._seen_sensitive_api_calls.add(fp)
+        self._sensitive_api_calls.append(call)
+
+    def _resolve_popup_path(self) -> str:
+        # Popup path from the manifest (action / browser_action / page_action). Extension
+        # id is resolved at runtime by the caller; only the relative page path here.
+        m = self._manifest if isinstance(self._manifest, dict) else {}
+        for key in ("action", "browser_action", "page_action"):
+            block = m.get(key) if isinstance(m.get(key), dict) else {}
+            popup = block.get("default_popup")
+            if isinstance(popup, str) and popup.strip():
+                return popup.strip().lstrip("/")
+        # TODO(generalize): some extensions expose a real extension context only via an
+        # options page / side panel / offscreen document rather than an action popup;
+        # fall back to those here when this returns "".
+        return ""
+
+    def open_extension_popup(self, action: dict) -> dict:
+        # Load the extension's popup page (a real extension context with chrome.runtime)
+        # so a later send_extension_message can inject from it. Path is read from the
+        # manifest, id from the runtime-detected extension_id — no hardcoding.
+        self._ensure_context()
+        self._execution["extension_popup_opened"] = False
+        self._execution["extension_popup_error"] = ""
+        try:
+            ext_id = str(self._execution.get("extension_id") or "")
+            popup_rel = self._resolve_popup_path()
+            if not ext_id:
+                self._execution["extension_popup_error"] = "extension_id_unknown"
+                self._notes.append("open_extension_popup_skipped: extension_id_unknown")
+                return self._current_observation()
+            if not popup_rel:
+                self._execution["extension_popup_error"] = "no_popup_in_manifest"
+                self._notes.append("open_extension_popup_skipped: no_popup_in_manifest")
+                return self._current_observation()
+            popup_url = f"chrome-extension://{ext_id}/{popup_rel}"
+            self._execution["extension_popup_url"] = popup_url
+            if self._context is None:
+                self._execution["extension_popup_error"] = "context_unavailable"
+                return self._current_observation()
+            self._popup_page = self._context.new_page()
+            self._popup_page.goto(popup_url, wait_until="domcontentloaded", timeout=8000)
+            self._execution["extension_popup_opened"] = True
+        except Exception as exc:
+            self._execution["extension_popup_error"] = str(exc)[:200]
+            self._notes.append(f"open_extension_popup_failed: {str(exc)[:160]}")
+            self._popup_page = None
+        return self._current_observation()
+
+    def send_extension_message(self, action: dict) -> dict:
+        # Inject the wake-up message(s) from the popup context. Message content comes
+        # from the statically-extracted trigger_chains (no per-extension hardcoding).
+        # Re-plants the API wrapper first: opening the popup wakes the service worker, so
+        # this is the point where the wrapper is guaranteed installable even if the early
+        # instrument_sensitive_apis ran before the worker was live.
+        self._ensure_context()
+        self._execution["sensitive_api_send_error"] = ""
+        sent: list[dict] = []
+        try:
+            # Ensure the wrapper is present now that the worker is awake, and reflect it
+            # in the flag so sensitive_api_instrumented is consistent with reality.
+            self._ensure_wrappers_on_worker()
+
+            chains = self._trigger_chains if isinstance(self._trigger_chains, list) else []
+            if not chains:
+                self._execution["sensitive_api_send_error"] = "no_trigger_chains"
+                self._notes.append("send_extension_message_skipped: no_trigger_chains")
+                return self._current_observation()
+            if self._popup_page is None:
+                self._execution["sensitive_api_send_error"] = "no_popup_context"
+                self._notes.append("send_extension_message_skipped: no_popup_context")
+                return self._current_observation()
+
+            # Deduplicate the {key: message} payloads across chains.
+            payloads: list[dict] = []
+            seen: set[tuple] = set()
+            for c in chains:
+                if not isinstance(c, dict):
+                    continue
+                key = str(c.get("trigger_key") or "")
+                name = str(c.get("trigger_message") or "")
+                if not key or not name or (key, name) in seen:
+                    continue
+                seen.add((key, name))
+                payloads.append({key: name})
+
+            for payload in payloads:
+                script = (
+                    "() => { try { chrome.runtime.sendMessage(" + json.dumps(payload)
+                    + "); return 'sent'; } catch (e) { return 'err:' + String(e); } }"
+                )
+                try:
+                    result = self._popup_page.evaluate(script)
+                except Exception as exc:
+                    result = f"err:{str(exc)[:120]}"
+                sent.append({"message": payload, "result": str(result)})
+            self._execution["sensitive_api_messages_sent"] = sent
+        except Exception as exc:
+            self._execution["sensitive_api_send_error"] = str(exc)[:200]
+            self._notes.append(f"send_extension_message_failed: {str(exc)[:160]}")
+        return self._current_observation()
+
     def wait_for_extension_service_worker(self, action: dict) -> dict:
         self._ensure_context()
         timeout_ms = int(os.getenv("SERVICE_WORKER_TIMEOUT_MS", str(DEFAULT_SERVICE_WORKER_TIMEOUT_MS)))
@@ -2206,7 +2778,13 @@ class PlaywrightDynamicHarness:
         finally:
             self._page = None
             self._context = None
-            self._pw = None
+            # Only drop the Playwright handle when stop() actually succeeded. If stop()
+            # failed, the parked event loop is still live on this thread; keeping the
+            # reference avoids orphaning it so a later cleanup can still stop it. With
+            # the launch-failure path handled at the source, _pw here is normally a
+            # cleanly-stopped instance; this branch is a secondary safety net.
+            if self._execution.get("cleanup_stopped_playwright"):
+                self._pw = None
 
         had_user_data_tmp = any("pw_ud_" in str(d) for d in self._tmp_dirs)
         had_unpacked_tmp = any("ext_unzip_" in str(d) for d in self._tmp_dirs)

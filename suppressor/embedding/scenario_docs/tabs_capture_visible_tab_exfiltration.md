@@ -1,3 +1,7 @@
+---
+expected_api:
+  - chrome.tabs.captureVisibleTab
+---
 # Scenario: tabs_capture_visible_tab_exfiltration
 
 ## 1. Purpose

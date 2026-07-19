@@ -578,6 +578,12 @@ async def scan(
         final_risk = "LOW"
         dynamic_harness = None
 
+        # Imported lazily inside the Dynamic RAG branch below, which is skipped when
+        # embedding or vector search fails — leaving the name unbound at the summary
+        # print. Bind a fallback here; the real import shadows it whenever the branch runs.
+        def compact_result_one_line_summary(result: dict) -> str:
+            return f"unavailable (status={result.get('status', 'unknown')})"
+
         try:
             # --- 1. RAG 핑거프린트 정적 분석 + Vector 검색 + Rerank + Dynamic RAG ---
             print(">>>> RAG 분석 실행")
@@ -712,12 +718,29 @@ async def scan(
                         flush=True,
                     )
 
+                # Statically-extracted trigger chains feed the deterministic stimulus
+                # actions (send_extension_message) so they wake conditional APIs without
+                # per-extension hardcoding.
+                _trigger_chains = (
+                    rag_fingerprint_result.get("static_code_signals", {})
+                    .get("messaging", {})
+                    .get("trigger_chains", [])
+                    if isinstance(rag_fingerprint_result, dict)
+                    else []
+                )
+                # Observation targets = union of every scenario doc's expected_api. Single
+                # source: adding an API to a scenario doc makes the harness observe it,
+                # with no harness/code_scanner change.
+                from embedding.scenario.loader import collect_expected_apis_from_docs
+                _sensitive_api_targets = collect_expected_apis_from_docs()
                 dynamic_harness = PlaywrightDynamicHarness(
                     extension_target=file_path,
                     mock_page_url="http://127.0.0.1:8080/mock/index.html",
                     receiver_origin="http://127.0.0.1:9999",
                     intercept_mock_receiver=True,
                     preferred_target_url=preferred_target_url,
+                    trigger_chains=_trigger_chains,
+                    sensitive_api_targets=_sensitive_api_targets,
                 )
 
                 adapter = DynamicActionAdapter(dynamic_harness)
