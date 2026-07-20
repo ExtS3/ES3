@@ -10,7 +10,13 @@
         { href: '/library', icon: 'inventory_2', label: '라이브러리' },
         { href: '/admin/scan-status', icon: 'manage_search', label: '검사 내역' },
         { href: '/scenario', icon: 'dataset', label: '시나리오 관리' },
-        { href: '/admin', icon: 'dashboard_customize', label: '관리자 대시보드' },
+        {
+            href: '/admin', icon: 'dashboard_customize', label: '관리자 대시보드',
+            children: [
+                { href: '/admin/permissions', icon: 'manage_accounts', label: '사용자 권한' },
+                { href: '/admin/policy', icon: 'rule_settings', label: '정책 설정' },
+            ],
+        },
     ];
 
     function activeHref() {
@@ -34,14 +40,28 @@
 <nav class="flex flex-col gap-1 px-3">
     ${NAV_ITEMS.map(item => {
         const isActive = item.href === active;
+        // 하위 메뉴: 해당 섹션에 있으면 항상 펼침, 아니면 그룹 호버 시에만 노출.
+        const children = item.children || [];
         return `
+    <div class="group flex flex-col gap-1">
     <a href="${item.href}" class="relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${isActive
             ? 'bg-primary-container text-on-primary-container'
             : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface'}">
         ${isActive ? '<span class="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-full es3-gradient-bg"></span>' : ''}
         <span class="material-symbols-outlined" data-icon="${item.icon}">${item.icon}</span>
         <span>${item.label}</span>
+    </a>` + (children.length ? `
+    <div class="${isActive ? 'flex' : 'hidden group-hover:flex group-focus-within:flex'} flex-col gap-1">` : '') + children.map(child => {
+        const childActive = window.location.pathname === child.href;
+        return `
+    <a href="${child.href}" class="relative flex items-center gap-2 ml-6 px-3 py-2 rounded-lg text-sm transition-colors ${childActive
+            ? 'bg-primary-container text-on-primary-container font-medium'
+            : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface'}">
+        ${childActive ? '<span class="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-[3px] rounded-full es3-gradient-bg"></span>' : ''}
+        <span class="material-symbols-outlined text-base" data-icon="${child.icon}">${child.icon}</span>
+        <span>${child.label}</span>
     </a>`;
+    }).join('') + (children.length ? '</div>' : '') + '</div>';
     }).join('')}
 </nav>
 <div id="side-bottom" class="mt-auto"></div>
