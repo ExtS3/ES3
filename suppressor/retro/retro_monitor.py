@@ -99,6 +99,50 @@ def chrome_id_from_public_key_b64(public_key_b64: str) -> Optional[str]:
     return None
 
 
+# --- 원격 config 채널 감시 (BadBlocker형: 코드는 그대로, 서버 응답만 바꿔 공격) ---
+
+FETCH_URL_REGEX = re.compile(r"""fetch\s*\(\s*['"`](https?://[^'"`\s]+)""")
+XHR_URL_REGEX = re.compile(r"""\.open\s*\(\s*['"][A-Za-z]+['"]\s*,\s*['"](https?://[^'"]+)""")
+# "scriplet"은 오타가 아님 — BadBlocker 실제 응답 필드명이 scripletsRules
+EXECUTABLE_HINT_REGEX = re.compile(
+    r"<script|\beval\s*\(|\bnew\s+Function\b|\bfunction\s*\(|scriptlet|scriplet",
+    re.IGNORECASE,
+)
+MAX_REMOTE_CONFIG_ENDPOINTS = 10
+
+
+def extract_remote_config_endpoints(zip_bytes: bytes) -> list:
+    """확장 JS에서 하드코딩된 원격 요청 URL 리터럴을 추출한다 (fetch / XHR.open)."""
+    endpoints: list = []
+    try:
+        with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
+            for name in zf.namelist():
+                if not name.lower().endswith(".js"):
+                    continue
+                try:
+                    text = zf.read(name).decode("utf-8", errors="replace")
+                except Exception:
+                    continue
+                for regex in (FETCH_URL_REGEX, XHR_URL_REGEX):
+                    for url in regex.findall(text):
+                        if url not in endpoints:
+                            endpoints.append(url)
+    except Exception:
+        return endpoints
+    return endpoints[:MAX_REMOTE_CONFIG_ENDPOINTS]
+
+
+def normalize_for_hash(text: str) -> str:
+    # ponytail: 공백·숫자를 뭉개 timestamp류 churn으로 인한 해시 변동을 근사 제거.
+    # 오탐/과탐이 문제되면 JSON 파싱 기반 필드 단위 비교로 업그레이드.
+    return re.sub(r"\d+", "0", re.sub(r"\s+", " ", text)).strip()
+
+
+def looks_executable(text: str) -> bool:
+    """응답 본문에 실행 가능한 코드 성격의 콘텐츠가 있는지 근사 판정."""
+    return bool(EXECUTABLE_HINT_REGEX.search(text))
+
+
 def slugify(text: str) -> str:
     value = (text or "").strip().lower()
     value = re.sub(r"[^a-z0-9]+", "-", value)
@@ -483,12 +527,72 @@ class LayerXReputationChecker:
         }
 
 
+class RemoteConfigChecker:
+    """승인 확장이 런타임에 조회하는 원격 config endpoint의 응답 변화를 감시한다.
+
+    대응 시나리오: BadBlocker(island.io, 2026-06) — 확장 코드·버전은 그대로 두고
+    서버 응답(scriptletsRules 등)만 바꿔 임의 JS를 배포하는 공격. 파일 재스캔으로는
+    잡히지 않으므로 endpoint 응답 자체를 baseline과 비교한다.
+
+    한계: 서버가 UA/지역 타게팅을 하면 모니터가 받는 응답과 실사용자 응답이
+    다를 수 있다. 완전 방어가 아닌 관측 확률을 높이는 장치.
+    """
+
+    def __init__(self, settings: Settings):
+        self.settings = settings
+        self.session = requests.Session()
+        self.session.headers.update({"User-Agent": settings.user_agent})
+
+    def check(self, endpoints: list, old_state: Optional[Dict[str, Any]]) -> Tuple[Dict[str, Any], list]:
+        """endpoint별 응답을 fetch해 (새 상태, 알림 목록)을 반환한다.
+
+        알림 조건: 응답에 실행성 콘텐츠가 있고 (처음 관측 or 정규화 해시 변경).
+        정적 응답이면 최초 1회만 알림이 나간다.
+        """
+        old_state = old_state or {}
+        new_state: Dict[str, Any] = {}
+        alerts: list = []
+        for url in endpoints:
+            entry: Dict[str, Any] = {"last_checked": utc_now()}
+            prev = old_state.get(url) or {}
+            try:
+                resp = self.session.get(url, timeout=self.settings.request_timeout)
+                body = resp.text or ""
+                entry["status_code"] = resp.status_code
+                entry["sha256"] = sha256_bytes(normalize_for_hash(body).encode("utf-8"))
+                entry["executable"] = looks_executable(body)
+            except Exception as exc:
+                # 일시 장애로 baseline이 초기화되면 다음 사이클에 오탐이 나므로 이전 값 유지
+                entry["error"] = str(exc)
+                entry["sha256"] = prev.get("sha256")
+                entry["executable"] = prev.get("executable", False)
+                new_state[url] = entry
+                continue
+
+            first_seen = prev.get("sha256") is None
+            changed = not first_seen and prev.get("sha256") != entry["sha256"]
+            if entry["executable"] and (first_seen or changed):
+                alerts.append({
+                    "endpoint": url,
+                    "reason": (
+                        "remote_config_executable_content"
+                        if first_seen
+                        else "remote_config_changed_with_executable_content"
+                    ),
+                    "changed": changed,
+                    "status_code": entry["status_code"],
+                })
+            new_state[url] = entry
+        return new_state, alerts
+
+
 class RetroMonitor:
     def __init__(self, settings: Settings):
         self.settings = settings
         self.nexus = NexusClient(settings)
         self.store = StoreVersionClient(timeout_seconds=settings.request_timeout)
         self.reputation = LayerXReputationChecker(settings)
+        self.remote_config = RemoteConfigChecker(settings)
         self.logger = logging.getLogger("retro_monitor")
         self.state = safe_json_load(settings.state_path, {"extensions": {}})
         self._migrate_legacy_state()
@@ -671,6 +775,22 @@ class RetroMonitor:
                     "recommended_action": "enqueue_reanalysis",
                 })
             baseline["yara"] = yara_result
+
+        raw_zip = artifact_bytes if artifact.file_ext != ".crx" else self._extract_zip_from_crx(artifact_bytes)
+        endpoints = extract_remote_config_endpoints(raw_zip)
+        if endpoints:
+            remote_state, remote_alerts = self.remote_config.check(endpoints, baseline.get("remote_config"))
+            for alert in remote_alerts:
+                events.append({
+                    "event_type": "HOLD_FOR_REPUTATION_REVIEW",
+                    "reason": alert["reason"],
+                    "detected_at": utc_now(),
+                    "extension_id": artifact.extension_id,
+                    "asset_path": artifact.path,
+                    "remote_config": alert,
+                    "recommended_action": "enqueue_reanalysis",
+                })
+            baseline["remote_config"] = remote_state
 
         baseline.update({
             "extension_id": artifact.extension_id,

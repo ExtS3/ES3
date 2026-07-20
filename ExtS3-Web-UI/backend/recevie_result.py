@@ -296,6 +296,28 @@ async def receive_and_save_analysis(
         ext_name = safe_path_part(ext_name, "unknown_extension")
         version = safe_path_part(version, "unknown_version")
         ext_id = safe_path_part(ext_id, "unknown_id")
+
+        # 인프라 클러스터 오염 점검: 거부 이력 확장과 백엔드 도메인을 공유하면
+        # risk_score와 무관하게 자동 승인을 차단하고 수동 review로 강등
+        # (BadBlocker 자매 확장 대응 — 동일 인프라 공유 확장의 malware 제거 이력)
+        try:
+            from backend.admin.decision.nexus_file import read_reject_records
+            from backend.admin.infra_cluster import find_cluster_taint, record_signals
+
+            external_domains = get_nested(
+                web_payload, "static_analysis", "external_domains", default=[]
+            ) or []
+            record_signals(ext_id, browser, ext_name, external_domains)
+            cluster_taint = find_cluster_taint(ext_id, external_domains, read_reject_records())
+            if cluster_taint:
+                auto_policy["cluster_taint"] = cluster_taint
+                if decision == "safe":
+                    decision = "review"
+                    auto_policy["decision"] = "review"
+                    auto_policy["reason"] = "cluster_tainted"
+        except Exception as cluster_e:
+            print(f"[receive_result] cluster taint check failed: {cluster_e}")
+
         nexus_reconcile = _reconcile_nexus_location(
             decision=decision,
             auto_policy=auto_policy,
