@@ -141,14 +141,16 @@
                 </h3>
                 <p id="summary-reason" class="mt-2 text-sm text-on-surface-variant leading-6">분석 결과를 불러오는 중입니다.</p>
             </div>
-            <button id="export-analysis-pdf" type="button" class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-surface-container-lowest text-on-surface border border-outline-variant rounded-lg text-sm font-bold hover:bg-primary-container hover:text-on-primary-container transition-colors">
-                <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
-                PDF 내보내기
-            </button>
-            <button id="download-summary-json" type="button" class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-surface-container-lowest text-on-surface border border-outline-variant rounded-lg text-sm font-bold hover:bg-primary-container hover:text-on-primary-container transition-colors">
-                <span class="material-symbols-outlined text-[18px]">download</span>
-                JSON 다운로드
-            </button>
+            <div class="flex flex-col gap-2 shrink-0">
+                <button id="export-analysis-pdf" type="button" class="inline-flex whitespace-nowrap items-center justify-center gap-2 px-4 py-2 bg-surface-container-lowest text-on-surface border border-outline-variant rounded-lg text-sm font-bold hover:bg-primary-container hover:text-on-primary-container transition-colors">
+                    <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+                    PDF 내보내기
+                </button>
+                <button id="download-summary-json" type="button" class="inline-flex whitespace-nowrap items-center justify-center gap-2 px-4 py-2 bg-surface-container-lowest text-on-surface border border-outline-variant rounded-lg text-sm font-bold hover:bg-primary-container hover:text-on-primary-container transition-colors">
+                    <span class="material-symbols-outlined text-[18px]">download</span>
+                    JSON 다운로드
+                </button>
+            </div>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
             <div class="bg-white rounded-lg border border-outline/10 p-4">
