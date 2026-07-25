@@ -63,6 +63,23 @@ _OR_ACCUMULATE_BOOL_KEYS: frozenset[str] = frozenset({
 })
 
 
+# Generic-scorer checks that the harness + mock page produce on their own,
+# independent of the scanned extension: input simulation (simulate_dom_input_events)
+# and the dummy-secret mock login form POST (build_mock_page_html →
+# _append_request_evidence). If every matched check is one of these, no signal is
+# attributable to the extension's code.
+# NOTE: this set reflects the CURRENT harness implementation, where every append
+# site for storage/runtime/dom observations is harness-authored. If the harness
+# later gains real, sample-attributable storage/message instrumentation, these
+# items would no longer be purely ambient and this set must be revisited.
+_AMBIENT_ONLY_EVIDENCE: frozenset[str] = frozenset({
+    "input_change_event",
+    "storage_access",
+    "message_passing_bridge",
+    "content_script_execution",
+})
+
+
 def collect_observations_from_agent_result(agent_result: dict) -> dict:
     if not isinstance(agent_result, dict):
         return normalize_observations(None)
@@ -394,10 +411,20 @@ def _score_generic(obs: dict, vector_fingerprint: dict) -> dict:
     else:
         missing.append("input_change_event")
 
+    # Only a genuinely sample-initiated external request counts. Requests to the
+    # harness-emulated target page (is_target_url_emulation=True) are the harness's
+    # own navigation, not the extension's code. external_request_attempted also
+    # fires on that navigation (harness:_refresh_network_safety_summary counts all
+    # external requests), so it is dropped in favor of the target-emulation-filtered
+    # per-request check. external_request_blocked is retained: the harness already
+    # excludes target-emulation from its "blocked" set, so it flags only a blocked
+    # non-target (sample-attributable) external request.
     has_external_net = any(
-        isinstance(n, dict) and str(n.get("url_category", "")).lower() == "external"
+        isinstance(n, dict)
+        and str(n.get("url_category", "")).lower() == "external"
+        and not bool(n.get("is_target_url_emulation", False))
         for n in obs["network_requests"]
-    ) or bool(ex.get("external_request_blocked", False)) or bool(ex.get("external_request_attempted", False))
+    ) or bool(ex.get("external_request_blocked", False))
     if has_external_net:
         matched.append("external_communication")
     else:
@@ -433,14 +460,27 @@ def _score_generic(obs: dict, vector_fingerprint: dict) -> dict:
     else:
         score = len(matched) / max(len(matched) + len(missing), 1)
 
+    # Ambient-only suppression: if every matched check is one the harness/mock
+    # produces regardless of the sample, no signal is attributable to the extension.
+    # Keep the diagnostic score, but do not let it stand as a match — an empty
+    # matched_evidence blocks the pipeline override (pipeline.py evidence_confirmed)
+    # and risk_classifier's confirmed_dynamic_flow without touching those files.
+    non_ambient_matched = [m for m in matched if m not in _AMBIENT_ONLY_EVIDENCE]
+    ambient_only = bool(matched) and not non_ambient_matched
+
     result = {
         "status": "ok",
         "scenario_evidence_score": score,
-        "matched_evidence": matched,
+        "matched_evidence": [] if ambient_only else matched,
         "missing_evidence": missing,
         "safety_violation": False,
         "notes": [f"Generic scorer (dynamic-only): matched {len(matched)} of {len(matched) + len(missing)}"],
     }
+    if ambient_only:
+        result["ambient_only_suppressed_evidence"] = matched
+        result["notes"].append(
+            "ambient-only evidence (harness/mock background); no sample-attributable signal — match suppressed"
+        )
     result.update(_external_attempt_summary(obs))
     return result
 

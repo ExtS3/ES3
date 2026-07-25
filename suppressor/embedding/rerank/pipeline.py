@@ -207,6 +207,7 @@ def _scan_extension_static_evidence(extension_target: str | None) -> dict[str, A
         "runtime.sendmessage",
         "chrome.runtime.onmessage",
         "runtime.onmessage",
+        "new websocket",
     ]
     weak_content_tokens = [
         "offscreen",
@@ -425,6 +426,9 @@ def _extract_concrete_evidence(query_fingerprint: dict[str, Any], extension_targ
         "canvas fingerprint",
         "webgl fingerprint",
     ]
+    c2_channel_keys = [
+        "new websocket",
+    ]
 
     screenshot_evidence = [k for k in screenshot_keys if k in txt]
     page_content_evidence = [k for k in page_content_keys if k in txt]
@@ -435,6 +439,7 @@ def _extract_concrete_evidence(query_fingerprint: dict[str, Any], extension_targ
     session_bridge_evidence = [k for k in session_bridge_keys if k in txt]
     session_origin_evidence = [k for k in session_origin_keys if k in txt]
     fingerprint_evidence = [k for k in fingerprint_keys if k in txt]
+    c2_channel_evidence = [k for k in c2_channel_keys if k in txt]
     generic_api_evidence = [k for k in generic_api_keys if k in txt]
     weak_capability_evidence = [k for k in weak_keys if k in txt]
     weak_capability_evidence.extend([str(x).lower() for x in weak_hits])
@@ -448,6 +453,7 @@ def _extract_concrete_evidence(query_fingerprint: dict[str, Any], extension_targ
         "session_bridge_evidence": sorted(set(session_bridge_evidence)),
         "session_origin_evidence": sorted(set(session_origin_evidence)),
         "fingerprinting_evidence": sorted(set(fingerprint_evidence)),
+        "c2_channel_evidence": sorted(set(c2_channel_evidence)),
         "generic_api_evidence": sorted(set(generic_api_evidence)),
         "concrete_static_evidence": sorted(set(file_hits)),
         "weak_capability_evidence": sorted(set(weak_capability_evidence)),
@@ -468,6 +474,7 @@ def _scenario_evidence_adjustment(pattern_name: str, evidence: dict[str, Any]) -
     session_bridge = evidence.get("session_bridge_evidence", []) if isinstance(evidence.get("session_bridge_evidence", []), list) else []
     session_origin = evidence.get("session_origin_evidence", []) if isinstance(evidence.get("session_origin_evidence", []), list) else []
     fingerprinting = evidence.get("fingerprinting_evidence", []) if isinstance(evidence.get("fingerprinting_evidence", []), list) else []
+    c2_channel = evidence.get("c2_channel_evidence", []) if isinstance(evidence.get("c2_channel_evidence", []), list) else []
 
     static_capability_score = 0.0
     concrete_api_evidence_score = 0.0
@@ -543,6 +550,15 @@ def _scenario_evidence_adjustment(pattern_name: str, evidence: dict[str, Any]) -
         if screenshot or remote:
             negative_penalties.append("screenshot_or_remote_control_not_fingerprinting")
             concrete_api_evidence_score -= 0.15
+
+    # websocket C2 channel scenario — simple presence of a real WebSocket construction
+    if "websocket_c2" in p:
+        concrete_api_evidence.extend(c2_channel)
+        if "new websocket" in c2_channel:
+            concrete_api_evidence_score += 0.35
+            rerank_reason_parts.append("websocket_c2_detected")
+        if c2_channel:
+            static_capability_score += min(0.30, 0.10 * len(c2_channel))
 
     # session exfiltration penalties when concrete payload evidence missing
     if "session_storage_exfiltration" in p or "session_theft" in p:

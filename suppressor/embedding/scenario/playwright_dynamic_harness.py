@@ -1483,6 +1483,9 @@ class PlaywrightDynamicHarness:
         "sensitive_api_wrapped": [],
         "sensitive_api_instrument_error": "",
         "sensitive_api_calls_before_instrument": 0,
+        "sensitive_api_already_wrapped": [],
+        "sensitive_api_unavailable": [],
+        "sensitive_api_wrap_installed_at": None,
         "sensitive_api_collect_error": "",
         "extension_popup_opened": False,
         "extension_popup_url": "",
@@ -2322,6 +2325,24 @@ class PlaywrightDynamicHarness:
                 targets.append({"label": name, "owner_path": owner_path, "method": method})
         return targets
 
+    def _accumulate_wrap_diagnostics(self, already, unavailable) -> None:
+        # Cumulative (dedup, order-preserving) record of the wrapper's "already" and
+        # "unavailable" lists across every (re)install this scenario, so a re-plant does
+        # not overwrite an earlier plant's diagnostics. Diagnostic only — no scorer reads
+        # these fields.
+        for key, src in (
+            ("sensitive_api_already_wrapped", already),
+            ("sensitive_api_unavailable", unavailable),
+        ):
+            if not isinstance(src, list):
+                continue
+            acc = self._execution.get(key) or []
+            for item in src:
+                s = str(item)
+                if s not in acc:
+                    acc.append(s)
+            self._execution[key] = acc
+
     def _ensure_wrappers_on_worker(self):
         # Idempotently (re)install the API wrappers on the live service worker and reflect
         # success in the instrumented flag. Called right before a stimulus fires, when the
@@ -2335,6 +2356,11 @@ class PlaywrightDynamicHarness:
         try:
             res = w.evaluate(_SENSITIVE_API_WRAP_JS, self._build_wrap_targets())
             labels = (res.get("wrapped") or []) + (res.get("already") or []) if isinstance(res, dict) else []
+            if isinstance(res, dict):
+                ia = res.get("installed_at")
+                if ia is not None and self._execution.get("sensitive_api_wrap_installed_at") is None:
+                    self._execution["sensitive_api_wrap_installed_at"] = ia
+                self._accumulate_wrap_diagnostics(res.get("already"), res.get("unavailable"))
             if labels:
                 self._execution["sensitive_api_instrumented"] = True
                 merged = sorted(set(self._execution.get("sensitive_api_wrapped", []) or []) | {str(x) for x in labels})
@@ -2410,13 +2436,16 @@ class PlaywrightDynamicHarness:
         # the compact projection and the next session can confirm — not infer — the plant.
         self._execution["sensitive_api_instrumented"] = False
         self._execution["sensitive_api_wrapped"] = []
+        self._execution["sensitive_api_already_wrapped"] = []
+        self._execution["sensitive_api_unavailable"] = []
+        self._execution["sensitive_api_wrap_installed_at"] = None
         self._execution["sensitive_api_instrument_error"] = ""
         try:
             if self._context is None:
                 self._execution["sensitive_api_instrument_error"] = "context_unavailable"
                 self._notes.append("sensitive_api_instrument_skipped: context_unavailable")
                 return self._current_observation()
-            ready = self._wait_for_service_worker(timeout_ms=5000)
+            ready = self._wait_for_service_worker(timeout_ms=DEFAULT_SERVICE_WORKER_TIMEOUT_MS)
             workers = []
             try:
                 workers = list(getattr(self._context, "service_workers", [])) if ready else []
@@ -2455,6 +2484,13 @@ class PlaywrightDynamicHarness:
                         pre = 0
                     if pre:
                         self._execution["sensitive_api_calls_before_instrument"] = pre
+                    # Surface the wrapper's install timestamp (SW-side Date.now, same clock
+                    # as each call's ts) so "0 calls" can later be split into "never called"
+                    # vs "called before wrap". Diagnostic only — not read by any scorer.
+                    ia = res.get("installed_at")
+                    if ia is not None and self._execution.get("sensitive_api_wrap_installed_at") is None:
+                        self._execution["sensitive_api_wrap_installed_at"] = ia
+                    self._accumulate_wrap_diagnostics(res.get("already"), res.get("unavailable"))
                     # Distinguish "target API not reachable in this worker scope" from a
                     # genuine failure, so instrumented=False is diagnosable in the response.
                     unavailable = res.get("unavailable") or []

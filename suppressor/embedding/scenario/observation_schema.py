@@ -249,6 +249,13 @@ def normalize_observations(observations: dict | None) -> dict:
             "sensitive_api_instrument_error": str(execution_src.get("sensitive_api_instrument_error", "")),
             "sensitive_api_collect_error": str(execution_src.get("sensitive_api_collect_error", "")),
             "sensitive_api_calls_before_instrument": int(execution_src.get("sensitive_api_calls_before_instrument", 0) or 0),
+            "sensitive_api_already_wrapped": execution_src.get("sensitive_api_already_wrapped", [])
+            if isinstance(execution_src.get("sensitive_api_already_wrapped", []), list)
+            else [],
+            "sensitive_api_unavailable": execution_src.get("sensitive_api_unavailable", [])
+            if isinstance(execution_src.get("sensitive_api_unavailable", []), list)
+            else [],
+            "sensitive_api_wrap_installed_at": execution_src.get("sensitive_api_wrap_installed_at", None),
             "extension_popup_opened": bool(execution_src.get("extension_popup_opened", False)),
             "extension_popup_url": str(execution_src.get("extension_popup_url", "")),
             "extension_popup_error": str(execution_src.get("extension_popup_error", "")),

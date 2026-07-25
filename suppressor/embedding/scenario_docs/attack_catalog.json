@@ -1,0 +1,1247 @@
+{
+  "meta": {
+    "schema_version": "A-1",
+    "generated": "2026-07-20",
+    "attack_count": 22,
+    "combo_count": 31,
+    "coverage_note": "22개 공격 중 실물 샘플 뒷받침 8개, 문서(Notion) 출처만 14개. unverified 앵커는 대응 확장 샘플 확보 시 재검증 필요.",
+    "verification_corpus": [
+      "eebihie",
+      "fpeaba",
+      "ghkcp",
+      "hmkcid",
+      "iefpkd",
+      "jhhjba",
+      "obifan",
+      "url_visit_fixture"
+    ],
+    "invariants": [
+      "anchor_tokens ∪ gate_tokens == all_tokens_literal",
+      "dynamic_only_signals ⊆ (all_tokens_original \\ all_tokens_literal)",
+      "generic 토큰은 anchor 금지 (gate 전용)"
+    ],
+    "buckets_existing": [
+      "screenshot",
+      "dom_surveillance",
+      "dom_tampering",
+      "remote",
+      "session",
+      "fingerprinting"
+    ],
+    "source_refs_note": "Notion 참고자료 전체 URL은 Notion 조합표 원본 참조 (Socket/GitLab/Unit42/palant.info/Koi/IBM/Zscaler/Trend Micro 등). A-1 파일엔 vendor 이름만 보존 — URL 날조 금지.",
+    "source_ref_vendors": [
+      "Socket",
+      "GitLab",
+      "Unit42",
+      "palant.info",
+      "Koi",
+      "IBM",
+      "Zscaler",
+      "Trend Micro"
+    ]
+  },
+  "attacks": [
+    {
+      "attack_id": "session_theft",
+      "name_ko": "세션 탈취",
+      "name_en": "Session Theft",
+      "description": "localStorage/쿠키를 직렬화해 외부로 전송",
+      "primary_bucket": "session",
+      "combos": [
+        {
+          "combo_id": "session_theft_msg",
+          "maps_to_bucket": "session",
+          "anchor_tokens": [
+            "localStorage"
+          ],
+          "gate_tokens": [
+            "chrome.runtime.sendMessage",
+            "JSON.stringify",
+            "setInterval"
+          ],
+          "all_tokens_literal": [
+            "localStorage",
+            "chrome.runtime.sendMessage",
+            "JSON.stringify",
+            "setInterval"
+          ],
+          "all_tokens_original": [
+            "chrome.runtime.sendMessage",
+            "localStorage",
+            "JSON.stringify",
+            "setInterval"
+          ],
+          "dynamic_only_signals": [],
+          "token_sources": {
+            "localStorage": "verified:eebihi,ghkcpc,iefpkd,obifan",
+            "chrome.runtime.sendMessage": "verified:eebihi,fpeaba,ghkcpc,iefpkd,obifan",
+            "JSON.stringify": "verified:eebihi,fpeaba,ghkcpc,hmkcid,iefpkd,jhhjba,obifan",
+            "setInterval": "verified:eebihi,fpeaba,ghkcpc,iefpkd,obifan"
+          },
+          "anchor_unverified": false,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": ""
+        },
+        {
+          "combo_id": "session_theft_cookies",
+          "maps_to_bucket": "session",
+          "anchor_tokens": [
+            "chrome.cookies.get"
+          ],
+          "gate_tokens": [
+            "setInterval",
+            "localStorage",
+            "JSON.stringify"
+          ],
+          "all_tokens_literal": [
+            "chrome.cookies.get",
+            "setInterval",
+            "localStorage",
+            "JSON.stringify"
+          ],
+          "all_tokens_original": [
+            "setInterval",
+            "localStorage",
+            "JSON.stringify",
+            "chrome.cookies.getAll"
+          ],
+          "dynamic_only_signals": [],
+          "token_sources": {
+            "chrome.cookies.get": "verified:jhhjba",
+            "setInterval": "verified:eebihi,fpeaba,ghkcpc,iefpkd,obifan",
+            "localStorage": "verified:eebihi,ghkcpc,iefpkd,obifan",
+            "JSON.stringify": "verified:eebihi,fpeaba,ghkcpc,hmkcid,iefpkd,jhhjba,obifan"
+          },
+          "anchor_unverified": false,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": "Notion 원본 chrome.cookies.getAll은 코퍼스 미확인; jhhjb 실호출은 chrome.cookies.get/.set → 리터럴 정정"
+        }
+      ]
+    },
+    {
+      "attack_id": "session_reverse_injection",
+      "name_ko": "세션 역주입",
+      "name_en": "Session Reverse Injection",
+      "description": "외부 값으로 로컬 세션/쿠키를 덮어써 계정 탈취",
+      "primary_bucket": "session",
+      "combos": [
+        {
+          "combo_id": "session_reverse_injection",
+          "maps_to_bucket": "session",
+          "anchor_tokens": [
+            "localStorage.setItem",
+            "localStorage.clear",
+            "clearAllCookies"
+          ],
+          "gate_tokens": [
+            "chrome.runtime.onMessage"
+          ],
+          "all_tokens_literal": [
+            "localStorage.setItem",
+            "localStorage.clear",
+            "clearAllCookies",
+            "chrome.runtime.onMessage"
+          ],
+          "all_tokens_original": [
+            "chrome.runtime.onMessage",
+            "localStorage.clear",
+            "localStorage.setItem",
+            "clearAllCookies"
+          ],
+          "dynamic_only_signals": [],
+          "token_sources": {
+            "localStorage.setItem": "verified:eebihi,iefpkd,obifan",
+            "localStorage.clear": "verified:obifan",
+            "clearAllCookies": "verified:obifan",
+            "chrome.runtime.onMessage": "verified:eebihi,fpeaba,ghkcpc,iefpkd,jhhjba,obifan"
+          },
+          "anchor_unverified": false,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "attack_id": "account_harvesting",
+      "name_ko": "계정 수집",
+      "name_en": "Account Harvesting",
+      "description": "OAuth 토큰을 획득해 외부 전송",
+      "primary_bucket": "NEW:identity",
+      "combos": [
+        {
+          "combo_id": "account_harvesting",
+          "maps_to_bucket": "NEW:identity",
+          "anchor_tokens": [
+            "getAuthToken"
+          ],
+          "gate_tokens": [
+            "fetch POST"
+          ],
+          "all_tokens_literal": [
+            "getAuthToken",
+            "fetch POST"
+          ],
+          "all_tokens_original": [
+            "getAuthToken",
+            "fetch POST",
+            "커스텀 헤더"
+          ],
+          "dynamic_only_signals": [
+            "커스텀 헤더 (custom auth header — 리터럴 미상)"
+          ],
+          "token_sources": {
+            "getAuthToken": "verified:iefpkd,obifan",
+            "fetch POST": "verified:eebihi,fpeaba,ghkcpc,iefpkd,jhhjba,obifan"
+          },
+          "anchor_unverified": false,
+          "needs_literalization": true,
+          "static_only_insufficient": true,
+          "notes": "static_only_insufficient: 정상 Gmail(CheckerPlus) OAuth와 정적 구분 불가"
+        }
+      ]
+    },
+    {
+      "attack_id": "backdoor_execution",
+      "name_ko": "백도어 실행",
+      "name_en": "Backdoor Execution",
+      "description": "확장 ID+엔드포인트로 원격 명령 수신",
+      "primary_bucket": "NEW:backdoor",
+      "combos": [
+        {
+          "combo_id": "backdoor_execution",
+          "maps_to_bucket": "NEW:backdoor",
+          "anchor_tokens": [
+            "runtime.id",
+            "/user_info"
+          ],
+          "gate_tokens": [
+            "tabs.create",
+            "fetch POST"
+          ],
+          "all_tokens_literal": [
+            "runtime.id",
+            "/user_info",
+            "tabs.create",
+            "fetch POST"
+          ],
+          "all_tokens_original": [
+            "tabs.create",
+            "runtime.id",
+            "fetch POST",
+            "/user_info"
+          ],
+          "dynamic_only_signals": [],
+          "token_sources": {
+            "runtime.id": "verified:fpeaba,ghkcpc,iefpkd",
+            "/user_info": "verified:obifan",
+            "tabs.create": "verified:eebihi,fpeaba,ghkcpc,hmkcid,iefpkd,jhhjba",
+            "fetch POST": "verified:eebihi,fpeaba,ghkcpc,iefpkd,jhhjba,obifan"
+          },
+          "anchor_unverified": false,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "attack_id": "dom_injection",
+      "name_ko": "DOM 인젝션",
+      "name_en": "DOM Injection",
+      "description": "원격 응답을 innerHTML로 페이지에 주입",
+      "primary_bucket": "dom_tampering",
+      "combos": [
+        {
+          "combo_id": "dom_injection",
+          "maps_to_bucket": "dom_tampering",
+          "anchor_tokens": [
+            "result.rating",
+            "result.protxt"
+          ],
+          "gate_tokens": [
+            "innerHTML",
+            "classList.remove()"
+          ],
+          "all_tokens_literal": [
+            "result.rating",
+            "result.protxt",
+            "innerHTML",
+            "classList.remove()"
+          ],
+          "all_tokens_original": [
+            "innerHTML",
+            "result.rating",
+            "result.protxt",
+            "classList.remove()"
+          ],
+          "dynamic_only_signals": [],
+          "token_sources": {
+            "result.rating": "unverified",
+            "result.protxt": "unverified",
+            "innerHTML": "verified:eebihi,fpeaba,ghkcpc,iefpkd,jhhjba,obifan",
+            "classList.remove()": "verified:hmkcid,iefpkd,obifan"
+          },
+          "anchor_unverified": true,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": "Notion 원본 (result.rating|result.protxt) OR를 두 리터럴로 전개"
+        }
+      ]
+    },
+    {
+      "attack_id": "security_header_bypass",
+      "name_ko": "보안 헤더 우회",
+      "name_en": "Security Header Bypass",
+      "description": "응답 보안 헤더를 제거/교체",
+      "primary_bucket": "NEW:header_manipulation",
+      "combos": [
+        {
+          "combo_id": "sec_header_dnr",
+          "maps_to_bucket": "NEW:header_manipulation",
+          "anchor_tokens": [
+            "modifyHeaders",
+            "updateDynamicRules",
+            "volumeHeaderRules"
+          ],
+          "gate_tokens": [
+            "declarativeNetRequest"
+          ],
+          "all_tokens_literal": [
+            "modifyHeaders",
+            "updateDynamicRules",
+            "volumeHeaderRules",
+            "declarativeNetRequest"
+          ],
+          "all_tokens_original": [
+            "declarativeNetRequest",
+            "modifyHeaders",
+            "updateDynamicRules",
+            "volumeHeaderRules"
+          ],
+          "dynamic_only_signals": [],
+          "token_sources": {
+            "modifyHeaders": "verified:ghkcpc",
+            "updateDynamicRules": "verified:ghkcpc",
+            "volumeHeaderRules": "unverified",
+            "declarativeNetRequest": "verified:ghkcpc"
+          },
+          "anchor_unverified": false,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": "ghkcp modifyHeaders는 operation:set IDM-Accept(헤더주입)로 verify — CSP제거 의미는 코퍼스에 없음; volumeHeaderRules 미확인"
+        },
+        {
+          "combo_id": "sec_header_webrequest",
+          "maps_to_bucket": "NEW:header_manipulation",
+          "anchor_tokens": [
+            "webRequest.onBeforeSendHeaders"
+          ],
+          "gate_tokens": [
+            "declarativeNetRequest"
+          ],
+          "all_tokens_literal": [
+            "webRequest.onBeforeSendHeaders",
+            "declarativeNetRequest"
+          ],
+          "all_tokens_original": [
+            "webRequest.onBeforeSendHeaders",
+            "헤더교체",
+            "declarativeNetRequest"
+          ],
+          "dynamic_only_signals": [
+            "헤더교체 (onBeforeSendHeaders 콜백 내 requestHeaders 재할당 — 대응 샘플 없음)"
+          ],
+          "token_sources": {
+            "webRequest.onBeforeSendHeaders": "unverified",
+            "declarativeNetRequest": "verified:ghkcpc"
+          },
+          "anchor_unverified": true,
+          "needs_literalization": true,
+          "static_only_insufficient": false,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "attack_id": "translation_proxy",
+      "name_ko": "번역 프록시",
+      "name_en": "Translation Proxy Hijack",
+      "description": "PAC/프록시 설정으로 트래픽 우회",
+      "primary_bucket": "NEW:proxy_hijack",
+      "combos": [
+        {
+          "combo_id": "translation_proxy",
+          "maps_to_bucket": "NEW:proxy_hijack",
+          "anchor_tokens": [
+            "proxy.settings.set",
+            "FindProxyForURL"
+          ],
+          "gate_tokens": [
+            "webRequest.onCompleted"
+          ],
+          "all_tokens_literal": [
+            "proxy.settings.set",
+            "FindProxyForURL",
+            "webRequest.onCompleted"
+          ],
+          "all_tokens_original": [
+            "proxy.settings.set",
+            "PAC 스크립트",
+            "webRequest.onCompleted"
+          ],
+          "dynamic_only_signals": [],
+          "token_sources": {
+            "proxy.settings.set": "unverified",
+            "FindProxyForURL": "unverified",
+            "webRequest.onCompleted": "verified:fpeaba,obifan"
+          },
+          "anchor_unverified": true,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": "PAC 스크립트 → FindProxyForURL 리터럴화 시도, 코퍼스 미확인"
+        }
+      ]
+    },
+    {
+      "attack_id": "console_silencing",
+      "name_ko": "콘솔 사일런싱",
+      "name_en": "Console Silencing",
+      "description": "console를 오버라이드해 로그 은폐",
+      "primary_bucket": "NEW:console_tampering",
+      "combos": [
+        {
+          "combo_id": "console_silencing",
+          "maps_to_bucket": "NEW:console_tampering",
+          "anchor_tokens": [
+            "window.console"
+          ],
+          "gate_tokens": [
+            "console.log",
+            "console.warn",
+            "console.error"
+          ],
+          "all_tokens_literal": [
+            "window.console",
+            "console.log",
+            "console.warn",
+            "console.error"
+          ],
+          "all_tokens_original": [
+            "window.console 재할당",
+            "log",
+            "warn",
+            "error 일괄 오버라이드"
+          ],
+          "dynamic_only_signals": [
+            "재할당/일괄 오버라이드 (override 의미 — obifan은 window.console&& 존재가드로만 verify)"
+          ],
+          "token_sources": {
+            "window.console": "verified:obifan",
+            "console.log": "verified:eebihi,fpeaba,ghkcpc,hmkcid,iefpkd,jhhjba,obifan,url_vi",
+            "console.warn": "verified:fpeaba,ghkcpc,hmkcid,iefpkd,obifan",
+            "console.error": "verified:eebihi,fpeaba,ghkcpc,iefpkd,jhhjba,obifan"
+          },
+          "anchor_unverified": false,
+          "needs_literalization": true,
+          "static_only_insufficient": false,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "attack_id": "dynamic_config_polling",
+      "name_ko": "동적 설정 폴링",
+      "name_en": "Dynamic Config Polling",
+      "description": "외부 설정을 주기 폴링·디코드·적용",
+      "primary_bucket": "NEW:config_polling",
+      "combos": [
+        {
+          "combo_id": "dcp_sync_poll",
+          "maps_to_bucket": "NEW:config_polling",
+          "anchor_tokens": [
+            "configUpdateInterval"
+          ],
+          "gate_tokens": [
+            "chrome.storage.sync",
+            "chrome.alarms"
+          ],
+          "all_tokens_literal": [
+            "configUpdateInterval",
+            "chrome.storage.sync",
+            "chrome.alarms"
+          ],
+          "all_tokens_original": [
+            "storage.sync",
+            "configUpdateInterval",
+            "alarms"
+          ],
+          "dynamic_only_signals": [],
+          "token_sources": {
+            "configUpdateInterval": "unverified",
+            "chrome.storage.sync": "verified:ghkcpc,iefpkd,jhhjba",
+            "chrome.alarms": "verified:ghkcpc"
+          },
+          "anchor_unverified": true,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": ""
+        },
+        {
+          "combo_id": "dcp_reload",
+          "maps_to_bucket": "NEW:config_polling",
+          "anchor_tokens": [
+            "runtime.reload()"
+          ],
+          "gate_tokens": [
+            "chrome.storage.local.set"
+          ],
+          "all_tokens_literal": [
+            "runtime.reload()",
+            "chrome.storage.local.set"
+          ],
+          "all_tokens_original": [
+            "runtime.reload()",
+            "storage.local 병합"
+          ],
+          "dynamic_only_signals": [
+            "storage.local 병합 (Object.assign/spread merge — 대응 샘플 없음)"
+          ],
+          "token_sources": {
+            "runtime.reload()": "unverified",
+            "chrome.storage.local.set": "verified:eebihi,fpeaba,ghkcpc,iefpkd,jhhjba,obifan"
+          },
+          "anchor_unverified": true,
+          "needs_literalization": true,
+          "static_only_insufficient": false,
+          "notes": ""
+        },
+        {
+          "combo_id": "dcp_decode",
+          "maps_to_bucket": "NEW:config_polling",
+          "anchor_tokens": [
+            "atob(atob("
+          ],
+          "gate_tokens": [
+            "JSON.parse",
+            "chrome.storage.local"
+          ],
+          "all_tokens_literal": [
+            "atob(atob(",
+            "JSON.parse",
+            "chrome.storage.local"
+          ],
+          "all_tokens_original": [
+            "atob 이중디코딩",
+            "JSON.parse",
+            "storage.local"
+          ],
+          "dynamic_only_signals": [],
+          "token_sources": {
+            "atob(atob(": "unverified",
+            "JSON.parse": "verified:eebihi,fpeaba,ghkcpc,hmkcid,iefpkd,obifan",
+            "chrome.storage.local": "verified:eebihi,fpeaba,ghkcpc,iefpkd,jhhjba,obifan"
+          },
+          "anchor_unverified": true,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "attack_id": "screenshot_capture",
+      "name_ko": "스크린샷 캡처",
+      "name_en": "Screenshot Capture",
+      "description": "captureVisibleTab로 화면 캡처 후 전송",
+      "primary_bucket": "screenshot",
+      "combos": [
+        {
+          "combo_id": "screenshot_capture",
+          "maps_to_bucket": "screenshot",
+          "anchor_tokens": [
+            "captureVisibleTab"
+          ],
+          "gate_tokens": [
+            "fetch POST",
+            "tabs.onUpdated"
+          ],
+          "all_tokens_literal": [
+            "captureVisibleTab",
+            "fetch POST",
+            "tabs.onUpdated"
+          ],
+          "all_tokens_original": [
+            "captureVisibleTab",
+            "fetch POST",
+            "tabs.onUpdated"
+          ],
+          "dynamic_only_signals": [],
+          "token_sources": {
+            "captureVisibleTab": "verified:fpeaba,ghkcpc,url_vi",
+            "fetch POST": "verified:eebihi,fpeaba,ghkcpc,iefpkd,jhhjba,obifan",
+            "tabs.onUpdated": "verified:fpeaba,ghkcpc,url_vi"
+          },
+          "anchor_unverified": false,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "attack_id": "email_surveillance",
+      "name_ko": "이메일 감시",
+      "name_en": "Email Surveillance",
+      "description": "메일 본문/스레드를 수집해 전송",
+      "primary_bucket": "dom_surveillance",
+      "combos": [
+        {
+          "combo_id": "email_surveillance",
+          "maps_to_bucket": "dom_surveillance",
+          "anchor_tokens": [
+            "emailSubject",
+            "gmailThreadId"
+          ],
+          "gate_tokens": [
+            "fetch POST",
+            "JSON.stringify"
+          ],
+          "all_tokens_literal": [
+            "emailSubject",
+            "gmailThreadId",
+            "fetch POST",
+            "JSON.stringify"
+          ],
+          "all_tokens_original": [
+            "fetch POST",
+            "JSON.stringify",
+            "emailSubject",
+            "gmailThreadId"
+          ],
+          "dynamic_only_signals": [],
+          "token_sources": {
+            "emailSubject": "unverified",
+            "gmailThreadId": "unverified",
+            "fetch POST": "verified:eebihi,fpeaba,ghkcpc,iefpkd,jhhjba,obifan",
+            "JSON.stringify": "verified:eebihi,fpeaba,ghkcpc,hmkcid,iefpkd,jhhjba,obifan"
+          },
+          "anchor_unverified": true,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "attack_id": "web_content_manipulation",
+      "name_ko": "웹 콘텐츠 변조",
+      "name_en": "Web Content Manipulation",
+      "description": "합성 이벤트/코드실행으로 페이지 변조",
+      "primary_bucket": "remote",
+      "combos": [
+        {
+          "combo_id": "wcm_event_inject",
+          "maps_to_bucket": "dom_tampering",
+          "anchor_tokens": [
+            "CustomEvent",
+            "onreset"
+          ],
+          "gate_tokens": [
+            "tabs.onUpdated",
+            "dispatchEvent"
+          ],
+          "all_tokens_literal": [
+            "CustomEvent",
+            "onreset",
+            "tabs.onUpdated",
+            "dispatchEvent"
+          ],
+          "all_tokens_original": [
+            "tabs.onUpdated",
+            "dispatchEvent",
+            "CustomEvent",
+            "onreset"
+          ],
+          "dynamic_only_signals": [],
+          "token_sources": {
+            "CustomEvent": "verified:fpeaba,ghkcpc,obifan",
+            "onreset": "unverified",
+            "tabs.onUpdated": "verified:fpeaba,ghkcpc,url_vi",
+            "dispatchEvent": "verified:eebihi,fpeaba,ghkcpc,iefpkd,obifan"
+          },
+          "anchor_unverified": false,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": ""
+        },
+        {
+          "combo_id": "wcm_eval_checklist",
+          "maps_to_bucket": "remote",
+          "anchor_tokens": [
+            "eval.call",
+            "checklist.info",
+            "checklist.core"
+          ],
+          "gate_tokens": [
+            "onreset"
+          ],
+          "all_tokens_literal": [
+            "eval.call",
+            "checklist.info",
+            "checklist.core",
+            "onreset"
+          ],
+          "all_tokens_original": [
+            "eval.call",
+            "checklist.info",
+            "checklist.core",
+            "onreset"
+          ],
+          "dynamic_only_signals": [],
+          "token_sources": {
+            "eval.call": "unverified",
+            "checklist.info": "verified:ghkcpc",
+            "checklist.core": "verified:ghkcpc",
+            "onreset": "unverified"
+          },
+          "anchor_unverified": false,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": ""
+        },
+        {
+          "combo_id": "wcm_reflect",
+          "maps_to_bucket": "remote",
+          "anchor_tokens": [
+            "Reflect.apply"
+          ],
+          "gate_tokens": [
+            "tabs.update()",
+            "tabs.onUpdated"
+          ],
+          "all_tokens_literal": [
+            "Reflect.apply",
+            "tabs.update()",
+            "tabs.onUpdated"
+          ],
+          "all_tokens_original": [
+            "Reflect.apply",
+            "tabs.update()",
+            "tabs.onUpdated"
+          ],
+          "dynamic_only_signals": [],
+          "token_sources": {
+            "Reflect.apply": "unverified",
+            "tabs.update()": "verified:fpeaba",
+            "tabs.onUpdated": "verified:fpeaba,ghkcpc,url_vi"
+          },
+          "anchor_unverified": true,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": ""
+        },
+        {
+          "combo_id": "wcm_scripting",
+          "maps_to_bucket": "remote",
+          "anchor_tokens": [
+            "chrome.scripting.executeScript",
+            "unsafe-eval"
+          ],
+          "gate_tokens": [
+            "chrome.storage.local.get"
+          ],
+          "all_tokens_literal": [
+            "chrome.scripting.executeScript",
+            "unsafe-eval",
+            "chrome.storage.local.get"
+          ],
+          "all_tokens_original": [
+            "scripting.executeScript",
+            "unsafe-eval",
+            "storage.local.get"
+          ],
+          "dynamic_only_signals": [],
+          "token_sources": {
+            "chrome.scripting.executeScript": "verified:fpeaba,ghkcpc",
+            "unsafe-eval": "verified:fpeaba,obifan",
+            "chrome.storage.local.get": "verified:eebihi,fpeaba,ghkcpc,iefpkd,jhhjba,obifan"
+          },
+          "anchor_unverified": false,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "attack_id": "browser_fingerprinting",
+      "name_ko": "브라우저 핑거프린팅",
+      "name_en": "Browser Fingerprinting",
+      "description": "환경 지문을 수집해 전송",
+      "primary_bucket": "fingerprinting",
+      "combos": [
+        {
+          "combo_id": "browser_fingerprinting",
+          "maps_to_bucket": "fingerprinting",
+          "anchor_tokens": [
+            "navigator.userAgent",
+            "screen.width",
+            "getTimezoneOffset"
+          ],
+          "gate_tokens": [
+            "fetch POST"
+          ],
+          "all_tokens_literal": [
+            "navigator.userAgent",
+            "screen.width",
+            "getTimezoneOffset",
+            "fetch POST"
+          ],
+          "all_tokens_original": [
+            "userAgent",
+            "screen.width",
+            "getTimezoneOffset()",
+            "fetch POST"
+          ],
+          "dynamic_only_signals": [],
+          "token_sources": {
+            "navigator.userAgent": "verified:fpeaba,ghkcpc,iefpkd,jhhjba,obifan",
+            "screen.width": "verified:obifan",
+            "getTimezoneOffset": "verified:fpeaba,iefpkd,obifan",
+            "fetch POST": "verified:eebihi,fpeaba,ghkcpc,iefpkd,jhhjba,obifan"
+          },
+          "anchor_unverified": false,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "attack_id": "input_grabbing",
+      "name_ko": "입력값 탈취",
+      "name_en": "Input Grabbing",
+      "description": "입력 필드 change를 가로채 전송",
+      "primary_bucket": "dom_surveillance",
+      "combos": [
+        {
+          "combo_id": "input_grabbing",
+          "maps_to_bucket": "dom_surveillance",
+          "anchor_tokens": [
+            "$('input').change()"
+          ],
+          "gate_tokens": [
+            "chrome.runtime.sendMessage",
+            "window.location.href"
+          ],
+          "all_tokens_literal": [
+            "$('input').change()",
+            "chrome.runtime.sendMessage",
+            "window.location.href"
+          ],
+          "all_tokens_original": [
+            "chrome.runtime.sendMessage",
+            "$('input').change()",
+            "window.location.href"
+          ],
+          "dynamic_only_signals": [],
+          "token_sources": {
+            "$('input').change()": "verified:obifan",
+            "chrome.runtime.sendMessage": "verified:eebihi,fpeaba,ghkcpc,iefpkd,obifan",
+            "window.location.href": "verified:eebihi,fpeaba,ghkcpc,iefpkd,obifan"
+          },
+          "anchor_unverified": false,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "attack_id": "email_tampering",
+      "name_ko": "이메일 변조",
+      "name_en": "Email Tampering",
+      "description": "메일 DOM을 주기적으로 변조",
+      "primary_bucket": "dom_tampering",
+      "combos": [
+        {
+          "combo_id": "email_tampering",
+          "maps_to_bucket": "dom_tampering",
+          "anchor_tokens": [
+            "find(':contains()')",
+            "html()"
+          ],
+          "gate_tokens": [
+            "setInterval"
+          ],
+          "all_tokens_literal": [
+            "find(':contains()')",
+            "html()",
+            "setInterval"
+          ],
+          "all_tokens_original": [
+            "setInterval",
+            "find(':contains()')",
+            "html()"
+          ],
+          "dynamic_only_signals": [],
+          "token_sources": {
+            "find(':contains()')": "verified:fpeaba",
+            "html()": "verified:obifan",
+            "setInterval": "verified:eebihi,fpeaba,ghkcpc,iefpkd,obifan"
+          },
+          "anchor_unverified": false,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "attack_id": "websocket_c2",
+      "name_ko": "WebSocket C2",
+      "name_en": "WebSocket C2",
+      "description": "WebSocket으로 상시 C2 채널 유지",
+      "primary_bucket": "NEW:c2_channel",
+      "combos": [
+        {
+          "combo_id": "websocket_c2",
+          "maps_to_bucket": "NEW:c2_channel",
+          "anchor_tokens": [
+            "new WebSocket"
+          ],
+          "gate_tokens": [
+            "response.headers.entries()"
+          ],
+          "all_tokens_literal": [
+            "new WebSocket",
+            "response.headers.entries()"
+          ],
+          "all_tokens_original": [
+            "new WebSocket",
+            "socket.onmessage",
+            "response.headers.entries()",
+            "socket.send"
+          ],
+          "dynamic_only_signals": [
+            "socket.onmessage (unverified — 변수명 의존, generic onmessage와 충돌; fpeaba 실제 리터럴은 ws.onmessage)",
+            "socket.send (unverified — 변수명 의존, generic .send()와 충돌; fpeaba 실제 리터럴은 ws.send)"
+          ],
+          "token_sources": {
+            "new WebSocket": "verified:fpeaba",
+            "response.headers.entries()": "unverified"
+          },
+          "anchor_unverified": false,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": "A-2 1단계 실측 정정 2건: (1) new WebSocket source에서 obifan 제거 — obifan 유일 WebSocket 등장은 modernizr.js feature-detection 문자열 'websocket'일 뿐 new WebSocket 생성 아님(C2 미수행); 실제 verified는 fpeaba(background.js:29291) 단독. (2) socket.onmessage/socket.send 리터럴 코퍼스 부재 — fpeaba 변수명이 ws라 실제는 ws.onmessage/ws.send, 변수명 의존 + generic onmessage/.send()와 충돌해 앵커 부적합 → all_tokens_literal에서 제거·dynamic_only_signals로 강등. 확정 앵커 = new WebSocket 단독(rare+benign-free+verified)."
+        }
+      ]
+    },
+    {
+      "attack_id": "ad_fraud_session_replay",
+      "name_ko": "광고 사기/세션 재생",
+      "name_en": "Ad Fraud / Session Replay",
+      "description": "요청을 반복 재생해 광고 사기",
+      "primary_bucket": "NEW:ad_fraud",
+      "combos": [
+        {
+          "combo_id": "ad_fraud_session_replay",
+          "maps_to_bucket": "NEW:ad_fraud",
+          "anchor_tokens": [
+            "arrayBuffer()",
+            "bff"
+          ],
+          "gate_tokens": [
+            "fetch POST"
+          ],
+          "all_tokens_literal": [
+            "arrayBuffer()",
+            "bff",
+            "fetch POST"
+          ],
+          "all_tokens_original": [
+            "fetch(url,options) 반복",
+            "arrayBuffer()",
+            "bff 키 저장"
+          ],
+          "dynamic_only_signals": [
+            "fetch(url,options) 반복 (요청 반복 재생 — 정적 리터럴로 미표현)"
+          ],
+          "token_sources": {
+            "arrayBuffer()": "verified:fpeaba,ghkcpc,iefpkd",
+            "bff": "verified:ghkcpc,iefpkd",
+            "fetch POST": "verified:eebihi,fpeaba,ghkcpc,iefpkd,jhhjba,obifan"
+          },
+          "anchor_unverified": false,
+          "needs_literalization": true,
+          "static_only_insufficient": false,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "attack_id": "popunder_ad",
+      "name_ko": "팝언더 광고",
+      "name_en": "Popunder Ad",
+      "description": "새 탭으로 팝언더 광고 오픈",
+      "primary_bucket": "NEW:popunder",
+      "combos": [
+        {
+          "combo_id": "popunder_ad",
+          "maps_to_bucket": "NEW:popunder",
+          "anchor_tokens": [
+            "newsPage"
+          ],
+          "gate_tokens": [
+            "tabs.create"
+          ],
+          "all_tokens_literal": [
+            "newsPage",
+            "tabs.create"
+          ],
+          "all_tokens_original": [
+            "tabs.create",
+            "newsPage"
+          ],
+          "dynamic_only_signals": [],
+          "token_sources": {
+            "newsPage": "unverified",
+            "tabs.create": "verified:eebihi,fpeaba,ghkcpc,hmkcid,iefpkd,jhhjba"
+          },
+          "anchor_unverified": true,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "attack_id": "ad_frame_injection",
+      "name_ko": "인라인 광고 프레임 주입",
+      "name_en": "Ad Frame Injection",
+      "description": "보안 헤더 제거 후 광고 프레임 주입",
+      "primary_bucket": "NEW:ad_frame",
+      "combos": [
+        {
+          "combo_id": "afi_dnr_frame",
+          "maps_to_bucket": "NEW:ad_frame",
+          "anchor_tokens": [
+            "content-security-policy",
+            "x-frame-options",
+            "isGoogle"
+          ],
+          "gate_tokens": [
+            "declarativeNetRequest"
+          ],
+          "all_tokens_literal": [
+            "content-security-policy",
+            "x-frame-options",
+            "isGoogle",
+            "declarativeNetRequest"
+          ],
+          "all_tokens_original": [
+            "declarativeNetRequest",
+            "CSP제거",
+            "XFO제거",
+            "isGoogle()"
+          ],
+          "dynamic_only_signals": [],
+          "token_sources": {
+            "content-security-policy": "unverified",
+            "x-frame-options": "unverified",
+            "isGoogle": "unverified",
+            "declarativeNetRequest": "verified:ghkcpc"
+          },
+          "anchor_unverified": true,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": "CSP제거/XFO제거를 헤더명+operation:remove로 리터럴화 시도, 코퍼스 미확인"
+        },
+        {
+          "combo_id": "afi_eval_frame",
+          "maps_to_bucket": "NEW:ad_frame",
+          "anchor_tokens": [
+            "isFrame",
+            "isGoogle",
+            "eval.call"
+          ],
+          "gate_tokens": [],
+          "all_tokens_literal": [
+            "isFrame",
+            "isGoogle",
+            "eval.call"
+          ],
+          "all_tokens_original": [
+            "eval.call",
+            "isGoogle()",
+            "isFrame()"
+          ],
+          "dynamic_only_signals": [],
+          "token_sources": {
+            "isFrame": "verified:fpeaba",
+            "isGoogle": "unverified",
+            "eval.call": "unverified"
+          },
+          "anchor_unverified": false,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": ""
+        },
+        {
+          "combo_id": "afi_img_beacon",
+          "maps_to_bucket": "NEW:ad_frame",
+          "anchor_tokens": [
+            "width=\"1\"",
+            "height=\"1\"",
+            "this.remove()"
+          ],
+          "gate_tokens": [
+            "declarativeNetRequest"
+          ],
+          "all_tokens_literal": [
+            "width=\"1\"",
+            "height=\"1\"",
+            "this.remove()",
+            "declarativeNetRequest"
+          ],
+          "all_tokens_original": [
+            "<img 1x1 onload>",
+            "this.remove()",
+            "declarativeNetRequest"
+          ],
+          "dynamic_only_signals": [],
+          "token_sources": {
+            "width=\"1\"": "verified:iefpkd",
+            "height=\"1\"": "verified:iefpkd",
+            "this.remove()": "verified:hmkcid,iefpkd,obifan",
+            "declarativeNetRequest": "verified:ghkcpc"
+          },
+          "anchor_unverified": false,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": "<img 1x1 onload> → width=1/height=1 리터럴화 (iefpkd verify)"
+        }
+      ]
+    },
+    {
+      "attack_id": "anti_debugging",
+      "name_ko": "안티디버깅",
+      "name_en": "Anti-Debugging",
+      "description": "확장 관리 페이지 접근 탐지",
+      "primary_bucket": "NEW:anti_debugging",
+      "combos": [
+        {
+          "combo_id": "anti_debugging",
+          "maps_to_bucket": "NEW:anti_debugging",
+          "anchor_tokens": [
+            "chrome://extensions"
+          ],
+          "gate_tokens": [
+            "tabs.query"
+          ],
+          "all_tokens_literal": [
+            "chrome://extensions",
+            "tabs.query"
+          ],
+          "all_tokens_original": [
+            "tabs.query",
+            "chrome://extensions/*"
+          ],
+          "dynamic_only_signals": [],
+          "token_sources": {
+            "chrome://extensions": "unverified",
+            "tabs.query": "verified:fpeaba,iefpkd,obifan"
+          },
+          "anchor_unverified": true,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "attack_id": "affiliate_cookie_stuffing",
+      "name_ko": "제휴사 쿠키 스터핑",
+      "name_en": "Affiliate Cookie Stuffing",
+      "description": "제휴 파라미터로 쿠키 스터핑",
+      "primary_bucket": "NEW:affiliate",
+      "combos": [
+        {
+          "combo_id": "affiliate_cookie_stuffing",
+          "maps_to_bucket": "NEW:affiliate",
+          "anchor_tokens": [
+            "awinaffid",
+            "awinmid"
+          ],
+          "gate_tokens": [
+            "tabs.create"
+          ],
+          "all_tokens_literal": [
+            "awinaffid",
+            "awinmid",
+            "tabs.create"
+          ],
+          "all_tokens_original": [
+            "tabs.create",
+            "awinaffid",
+            "awinmid"
+          ],
+          "dynamic_only_signals": [],
+          "token_sources": {
+            "awinaffid": "unverified",
+            "awinmid": "unverified",
+            "tabs.create": "verified:eebihi,fpeaba,ghkcpc,hmkcid,iefpkd,jhhjba"
+          },
+          "anchor_unverified": true,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": ""
+        }
+      ]
+    },
+    {
+      "attack_id": "browsing_profile_exfiltration",
+      "name_ko": "브라우징 프로필 수집",
+      "name_en": "Browsing Profile Exfiltration",
+      "description": "방문 URL을 이벤트로 수집·전송",
+      "primary_bucket": "NEW:profiling",
+      "combos": [
+        {
+          "combo_id": "browsing_profile_exfiltration",
+          "maps_to_bucket": "NEW:profiling",
+          "anchor_tokens": [
+            "distinct_id",
+            "page_visit"
+          ],
+          "gate_tokens": [
+            "tabs.onUpdated"
+          ],
+          "all_tokens_literal": [
+            "distinct_id",
+            "page_visit",
+            "tabs.onUpdated"
+          ],
+          "all_tokens_original": [
+            "tabs.onUpdated",
+            "distinct_id",
+            "event:\"page_visit\""
+          ],
+          "dynamic_only_signals": [],
+          "token_sources": {
+            "distinct_id": "unverified",
+            "page_visit": "unverified",
+            "tabs.onUpdated": "verified:fpeaba,ghkcpc,url_vi"
+          },
+          "anchor_unverified": true,
+          "needs_literalization": false,
+          "static_only_insufficient": false,
+          "notes": ""
+        }
+      ]
+    }
+  ]
+}

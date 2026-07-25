@@ -212,6 +212,9 @@ def compact_agent_result(agent_result: dict) -> dict:
         # A ("extension did not call it") vs B ("plant failed / raced") on its own.
         "sensitive_api_instrumented": False,
         "sensitive_api_wrapped": [],
+        "sensitive_api_already_wrapped": [],
+        "sensitive_api_unavailable": [],
+        "sensitive_api_wrap_installed_at": None,
         "sensitive_api_instrument_error": "",
         "sensitive_api_collect_error": "",
         "sensitive_api_calls_before_instrument": 0,
@@ -481,6 +484,17 @@ def compact_agent_result(agent_result: dict) -> dict:
                     int(observation_totals.get("sensitive_api_calls_before_instrument", 0) or 0),
                     int(ex.get("sensitive_api_calls_before_instrument", 0) or 0),
                 )
+                for k in ("sensitive_api_already_wrapped", "sensitive_api_unavailable"):
+                    src = ex.get(k, [])
+                    if isinstance(src, list):
+                        acc = list(observation_totals.get(k, []) or [])
+                        for item in src:
+                            s = str(item)
+                            if s not in acc:
+                                acc.append(s)
+                        observation_totals[k] = acc
+                if observation_totals.get("sensitive_api_wrap_installed_at") is None and ex.get("sensitive_api_wrap_installed_at") is not None:
+                    observation_totals["sensitive_api_wrap_installed_at"] = ex.get("sensitive_api_wrap_installed_at")
                 observation_totals["extension_popup_opened"] = observation_totals["extension_popup_opened"] or bool(
                     ex.get("extension_popup_opened", False)
                 )
